@@ -500,6 +500,9 @@ const filtreTypeLieu =
 const filtreExperience =
     document.getElementById("filtreExperience");
 
+const modeCarte =
+    document.getElementById("modeCarte");
+
 
 // ==========================================================
 // DONNEES GLOBALES
@@ -516,6 +519,8 @@ let voyagesParId = {};
 let photosParLieu = {};
 
 let marqueurs = [];
+
+let modeAffichage = "marqueurs";
 
 
 // ==========================================================
@@ -1717,6 +1722,17 @@ filtreTypeLieu.addEventListener(
 filtreExperience.addEventListener(
     "change",
     afficherLieuxFiltres
+);
+
+modeCarte.addEventListener(
+    "change",
+    function() {
+
+        modeAffichage =
+            modeCarte.value;
+
+        afficherLieuxFiltres();
+    }
 );
 
 
