@@ -103,10 +103,11 @@
 }
         
 .fiche-photo {
+    display: block;
     width: 100%;
-    max-height: 220px;
+    height: 220px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 8px;
     margin-bottom: 10px;
 }
 
@@ -118,11 +119,16 @@
 }
 
 .fiche-miniature {
-    width: 55px;
-    height: 45px;
+    width: 64px;
+    height: 50px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: 6px;
     flex-shrink: 0;
+    cursor: pointer;
+}
+
+.fiche-miniature:active {
+    opacity: 0.7;
 }
         
 .icone {
@@ -685,7 +691,7 @@ photos.forEach(photo => {
 
                         offset: 25,
 
-                        maxWidth: "360px"
+                        maxWidth: "420px"
                     })
                     .setHTML(
                         creerFiche(
