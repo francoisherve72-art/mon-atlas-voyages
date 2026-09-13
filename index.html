@@ -309,6 +309,7 @@ if (photoPrincipale && photoPrincipale.fichier) {
     html += `
         <img
             class="fiche-photo"
+            id="photo-principale-${echapperHTML(lieu.lieu_id)}"
             src="${echapperHTML(urlPhotoPrincipale)}"
             alt="${echapperHTML(
                 photoPrincipale.titre || lieu.nom
@@ -337,15 +338,19 @@ if (photos.length > 1) {
             "/storage/v1/object/public/photos/" +
             photo.fichier;
 
-        html += `
-            <img
-                class="fiche-miniature"
-                src="${echapperHTML(urlPhoto)}"
-                alt="${echapperHTML(
-                    photo.titre || lieu.nom
-                )}"
-            >
-        `;
+html += `
+    <img
+        class="fiche-miniature"
+        src="${echapperHTML(urlPhoto)}"
+        data-photo-url="${echapperHTML(urlPhoto)}"
+        data-photo-titre="${echapperHTML(
+            photo.titre || lieu.nom
+        )}"
+        alt="${echapperHTML(
+            photo.titre || lieu.nom
+        )}"
+    >
+`;
     });
 
     html += `
@@ -757,6 +762,36 @@ photos.forEach(photo => {
 
     chargerDonnees();
 
+document.addEventListener("click", function(event) {
+
+    const miniature =
+        event.target.closest(".fiche-miniature");
+
+    if (!miniature) {
+        return;
+    }
+
+    const popup =
+        miniature.closest(".maplibregl-popup");
+
+    if (!popup) {
+        return;
+    }
+
+    const grandePhoto =
+        popup.querySelector(".fiche-photo");
+
+    if (!grandePhoto) {
+        return;
+    }
+
+    grandePhoto.src =
+        miniature.dataset.photoUrl;
+
+    grandePhoto.alt =
+        miniature.dataset.photoTitre;
+});
+    
 </script>
 
 </body>
