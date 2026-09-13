@@ -101,7 +101,15 @@
     border-top: 1px solid #ddd;
     color: #555;
 }
-
+        
+.fiche-photo {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+        
 .icone {
     margin-right: 4px;
 }
@@ -261,12 +269,36 @@ const MAPTILER_KEY =
     // CREATION D'UNE FICHE
     // ==================================================
 
-    function creerFiche(lieu, voyage) {
+    function creerFiche(lieu, voyage, photos) {
 
         let html = `
             <div class="fiche-lieu">
         `;
 
+        // PHOTO PRINCIPALE
+
+const photoPrincipale =
+    photos.find(photo =>
+        photo.photo_principale === true
+    ) || photos[0];
+
+if (photoPrincipale && photoPrincipale.fichier) {
+
+    const urlPhoto =
+        SUPABASE_URL +
+        "/storage/v1/object/public/photos/" +
+        photoPrincipale.fichier;
+
+    html += `
+        <img
+            class="fiche-photo"
+            src="${echapperHTML(urlPhoto)}"
+            alt="${echapperHTML(
+                photoPrincipale.titre || lieu.nom
+            )}"
+        >
+    `;
+}
 
         // NOM
         html += `
@@ -494,7 +526,42 @@ const MAPTILER_KEY =
             const voyages =
                 await responseVoyages.json();
 
+// ------------------------------------------
+// 2 bis. CHARGER LES PHOTOS
+// ------------------------------------------
 
+const urlPhotos =
+    SUPABASE_URL +
+    "/rest/v1/photos" +
+    "?select=*" +
+    "&order=ordre.asc";
+
+const responsePhotos =
+    await fetch(urlPhotos, {
+
+        headers: {
+
+            "apikey":
+                SUPABASE_KEY,
+
+            "Authorization":
+                "Bearer " +
+                SUPABASE_KEY
+        }
+    });
+
+if (!responsePhotos.ok) {
+
+    throw new Error(
+        "Photos : HTTP " +
+        responsePhotos.status
+    );
+}
+
+const photos =
+    await responsePhotos.json();
+
+            
             // ------------------------------------------
             // 3. CREER UN INDEX DES VOYAGES
             // ------------------------------------------
@@ -507,7 +574,26 @@ const MAPTILER_KEY =
                     voyage;
             });
 
+// ------------------------------------------
+// INDEX DES PHOTOS
+// ------------------------------------------
 
+const photosParLieu = {};
+
+photos.forEach(photo => {
+
+    if (!photo.lieu_id) {
+        return;
+    }
+
+    if (!photosParLieu[photo.lieu_id]) {
+
+        photosParLieu[photo.lieu_id] = [];
+    }
+
+    photosParLieu[photo.lieu_id].push(photo);
+});
+            
             // ------------------------------------------
             // 4. GARDER LES LIEUX GEOLOCALISES
             // ------------------------------------------
@@ -546,7 +632,8 @@ const MAPTILER_KEY =
                     .setHTML(
                         creerFiche(
                             lieu,
-                            voyage
+                            voyage,
+                            photosParLieu[Lieu.lieu_id] || []
                         )
                     );
 
