@@ -205,14 +205,20 @@
             margin-top: 8px;
         }
 
-        .fiche-infos {
-    margin-top: 8px;
-}
 
-.fiche-sous-titre {
-    font-weight: bold;
-    margin-bottom: 5px;
-}
+        .fiche-infos {
+
+            margin-top: 8px;
+        }
+
+
+        .fiche-sous-titre {
+
+            font-weight: bold;
+
+            margin-bottom: 5px;
+        }
+
 
         .fiche-description {
 
@@ -329,7 +335,6 @@
                 align-items: flex-start;
 
                 flex-direction: column;
-
             }
 
 
@@ -338,7 +343,6 @@
                 width: 100%;
 
                 justify-content: flex-start;
-
             }
 
 
@@ -349,7 +353,6 @@
                 min-width: 0;
 
                 max-width: none;
-
             }
 
 
@@ -375,19 +378,24 @@
 
     <div id="filtres">
 
-<select
-    id="modeCarte"
-    class="filtre"
->
-    <option value="marqueurs">
-        📍 Lieux
-    </option>
+        <!-- MODE D'AFFICHAGE -->
 
-    <option value="heatmap">
-        🔥 Heatmap
-    </option>
-</select>
-        
+        <select
+            id="modeCarte"
+            class="filtre"
+        >
+
+            <option value="marqueurs">
+                📍 Lieux
+            </option>
+
+            <option value="heatmap">
+                🔥 Heatmap
+            </option>
+
+        </select>
+
+
         <!-- FILTRE VOYAGE -->
 
         <select
@@ -499,6 +507,7 @@ const filtreTypeLieu =
 
 const filtreExperience =
     document.getElementById("filtreExperience");
+
 
 const modeCarte =
     document.getElementById("modeCarte");
@@ -689,6 +698,7 @@ try {
         erreur.message
     );
 }
+
 
 // ==========================================================
 // CREATION DE LA FICHE
@@ -1034,7 +1044,6 @@ function creerFiche(
 
 
     return html;
-
 }
 
 
@@ -1073,7 +1082,6 @@ function remplirFiltres() {
         voyage => {
 
             if (!voyage.voyage_id) {
-
                 return;
             }
 
@@ -1242,14 +1250,77 @@ function supprimerMarqueurs() {
 
 
 // ==========================================================
+// SUPPRESSION DE LA HEATMAP
+// ==========================================================
+
+function supprimerHeatmap() {
+
+    if (
+        !map ||
+        !map.isStyleLoaded()
+    ) {
+
+        return;
+    }
+
+
+    if (
+        map.getLayer(
+            "heatmap-lieux"
+        )
+    ) {
+
+        map.removeLayer(
+            "heatmap-lieux"
+        );
+    }
+
+
+    if (
+        map.getSource(
+            "lieux-heatmap"
+        )
+    ) {
+
+        map.removeSource(
+            "lieux-heatmap"
+        );
+    }
+}
+
+
+// ==========================================================
 // AFFICHAGE DES LIEUX FILTRES
 // ==========================================================
 
 function afficherLieuxFiltres() {
 
 
+    // ------------------------------------------------------
+    // SECURITE : ATTENDRE LE CHARGEMENT DU STYLE
+    // ------------------------------------------------------
+
+    if (
+        !map ||
+        !map.isStyleLoaded()
+    ) {
+
+        return;
+    }
+
+
+    // ------------------------------------------------------
+    // SUPPRESSION DE L'ANCIEN AFFICHAGE
+    // ------------------------------------------------------
+
     supprimerMarqueurs();
 
+    supprimerHeatmap();
+
+
+    // ------------------------------------------------------
+    // RECUPERATION DES FILTRES
+    // ------------------------------------------------------
 
     const voyageSelectionne =
         filtreVoyage.value;
@@ -1263,6 +1334,10 @@ function afficherLieuxFiltres() {
         filtreExperience.value;
 
 
+    // ------------------------------------------------------
+    // FILTRAGE
+    // ------------------------------------------------------
+
     const lieuxFiltres =
         tousLesLieux.filter(
             lieu => {
@@ -1273,13 +1348,13 @@ function afficherLieuxFiltres() {
                 // ------------------------------
 
                 if (
-    voyageSelectionne &&
-    String(lieu.voyage_id) !==
-        String(voyageSelectionne)
-) {
+                    voyageSelectionne &&
+                    String(lieu.voyage_id) !==
+                        String(voyageSelectionne)
+                ) {
 
-    return false;
-}
+                    return false;
+                }
 
 
                 // ------------------------------
@@ -1310,6 +1385,10 @@ function afficherLieuxFiltres() {
                 }
 
 
+                // ------------------------------
+                // GEOLOCALISATION
+                // ------------------------------
+
                 return (
                     lieu.latitude !== null &&
                     lieu.longitude !== null
@@ -1329,12 +1408,244 @@ function afficherLieuxFiltres() {
 
 
     // ======================================================
-    // NOUVEAUX MARQUEURS
+    // CAS : AUCUN LIEU
+    // ======================================================
+
+    if (lieuxFiltres.length === 0) {
+
+        return;
+    }
+
+
+    // ======================================================
+    // CADRAGE COMMUN
     // ======================================================
 
     const bounds =
         new maplibregl.LngLatBounds();
 
+
+    lieuxFiltres.forEach(
+        lieu => {
+
+            bounds.extend([
+
+                Number(
+                    lieu.longitude
+                ),
+
+                Number(
+                    lieu.latitude
+                )
+
+            ]);
+
+        }
+    );
+
+
+    // ======================================================
+    // MODE HEATMAP
+    // ======================================================
+
+    if (
+        modeAffichage === "heatmap"
+    ) {
+
+
+        // --------------------------------------------------
+        // GEOJSON
+        // --------------------------------------------------
+
+        const geojson = {
+
+            type: "FeatureCollection",
+
+            features:
+                lieuxFiltres.map(
+                    lieu => ({
+
+                        type: "Feature",
+
+                        geometry: {
+
+                            type: "Point",
+
+                            coordinates: [
+
+                                Number(
+                                    lieu.longitude
+                                ),
+
+                                Number(
+                                    lieu.latitude
+                                )
+
+                            ]
+
+                        },
+
+                        properties: {
+
+                            lieu_id:
+                                lieu.lieu_id
+
+                        }
+
+                    })
+                )
+        };
+
+
+        // --------------------------------------------------
+        // SOURCE HEATMAP
+        // --------------------------------------------------
+
+        map.addSource(
+            "lieux-heatmap",
+            {
+
+                type: "geojson",
+
+                data: geojson
+
+            }
+        );
+
+
+        // --------------------------------------------------
+        // COUCHE HEATMAP
+        // --------------------------------------------------
+
+        map.addLayer({
+
+            id: "heatmap-lieux",
+
+            type: "heatmap",
+
+            source: "lieux-heatmap",
+
+            maxzoom: 12,
+
+            paint: {
+
+                // Intensité générale
+                "heatmap-intensity": [
+
+                    "interpolate",
+
+                    ["linear"],
+
+                    ["zoom"],
+
+                    2,
+                    0.8,
+
+                    5,
+                    1.2,
+
+                    8,
+                    1.6,
+
+                    12,
+                    2.0
+
+                ],
+
+
+                // Rayon des zones
+                "heatmap-radius": [
+
+                    "interpolate",
+
+                    ["linear"],
+
+                    ["zoom"],
+
+                    2,
+                    18,
+
+                    5,
+                    28,
+
+                    8,
+                    38,
+
+                    12,
+                    45
+
+                ],
+
+
+                // Transparence
+                "heatmap-opacity": 0.85,
+
+
+                // Couleurs de densité
+                "heatmap-color": [
+
+                    "interpolate",
+
+                    ["linear"],
+
+                    ["heatmap-density"],
+
+                    0,
+                    "rgba(0,0,255,0)",
+
+                    0.1,
+                    "royalblue",
+
+                    0.3,
+                    "cyan",
+
+                    0.5,
+                    "lime",
+
+                    0.7,
+                    "yellow",
+
+                    0.85,
+                    "orange",
+
+                    1,
+                    "red"
+
+                ]
+
+            }
+
+        });
+
+
+        // --------------------------------------------------
+        // CADRAGE
+        // --------------------------------------------------
+
+        map.fitBounds(
+
+            bounds,
+
+            {
+
+                padding: 70,
+
+                maxZoom: 6,
+
+                duration: 700
+
+            }
+
+        );
+
+
+        return;
+    }
+
+
+    // ======================================================
+    // MODE MARQUEURS
+    // ======================================================
 
     lieuxFiltres.forEach(
         lieu => {
@@ -1399,43 +1710,29 @@ function afficherLieuxFiltres() {
                 marqueur
             );
 
-
-            bounds.extend([
-
-                Number(
-                    lieu.longitude
-                ),
-
-                Number(
-                    lieu.latitude
-                )
-
-            ]);
-
         }
     );
 
 
-    // ======================================================
+    // ------------------------------------------------------
     // CADRAGE
-    // ======================================================
+    // ------------------------------------------------------
 
-    if (lieuxFiltres.length > 0) {
+    map.fitBounds(
 
-        map.fitBounds(
+        bounds,
 
-            bounds,
+        {
 
-            {
+            padding: 70,
 
-                padding: 70,
+            maxZoom: 6,
 
-                maxZoom: 6,
+            duration: 700
 
-                duration: 700
-            }
-        );
-    }
+        }
+
+    );
 }
 
 
@@ -1682,7 +1979,21 @@ async function chargerDonnees() {
         // 7. AFFICHAGE INITIAL
         // ==================================================
 
-        afficherLieuxFiltres();
+        if (map.isStyleLoaded()) {
+
+            afficherLieuxFiltres();
+
+        } else {
+
+            map.once(
+                "load",
+                function() {
+
+                    afficherLieuxFiltres();
+
+                }
+            );
+        }
 
 
     } catch (erreur) {
@@ -1724,6 +2035,7 @@ filtreExperience.addEventListener(
     afficherLieuxFiltres
 );
 
+
 modeCarte.addEventListener(
     "change",
     function() {
@@ -1732,6 +2044,7 @@ modeCarte.addEventListener(
             modeCarte.value;
 
         afficherLieuxFiltres();
+
     }
 );
 
