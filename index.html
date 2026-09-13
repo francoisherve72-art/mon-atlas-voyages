@@ -1,17 +1,23 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <title>Mon Atlas</title>
 
     <link
         href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"
         rel="stylesheet"
-    />
+    >
 
     <style>
+
         html,
         body {
             margin: 0;
@@ -26,29 +32,71 @@
             flex-direction: column;
         }
 
+        /* ==================================================
+           EN-TÊTE
+           ================================================== */
+
         header {
-            height: 60px;
+            min-height: 60px;
+
             display: flex;
             align-items: center;
             justify-content: space-between;
+
+            gap: 12px;
+
             padding: 0 20px;
+
             box-sizing: border-box;
+
             background: white;
+
             border-bottom: 1px solid #ddd;
+
+            z-index: 10;
         }
 
         h1 {
             margin: 0;
             font-size: 22px;
+            white-space: nowrap;
+        }
+
+        #controle-voyage {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+
+            font-size: 14px;
+        }
+
+        #select-voyage {
+            max-width: 180px;
+
+            padding: 6px 8px;
+
+            border: 1px solid #ccc;
+
+            border-radius: 5px;
+
+            background: white;
+
+            font-size: 14px;
         }
 
         #compteur {
             font-size: 14px;
             color: #666;
+            white-space: nowrap;
         }
+
+        /* ==================================================
+           CARTE
+           ================================================== */
 
         main {
             flex: 1;
+            min-height: 0;
         }
 
         #map {
@@ -56,840 +104,827 @@
             height: 100%;
         }
 
+        /* ==================================================
+           MESSAGE D'ERREUR
+           ================================================== */
+
         #message {
             position: fixed;
+
             top: 70px;
             left: 10px;
             right: 10px;
+
             z-index: 1000;
+
             padding: 10px;
+
             background: white;
+
             border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+
+            box-shadow:
+                0 2px 8px rgba(0,0,0,0.2);
+
             display: none;
         }
 
-.fiche-lieu {
-    font-family: Arial, sans-serif;
-    line-height: 1.4;
-}
+        /* ==================================================
+           FICHE LIEU
+           ================================================== */
 
-.fiche-titre {
-    font-size: 18px;
-    font-weight: bold;
-    margin-bottom: 4px;
-}
+        .fiche-lieu {
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+        }
 
-.fiche-localisation {
-    color: #666;
-    margin-bottom: 10px;
-}
+        .fiche-titre {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
 
-.fiche-rubrique {
-    margin-top: 7px;
-}
+        .fiche-localisation {
+            color: #666;
+            margin-bottom: 10px;
+        }
 
-.fiche-description {
-    margin-top: 12px;
-    padding-top: 10px;
-    border-top: 1px solid #ddd;
-}
+        .fiche-rubrique {
+            margin-top: 7px;
+        }
 
-.fiche-notes {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #ddd;
-    color: #555;
-}
-        
-.fiche-photo {
-    display: block;
-    width: 100%;
-    height: 220px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
+        .fiche-description {
+            margin-top: 12px;
 
-.fiche-galerie {
-    display: flex;
-    gap: 5px;
-    overflow-x: auto;
-    margin-bottom: 10px;
-}
+            padding-top: 10px;
 
-.fiche-miniature {
-    width: 64px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 6px;
-    flex-shrink: 0;
-    cursor: pointer;
-}
+            border-top: 1px solid #ddd;
+        }
 
-.fiche-miniature:active {
-    opacity: 0.7;
-}
-        
-.icone {
-    margin-right: 4px;
-}
+        .fiche-notes {
+            margin-top: 10px;
 
-#controle-voyage {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 14px;
-}
+            padding-top: 10px;
 
-#select-voyage {
-    max-width: 180px;
-    padding: 5px 7px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    background: white;
-}
-        
+            border-top: 1px solid #ddd;
+
+            color: #555;
+        }
+
+        /* ==================================================
+           PHOTO PRINCIPALE
+           ================================================== */
+
+        .fiche-photo {
+            display: block;
+
+            width: 100%;
+            height: 220px;
+
+            object-fit: cover;
+
+            border-radius: 8px;
+
+            margin-bottom: 10px;
+        }
+
+        /* ==================================================
+           GALERIE
+           ================================================== */
+
+        .fiche-galerie {
+            display: flex;
+
+            gap: 5px;
+
+            overflow-x: auto;
+
+            margin-bottom: 10px;
+
+            padding-bottom: 3px;
+        }
+
+        .fiche-miniature {
+            width: 64px;
+            height: 50px;
+
+            object-fit: cover;
+
+            border-radius: 6px;
+
+            flex-shrink: 0;
+
+            cursor: pointer;
+        }
+
+        .fiche-miniature:active {
+            opacity: 0.7;
+        }
+
+        .icone {
+            margin-right: 4px;
+        }
+
+        /* ==================================================
+           MOBILE
+           ================================================== */
+
+        @media (max-width: 600px) {
+
+            header {
+                padding: 0 10px;
+
+                gap: 8px;
+            }
+
+            h1 {
+                font-size: 19px;
+            }
+
+            #controle-voyage {
+                font-size: 13px;
+            }
+
+            #select-voyage {
+                max-width: 130px;
+                font-size: 13px;
+            }
+
+            #compteur {
+                font-size: 12px;
+            }
+        }
+
     </style>
+
 </head>
+
 
 <body>
 
+
 <header>
+
     <h1>Mon Atlas</h1>
 
     <div id="controle-voyage">
-        <label for="select-voyage">Voyage :</label>
+
+        <label for="select-voyage">
+            Voyage :
+        </label>
 
         <select id="select-voyage">
-            <option value="">Tous les voyages</option>
+
+            <option value="">
+                Tous les voyages
+            </option>
+
         </select>
+
     </div>
 
-    <span id="compteur">Chargement...</span>
+    <span id="compteur">
+        Chargement...
+    </span>
+
 </header>
+
 
 <div id="message"></div>
 
+
 <main>
+
     <div id="map"></div>
+
 </main>
 
-<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+
+<script
+    src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js">
+</script>
+
 
 <script>
 
-    // ==================================================
-    // SUPABASE
-    // ==================================================
 
-    const SUPABASE_URL =
-        "https://xiddtmzehxwfncnyuvid.supabase.co";
+// ==================================================
+// SUPABASE
+// ==================================================
 
-    const SUPABASE_KEY =
-        "sb_publishable_5Sgu_vod3bSaf1ecQeaD8A_BqZ_8HYj";
+const SUPABASE_URL =
+    "https://xiddtmzehxwfncnyuvid.supabase.co";
+
+
+const SUPABASE_KEY =
+    "sb_publishable_5Sgu_vod3bSaf1ecQeaD8A_BqZ_8HYj";
+
 
 const MAPTILER_KEY =
     "knGFRadbYDcoOEytbBIZ";
 
 
-    // ==================================================
-    // ELEMENTS DE LA PAGE
-    // ==================================================
+// ==================================================
+// ELEMENTS DE LA PAGE
+// ==================================================
 
-    const compteur =
-        document.getElementById("compteur");
+const compteur =
+    document.getElementById("compteur");
+
+
+const message =
+    document.getElementById("message");
+
 
 const selectVoyage =
     document.getElementById("select-voyage");
-    
-    const message =
-        document.getElementById("message");
 
 
-    function afficherErreur(texte) {
+// ==================================================
+// VARIABLES GLOBALES
+// ==================================================
 
-        compteur.textContent = "Erreur";
+let tousLesLieux = [];
 
-        message.textContent = texte;
+let lieuxGeolocalises = [];
 
-        message.style.display = "block";
-    }
+let voyages = [];
 
+let voyagesParId = {};
 
-    // ==================================================
-    // SECURITE HTML
-    // ==================================================
+let photosParLieu = {};
 
-    function echapperHTML(texte) {
-
-        if (texte === null || texte === undefined) {
-            return "";
-        }
-
-        return String(texte)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
+let marqueursParLieu = {};
 
 
-    // ==================================================
-    // FORMATAGE DES DATES
-    // ==================================================
+// ==================================================
+// AFFICHAGE DES ERREURS
+// ==================================================
 
-    function formaterDate(date) {
+function afficherErreur(texte) {
 
-        if (!date) {
-            return "";
-        }
+    compteur.textContent =
+        "Erreur";
 
-        const morceaux =
-            date.split("-");
+    message.textContent =
+        texte;
 
-        if (morceaux.length !== 3) {
-            return date;
-        }
-
-        return (
-            morceaux[2] +
-            "/" +
-            morceaux[1] +
-            "/" +
-            morceaux[0]
-        );
-    }
-
-
-    function afficherPeriode(
-        dateDebut,
-        dateFin,
-        precision,
-        dateTexte
-    ) {
-
-        // Si nous avons une date textuelle,
-        // elle est prioritaire.
-        if (dateTexte) {
-            return echapperHTML(dateTexte);
-        }
-
-        if (!dateDebut) {
-            return "";
-        }
-
-        const debut =
-            formaterDate(dateDebut);
-
-        if (!dateFin || dateFin === dateDebut) {
-            return debut;
-        }
-
-        return (
-            debut +
-            " → " +
-            formaterDate(dateFin)
-        );
-    }
-
-
-    // ==================================================
-    // CARTE
-    // ==================================================
-
-    const map =
-        new maplibregl.Map({
-
-            container: "map",
-
-            style:
-`https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`,
-
-
-            center: [2.5, 46.5],
-
-            zoom: 4
-        });
-
-
-    // ==================================================
-    // CREATION D'UNE FICHE
-    // ==================================================
-
-    function creerFiche(lieu, voyage, photos) {
-
-        let html = `
-            <div class="fiche-lieu">
-        `;
-
-        // PHOTO PRINCIPALE
-
-// PHOTO PRINCIPALE
-
-const photoPrincipale =
-    photos.find(photo =>
-        photo.photo_principale === true
-    ) || photos[0];
-
-if (photoPrincipale && photoPrincipale.fichier) {
-
-    const urlPhotoPrincipale =
-        SUPABASE_URL +
-        "/storage/v1/object/public/photos/" +
-        photoPrincipale.fichier;
-
-    html += `
-        <img
-            class="fiche-photo"
-            id="photo-principale-${echapperHTML(lieu.lieu_id)}"
-            src="${echapperHTML(urlPhotoPrincipale)}"
-            alt="${echapperHTML(
-                photoPrincipale.titre || lieu.nom
-            )}"
-        >
-    `;
+    message.style.display =
+        "block";
 }
 
 
-// MINIATURES
+// ==================================================
+// SECURITE HTML
+// ==================================================
 
-if (photos.length > 1) {
+function echapperHTML(texte) {
 
-    html += `
-        <div class="fiche-galerie">
-    `;
+    if (
+        texte === null ||
+        texte === undefined
+    ) {
+        return "";
+    }
 
-    photos.forEach(photo => {
+    return String(texte)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
-        if (!photo.fichier) {
-            return;
-        }
 
-        const urlPhoto =
-            SUPABASE_URL +
-            "/storage/v1/object/public/photos/" +
-            photo.fichier;
+// ==================================================
+// FORMATAGE DES DATES
+// ==================================================
 
-html += `
-    <img
-        class="fiche-miniature"
-        src="${echapperHTML(urlPhoto)}"
-        data-photo-url="${echapperHTML(urlPhoto)}"
-        data-photo-titre="${echapperHTML(
-            photo.titre || lieu.nom
-        )}"
-        alt="${echapperHTML(
-            photo.titre || lieu.nom
-        )}"
-    >
-`;
+function formaterDate(date) {
+
+    if (!date) {
+        return "";
+    }
+
+    const morceaux =
+        date.split("-");
+
+    if (morceaux.length !== 3) {
+        return date;
+    }
+
+    return (
+        morceaux[2] +
+        "/" +
+        morceaux[1] +
+        "/" +
+        morceaux[0]
+    );
+}
+
+
+function afficherPeriode(
+    dateDebut,
+    dateFin,
+    precision,
+    dateTexte
+) {
+
+    if (dateTexte) {
+
+        return echapperHTML(
+            dateTexte
+        );
+    }
+
+    if (!dateDebut) {
+        return "";
+    }
+
+    const debut =
+        formaterDate(dateDebut);
+
+    if (
+        !dateFin ||
+        dateFin === dateDebut
+    ) {
+        return debut;
+    }
+
+    return (
+        debut +
+        " → " +
+        formaterDate(dateFin)
+    );
+}
+
+
+// ==================================================
+// CARTE
+// ==================================================
+
+const map =
+    new maplibregl.Map({
+
+        container: "map",
+
+        style:
+        `https://api.maptiler.com/maps/streets-v4/style.json?key=${MAPTILER_KEY}`,
+
+        center: [
+            2.5,
+            46.5
+        ],
+
+        zoom: 4
+
     });
 
-    html += `
-        </div>
-    `;
-}
 
-        // NOM
+// ==================================================
+// CREATION D'UNE FICHE
+// ==================================================
+
+function creerFiche(
+    lieu,
+    voyage,
+    photos
+) {
+
+    let html = `
+
+        <div class="fiche-lieu">
+
+    `;
+
+
+    // ==================================================
+    // PHOTO PRINCIPALE
+    // ==================================================
+
+    const photoPrincipale =
+        photos.find(
+            photo =>
+                photo.photo_principale === true
+        ) || photos[0];
+
+
+    if (
+        photoPrincipale &&
+        photoPrincipale.fichier
+    ) {
+
+        const urlPhotoPrincipale =
+            SUPABASE_URL +
+            "/storage/v1/object/public/photos/" +
+            photoPrincipale.fichier;
+
+
         html += `
-            <div class="fiche-titre">
-                ${echapperHTML(lieu.nom)}
-            </div>
+
+            <img
+
+                class="fiche-photo"
+
+                src="${echapperHTML(
+                    urlPhotoPrincipale
+                )}"
+
+                alt="${echapperHTML(
+                    photoPrincipale.titre ||
+                    lieu.nom
+                )}"
+
+            >
+
+        `;
+    }
+
+
+    // ==================================================
+    // MINIATURES
+    // ==================================================
+
+    if (photos.length > 1) {
+
+        html += `
+
+            <div class="fiche-galerie">
+
         `;
 
 
-        // LOCALISATION
-        const localisation = [
-            lieu.ville,
-            lieu.pays
-        ]
+        photos.forEach(
+            photo => {
+
+                if (!photo.fichier) {
+                    return;
+                }
+
+
+                const urlPhoto =
+                    SUPABASE_URL +
+                    "/storage/v1/object/public/photos/" +
+                    photo.fichier;
+
+
+                html += `
+
+                    <img
+
+                        class="fiche-miniature"
+
+                        src="${echapperHTML(
+                            urlPhoto
+                        )}"
+
+                        data-photo-url="${echapperHTML(
+                            urlPhoto
+                        )}"
+
+                        data-photo-titre="${echapperHTML(
+                            photo.titre ||
+                            lieu.nom
+                        )}"
+
+                        alt="${echapperHTML(
+                            photo.titre ||
+                            lieu.nom
+                        )}"
+
+                    >
+
+                `;
+            }
+        );
+
+
+        html += `
+
+            </div>
+
+        `;
+    }
+
+
+    // ==================================================
+    // NOM
+    // ==================================================
+
+    html += `
+
+        <div class="fiche-titre">
+
+            ${echapperHTML(
+                lieu.nom
+            )}
+
+        </div>
+
+    `;
+
+
+    // ==================================================
+    // LOCALISATION
+    // ==================================================
+
+    const localisation = [
+
+        lieu.ville,
+
+        lieu.pays
+
+    ]
         .filter(Boolean)
         .map(echapperHTML)
         .join(" · ");
 
-        if (localisation) {
 
-            html += `
-                <div class="fiche-localisation">
-                    ${localisation}
-                </div>
-            `;
-        }
-
-
-        // VOYAGE
-        if (voyage) {
-
-            html += `
-                <div class="fiche-rubrique">
-                    <span class="icone">✈️</span>
-                    <strong>${echapperHTML(voyage.nom)}</strong>
-                </div>
-            `;
-        }
-
-
-        // DATE DU LIEU
-        const dateLieu =
-            afficherPeriode(
-                lieu.date_debut,
-                lieu.date_fin,
-                lieu.date_precision,
-                lieu.date_texte
-            );
-
-        if (dateLieu) {
-
-            html += `
-                <div class="fiche-rubrique">
-                    <span class="icone">📅</span>
-                    ${dateLieu}
-                </div>
-            `;
-        }
-
-
-        // DESCRIPTION
-        if (lieu.description) {
-
-            html += `
-                <div class="fiche-description">
-                    ${echapperHTML(lieu.description)}
-                </div>
-            `;
-        }
-
-
-        // NOTE
-        if (lieu.note !== null &&
-            lieu.note !== undefined) {
-
-            html += `
-                <div class="fiche-rubrique">
-                    <span class="icone">⭐</span>
-                    ${echapperHTML(lieu.note)}/5
-                </div>
-            `;
-        }
-
-
-        // TYPE DE LIEU
-        if (lieu.type_lieu) {
-
-            html += `
-                <div class="fiche-rubrique">
-                    <strong>Type :</strong>
-                    ${echapperHTML(lieu.type_lieu)}
-                </div>
-            `;
-        }
-
-
-        // TYPE D'EXPERIENCE
-        if (lieu.type_experience) {
-
-            html += `
-                <div class="fiche-rubrique">
-                    <strong>Expérience :</strong>
-                    ${echapperHTML(lieu.type_experience)}
-                </div>
-            `;
-        }
-
-
-        // ADRESSE
-        if (lieu.adresse) {
-
-            html += `
-                <div class="fiche-rubrique">
-                    <strong>Adresse :</strong><br>
-                    ${echapperHTML(lieu.adresse)}
-                </div>
-            `;
-        }
-
-
-        // NOTES
-        if (lieu.notes) {
-
-            html += `
-                <div class="fiche-notes">
-                    ${echapperHTML(lieu.notes)}
-                </div>
-            `;
-        }
-
+    if (localisation) {
 
         html += `
+
+            <div class="fiche-localisation">
+
+                ${localisation}
+
             </div>
+
         `;
-
-        return html;
     }
 
 
     // ==================================================
-    // CHARGEMENT DES DONNEES
+    // VOYAGE
     // ==================================================
 
-    async function chargerDonnees() {
+    if (voyage) {
 
-        compteur.textContent =
-            "Connexion à Supabase...";
+        html += `
 
+            <div class="fiche-rubrique">
 
-        try {
+                <span class="icone">
+                    ✈️
+                </span>
 
-            // ------------------------------------------
-            // 1. CHARGER LES LIEUX
-            // ------------------------------------------
+                <strong>
+                    ${echapperHTML(
+                        voyage.nom
+                    )}
+                </strong>
 
-            const urlLieux =
-                SUPABASE_URL +
-                "/rest/v1/lieux" +
-                "?select=*" +
-                "&order=lieu_id.asc";
+            </div>
 
-
-            const responseLieux =
-                await fetch(urlLieux, {
-
-                    headers: {
-
-                        "apikey":
-                            SUPABASE_KEY,
-
-                        "Authorization":
-                            "Bearer " +
-                            SUPABASE_KEY
-                    }
-                });
-
-
-            if (!responseLieux.ok) {
-
-                throw new Error(
-                    "Lieux : HTTP " +
-                    responseLieux.status
-                );
-            }
-
-
-            const lieux =
-                await responseLieux.json();
-
-
-            // ------------------------------------------
-            // 2. CHARGER LES VOYAGES
-            // ------------------------------------------
-
-            const urlVoyages =
-                SUPABASE_URL +
-                "/rest/v1/voyages" +
-                "?select=*";
-
-
-            const responseVoyages =
-                await fetch(urlVoyages, {
-
-                    headers: {
-
-                        "apikey":
-                            SUPABASE_KEY,
-
-                        "Authorization":
-                            "Bearer " +
-                            SUPABASE_KEY
-                    }
-                });
-
-
-            if (!responseVoyages.ok) {
-
-                throw new Error(
-                    "Voyages : HTTP " +
-                    responseVoyages.status
-                );
-            }
-
-
-            const voyages =
-                await responseVoyages.json();
-
-// ------------------------------------------
-// 2 bis. CHARGER LES PHOTOS
-// ------------------------------------------
-
-const urlPhotos =
-    SUPABASE_URL +
-    "/rest/v1/photos" +
-    "?select=*" +
-    "&order=ordre.asc";
-
-const responsePhotos =
-    await fetch(urlPhotos, {
-
-        headers: {
-
-            "apikey":
-                SUPABASE_KEY,
-
-            "Authorization":
-                "Bearer " +
-                SUPABASE_KEY
-        }
-    });
-
-if (!responsePhotos.ok) {
-
-    throw new Error(
-        "Photos : HTTP " +
-        responsePhotos.status
-    );
-}
-
-const photos =
-    await responsePhotos.json();
-
-            
-            // ------------------------------------------
-            // 3. CREER UN INDEX DES VOYAGES
-            // ------------------------------------------
-
-            const voyagesParId = {};
-
-            voyages.forEach(voyage => {
-
-                voyagesParId[voyage.voyage_id] =
-                    voyage;
-            });
-
-// ------------------------------------------
-// INDEX DES PHOTOS
-// ------------------------------------------
-
-const photosParLieu = {};
-
-photos.forEach(photo => {
-
-    if (!photo.lieu_id) {
-        return;
+        `;
     }
 
-    if (!photosParLieu[photo.lieu_id]) {
 
-        photosParLieu[photo.lieu_id] = [];
-    }
+    // ==================================================
+    // DATE DU LIEU
+    // ==================================================
 
-    photosParLieu[photo.lieu_id].push(photo);
-});
-            
-            // ------------------------------------------
-            // 4. GARDER LES LIEUX GEOLOCALISES
-            // ------------------------------------------
+    const dateLieu =
+        afficherPeriode(
 
-            const lieuxGeolocalises =
-                lieux.filter(lieu =>
+            lieu.date_debut,
 
-                    lieu.latitude !== null &&
-                    lieu.longitude !== null
+            lieu.date_fin,
 
-                );
+            lieu.date_precision,
 
+            lieu.date_texte
 
-            compteur.textContent =
-                lieuxGeolocalises.length +
-                " lieux";
-
-
-            // ------------------------------------------
-            // 5. CREER LES PINS
-            // ------------------------------------------
-
-            const marqueursParLieu = {};
-            // ------------------------------------------
-// 5. CREER LES PINS
-// ------------------------------------------
-
-const marqueursParLieu = {};
-
-lieuxGeolocalises.forEach(lieu => {
-
-    const voyage =
-        voyagesParId[lieu.voyage_id];
-
-    const popup =
-        new maplibregl.Popup({
-
-            offset: 25,
-
-            maxWidth: "420px"
-        })
-        .setHTML(
-            creerFiche(
-                lieu,
-                voyage,
-                photosParLieu[lieu.lieu_id] || []
-            )
         );
 
-    const marqueur =
-        new maplibregl.Marker()
-            .setLngLat([
-                Number(lieu.longitude),
-                Number(lieu.latitude)
-            ])
-            .setPopup(popup)
-            .addTo(map);
 
-    marqueursParLieu[lieu.lieu_id] =
-        marqueur;
-});
+    if (dateLieu) {
 
-// ------------------------------------------
-// 5 bis. REMPLIR LE MENU DES VOYAGES
-// ------------------------------------------
+        html += `
 
-voyages.forEach(voyage => {
+            <div class="fiche-rubrique">
 
-    const option =
-        document.createElement("option");
+                <span class="icone">
+                    📅
+                </span>
 
-    option.value =
-        voyage.voyage_id;
+                ${dateLieu}
 
-    option.textContent =
-        voyage.nom;
+            </div>
 
-    selectVoyage.appendChild(option);
-});
+        `;
+    }
 
-            // ------------------------------------------
-// 5 ter. FILTRER PAR VOYAGE
-// ------------------------------------------
 
-selectVoyage.addEventListener(
-    "change",
-    function() {
+    // ==================================================
+    // DESCRIPTION
+    // ==================================================
 
-        const voyageSelectionne =
-            selectVoyage.value;
+    if (lieu.description) {
 
-        lieuxGeolocalises.forEach(lieu => {
+        html += `
+
+            <div class="fiche-description">
+
+                ${echapperHTML(
+                    lieu.description
+                )}
+
+            </div>
+
+        `;
+    }
+
+
+    // ==================================================
+    // NOTE
+    // ==================================================
+
+    if (
+        lieu.note !== null &&
+        lieu.note !== undefined
+    ) {
+
+        html += `
+
+            <div class="fiche-rubrique">
+
+                <span class="icone">
+                    ⭐
+                </span>
+
+                ${echapperHTML(
+                    lieu.note
+                )}/5
+
+            </div>
+
+        `;
+    }
+
+
+    // ==================================================
+    // TYPE DE LIEU
+    // ==================================================
+
+    if (lieu.type_lieu) {
+
+        html += `
+
+            <div class="fiche-rubrique">
+
+                <strong>
+                    Type :
+                </strong>
+
+                ${echapperHTML(
+                    lieu.type_lieu
+                )}
+
+            </div>
+
+        `;
+    }
+
+
+    // ==================================================
+    // TYPE D'EXPERIENCE
+    // ==================================================
+
+    if (lieu.type_experience) {
+
+        html += `
+
+            <div class="fiche-rubrique">
+
+                <strong>
+                    Expérience :
+                </strong>
+
+                ${echapperHTML(
+                    lieu.type_experience
+                )}
+
+            </div>
+
+        `;
+    }
+
+
+    // ==================================================
+    // ADRESSE
+    // ==================================================
+
+    if (lieu.adresse) {
+
+        html += `
+
+            <div class="fiche-rubrique">
+
+                <strong>
+                    Adresse :
+                </strong>
+
+                <br>
+
+                ${echapperHTML(
+                    lieu.adresse
+                )}
+
+            </div>
+
+        `;
+    }
+
+
+    // ==================================================
+    // NOTES
+    // ==================================================
+
+    if (lieu.notes) {
+
+        html += `
+
+            <div class="fiche-notes">
+
+                ${echapperHTML(
+                    lieu.notes
+                )}
+
+            </div>
+
+        `;
+    }
+
+
+    html += `
+
+        </div>
+
+    `;
+
+
+    return html;
+}
+
+
+// ==================================================
+// CREER LES PINS
+// ==================================================
+
+function creerMarqueurs() {
+
+    // Nettoyer les anciens marqueurs
+
+    Object.values(
+        marqueursParLieu
+    ).forEach(
+        marqueur => {
+
+            marqueur.remove();
+
+        }
+    );
+
+
+    marqueursParLieu = {};
+
+
+    lieuxGeolocalises.forEach(
+        lieu => {
+
+            const voyage =
+                voyagesParId[
+                    lieu.voyage_id
+                ];
+
+
+            const photos =
+                photosParLieu[
+                    lieu.lieu_id
+                ] || [];
+
+
+            const popup =
+                new maplibregl.Popup({
+
+                    offset: 25,
+
+                    maxWidth: "420px"
+
+                })
+                .setHTML(
+
+                    creerFiche(
+                        lieu,
+                        voyage,
+                        photos
+                    )
+
+                );
+
 
             const marqueur =
-                marqueursParLieu[lieu.lieu_id];
+                new maplibregl.Marker()
 
-            if (!marqueur) {
-                return;
-            }
-
-            const afficher =
-                voyageSelectionne === "" ||
-                lieu.voyage_id === voyageSelectionne;
-
-            const element =
-                marqueur.getElement();
-
-            element.style.display =
-                afficher ? "" : "none";
-        });
-
-        const nombre =
-            voyageSelectionne === ""
-                ? lieuxGeolocalises.length
-                : lieuxGeolocalises.filter(
-                    lieu =>
-                        lieu.voyage_id === voyageSelectionne
-                ).length;
-
-        compteur.textContent =
-            nombre + " lieux";
-    }
-);
-            // ------------------------------------------
-            // 6. CADRER LA CARTE
-            // ------------------------------------------
-
-            if (lieuxGeolocalises.length > 0) {
-
-                const bounds =
-                    new maplibregl.LngLatBounds();
-
-
-                lieuxGeolocalises.forEach(lieu => {
-
-                    bounds.extend([
-
-                        Number(lieu.longitude),
-
-                        Number(lieu.latitude)
-
-                    ]);
-                });
-
-
-                map.fitBounds(
-                    bounds,
-                    {
-                        padding: 60,
-                        maxZoom: 6
-                    }
-                );
-            }
-
-
-        } catch (erreur) {
-
-            console.error(erreur);
-
-            afficherErreur(
-                "Impossible de charger les données : " +
-                erreur.message
-            );
-        }
-    }
-
-
-    // ==================================================
-    // LANCEMENT
-    // ==================================================
-
-    chargerDonnees();
-
-document.addEventListener("click", function(event) {
-
-    const miniature =
-        event.target.closest(".fiche-miniature");
-
-    if (!miniature) {
-        return;
-    }
-
-    const popup =
-        miniature.closest(".maplibregl-popup");
-
-    if (!popup) {
-        return;
-    }
-
-    const grandePhoto =
-        popup.querySelector(".fiche-photo");
-
-    if (!grandePhoto) {
-        return;
-    }
-
-    grandePhoto.src =
-        miniature.dataset.photoUrl;
-
-    grandePhoto.alt =
-        miniature.dataset.photoTitre;
-});
-    
-</script>
-
-</body>
-</html>
+                   
