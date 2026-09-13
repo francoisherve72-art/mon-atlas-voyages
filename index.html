@@ -109,6 +109,21 @@
     border-radius: 6px;
     margin-bottom: 10px;
 }
+
+.fiche-galerie {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    margin-bottom: 10px;
+}
+
+.fiche-miniature {
+    width: 55px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
         
 .icone {
     margin-right: 4px;
@@ -277,6 +292,8 @@ const MAPTILER_KEY =
 
         // PHOTO PRINCIPALE
 
+// PHOTO PRINCIPALE
+
 const photoPrincipale =
     photos.find(photo =>
         photo.photo_principale === true
@@ -284,7 +301,7 @@ const photoPrincipale =
 
 if (photoPrincipale && photoPrincipale.fichier) {
 
-    const urlPhoto =
+    const urlPhotoPrincipale =
         SUPABASE_URL +
         "/storage/v1/object/public/photos/" +
         photoPrincipale.fichier;
@@ -292,11 +309,47 @@ if (photoPrincipale && photoPrincipale.fichier) {
     html += `
         <img
             class="fiche-photo"
-            src="${echapperHTML(urlPhoto)}"
+            src="${echapperHTML(urlPhotoPrincipale)}"
             alt="${echapperHTML(
                 photoPrincipale.titre || lieu.nom
             )}"
         >
+    `;
+}
+
+
+// MINIATURES
+
+if (photos.length > 1) {
+
+    html += `
+        <div class="fiche-galerie">
+    `;
+
+    photos.forEach(photo => {
+
+        if (!photo.fichier) {
+            return;
+        }
+
+        const urlPhoto =
+            SUPABASE_URL +
+            "/storage/v1/object/public/photos/" +
+            photo.fichier;
+
+        html += `
+            <img
+                class="fiche-miniature"
+                src="${echapperHTML(urlPhoto)}"
+                alt="${echapperHTML(
+                    photo.titre || lieu.nom
+                )}"
+            >
+        `;
+    });
+
+    html += `
+        </div>
     `;
 }
 
