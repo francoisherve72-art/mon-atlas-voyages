@@ -134,6 +134,22 @@
 .icone {
     margin-right: 4px;
 }
+
+#controle-voyage {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+#select-voyage {
+    max-width: 180px;
+    padding: 5px 7px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: white;
+}
+        
     </style>
 </head>
 
@@ -141,6 +157,15 @@
 
 <header>
     <h1>Mon Atlas</h1>
+
+    <div id="controle-voyage">
+        <label for="select-voyage">Voyage :</label>
+
+        <select id="select-voyage">
+            <option value="">Tous les voyages</option>
+        </select>
+    </div>
+
     <span id="compteur">Chargement...</span>
 </header>
 
@@ -175,6 +200,9 @@ const MAPTILER_KEY =
     const compteur =
         document.getElementById("compteur");
 
+const selectVoyage =
+    document.getElementById("select-voyage");
+    
     const message =
         document.getElementById("message");
 
@@ -680,44 +708,107 @@ photos.forEach(photo => {
             // 5. CREER LES PINS
             // ------------------------------------------
 
-            lieuxGeolocalises.forEach(lieu => {
+            const marqueursParLieu = {};
+            // ------------------------------------------
+// 5. CREER LES PINS
+// ------------------------------------------
 
-                const voyage =
-                    voyagesParId[lieu.voyage_id];
+const marqueursParLieu = {};
 
+lieuxGeolocalises.forEach(lieu => {
 
-                const popup =
-                    new maplibregl.Popup({
+    const voyage =
+        voyagesParId[lieu.voyage_id];
 
-                        offset: 25,
+    const popup =
+        new maplibregl.Popup({
 
-                        maxWidth: "420px"
-                    })
-                    .setHTML(
-                        creerFiche(
-                            lieu,
-                            voyage,
-                            photosParLieu[lieu.lieu_id] || []
-                        )
-                    );
+            offset: 25,
 
+            maxWidth: "420px"
+        })
+        .setHTML(
+            creerFiche(
+                lieu,
+                voyage,
+                photosParLieu[lieu.lieu_id] || []
+            )
+        );
 
-                new maplibregl.Marker()
+    const marqueur =
+        new maplibregl.Marker()
+            .setLngLat([
+                Number(lieu.longitude),
+                Number(lieu.latitude)
+            ])
+            .setPopup(popup)
+            .addTo(map);
 
-                    .setLngLat([
+    marqueursParLieu[lieu.lieu_id] =
+        marqueur;
+});
 
-                        Number(lieu.longitude),
+// ------------------------------------------
+// 5 bis. REMPLIR LE MENU DES VOYAGES
+// ------------------------------------------
 
-                        Number(lieu.latitude)
+voyages.forEach(voyage => {
 
-                    ])
+    const option =
+        document.createElement("option");
 
-                    .setPopup(popup)
+    option.value =
+        voyage.voyage_id;
 
-                    .addTo(map);
-            });
+    option.textContent =
+        voyage.nom;
 
+    selectVoyage.appendChild(option);
+});
 
+            // ------------------------------------------
+// 5 ter. FILTRER PAR VOYAGE
+// ------------------------------------------
+
+selectVoyage.addEventListener(
+    "change",
+    function() {
+
+        const voyageSelectionne =
+            selectVoyage.value;
+
+        lieuxGeolocalises.forEach(lieu => {
+
+            const marqueur =
+                marqueursParLieu[lieu.lieu_id];
+
+            if (!marqueur) {
+                return;
+            }
+
+            const afficher =
+                voyageSelectionne === "" ||
+                lieu.voyage_id === voyageSelectionne;
+
+            const element =
+                marqueur.getElement();
+
+            element.style.display =
+                afficher ? "" : "none";
+        });
+
+        const nombre =
+            voyageSelectionne === ""
+                ? lieuxGeolocalises.length
+                : lieuxGeolocalises.filter(
+                    lieu =>
+                        lieu.voyage_id === voyageSelectionne
+                ).length;
+
+        compteur.textContent =
+            nombre + " lieux";
+    }
+);
             // ------------------------------------------
             // 6. CADRER LA CARTE
             // ------------------------------------------
