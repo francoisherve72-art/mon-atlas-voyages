@@ -1016,7 +1016,6 @@ function creerFiche(
 
 
     return html;
-}
 
 }
 
@@ -1256,13 +1255,13 @@ function afficherLieuxFiltres() {
                 // ------------------------------
 
                 if (
-                    voyageSelectionne &&
-                    lieu.voyage_id !==
-                        voyageSelectionne
-                ) {
+    voyageSelectionne &&
+    String(lieu.voyage_id) !==
+        String(voyageSelectionne)
+) {
 
-                    return false;
-                }
+    return false;
+}
 
 
                 // ------------------------------
