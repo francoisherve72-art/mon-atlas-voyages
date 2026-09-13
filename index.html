@@ -205,6 +205,14 @@
             margin-top: 8px;
         }
 
+        .fiche-infos {
+    margin-top: 8px;
+}
+
+.fiche-sous-titre {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
 
         .fiche-description {
 
@@ -664,7 +672,6 @@ try {
     );
 }
 
-
 // ==========================================================
 // CREATION DE LA FICHE
 // ==========================================================
@@ -680,9 +687,9 @@ function creerFiche(
     `;
 
 
-    // ------------------------------------------------------
+    // ======================================================
     // PHOTO PRINCIPALE
-    // ------------------------------------------------------
+    // ======================================================
 
     let photoPrincipale = null;
 
@@ -709,7 +716,6 @@ function creerFiche(
 
 
         html += `
-
             <img
                 class="fiche-photo"
                 src="${echapperHTML(urlPhoto)}"
@@ -718,14 +724,13 @@ function creerFiche(
                     lieu.nom
                 )}"
             >
-
         `;
     }
 
 
-    // ------------------------------------------------------
-    // GALERIE
-    // ------------------------------------------------------
+    // ======================================================
+    // GALERIE PHOTO
+    // ======================================================
 
     if (
         Array.isArray(photos) &&
@@ -741,7 +746,6 @@ function creerFiche(
             photo => {
 
                 if (!photo.fichier) {
-
                     return;
                 }
 
@@ -753,7 +757,6 @@ function creerFiche(
 
 
                 html += `
-
                     <img
                         class="fiche-miniature"
 
@@ -775,7 +778,6 @@ function creerFiche(
                             lieu.nom
                         )}"
                     >
-
                 `;
             }
         );
@@ -787,22 +789,20 @@ function creerFiche(
     }
 
 
-    // ------------------------------------------------------
-    // NOM
-    // ------------------------------------------------------
+    // ======================================================
+    // TITRE
+    // ======================================================
 
     html += `
-
         <div class="fiche-titre">
             ${echapperHTML(lieu.nom)}
         </div>
-
     `;
 
 
-    // ------------------------------------------------------
+    // ======================================================
     // LOCALISATION
-    // ------------------------------------------------------
+    // ======================================================
 
     const localisation = [
 
@@ -811,24 +811,28 @@ function creerFiche(
         lieu.pays
 
     ]
-
         .filter(Boolean)
-
         .map(echapperHTML)
-
         .join(" · ");
 
 
     if (localisation) {
 
         html += `
-
             <div class="fiche-localisation">
-                ${localisation}
+                📍 ${localisation}
             </div>
-
         `;
     }
+
+
+    // ======================================================
+    // INFORMATIONS PRINCIPALES
+    // ======================================================
+
+    html += `
+        <div class="fiche-infos">
+    `;
 
 
     // ------------------------------------------------------
@@ -838,21 +842,11 @@ function creerFiche(
     if (voyage) {
 
         html += `
-
             <div class="fiche-rubrique">
-
-                <span class="icone">
-                    ✈️
-                </span>
-
-                <strong>
-                    ${echapperHTML(
-                        voyage.nom
-                    )}
-                </strong>
-
+                <span class="icone">✈️</span>
+                <strong>Voyage :</strong>
+                ${echapperHTML(voyage.nom)}
             </div>
-
         `;
     }
 
@@ -877,37 +871,11 @@ function creerFiche(
     if (dateLieu) {
 
         html += `
-
             <div class="fiche-rubrique">
-
-                <span class="icone">
-                    📅
-                </span>
-
+                <span class="icone">📅</span>
+                <strong>Date :</strong>
                 ${dateLieu}
-
             </div>
-
-        `;
-    }
-
-
-    // ------------------------------------------------------
-    // DESCRIPTION
-    // ------------------------------------------------------
-
-    if (lieu.description) {
-
-        html += `
-
-            <div class="fiche-description">
-
-                ${echapperHTML(
-                    lieu.description
-                )}
-
-            </div>
-
         `;
     }
 
@@ -922,19 +890,11 @@ function creerFiche(
     ) {
 
         html += `
-
             <div class="fiche-rubrique">
-
-                <span class="icone">
-                    ⭐
-                </span>
-
-                ${echapperHTML(
-                    lieu.note
-                )}/5
-
+                <span class="icone">⭐</span>
+                <strong>Note :</strong>
+                ${echapperHTML(lieu.note)}/5
             </div>
-
         `;
     }
 
@@ -946,43 +906,31 @@ function creerFiche(
     if (lieu.type_lieu) {
 
         html += `
-
             <div class="fiche-rubrique">
-
-                <strong>
-                    Type :
-                </strong>
-
+                <span class="icone">📍</span>
+                <strong>Type :</strong>
                 ${echapperHTML(
                     lieu.type_lieu
                 )}
-
             </div>
-
         `;
     }
 
 
     // ------------------------------------------------------
-    // TYPE EXPERIENCE
+    // TYPE D'EXPERIENCE
     // ------------------------------------------------------
 
     if (lieu.type_experience) {
 
         html += `
-
             <div class="fiche-rubrique">
-
-                <strong>
-                    Expérience :
-                </strong>
-
+                <span class="icone">✨</span>
+                <strong>Expérience :</strong>
                 ${echapperHTML(
                     lieu.type_experience
                 )}
-
             </div>
-
         `;
     }
 
@@ -994,41 +942,13 @@ function creerFiche(
     if (lieu.adresse) {
 
         html += `
-
             <div class="fiche-rubrique">
-
-                <strong>
-                    Adresse :
-                </strong>
-
-                <br>
-
+                <span class="icone">🏠</span>
+                <strong>Adresse :</strong><br>
                 ${echapperHTML(
                     lieu.adresse
                 )}
-
             </div>
-
-        `;
-    }
-
-
-    // ------------------------------------------------------
-    // NOTES
-    // ------------------------------------------------------
-
-    if (lieu.notes) {
-
-        html += `
-
-            <div class="fiche-notes">
-
-                ${echapperHTML(
-                    lieu.notes
-                )}
-
-            </div>
-
         `;
     }
 
@@ -1038,7 +958,66 @@ function creerFiche(
     `;
 
 
+    // ======================================================
+    // DESCRIPTION
+    // ======================================================
+
+    if (lieu.description) {
+
+        html += `
+            <div class="fiche-description">
+
+                <div class="fiche-sous-titre">
+                    Description
+                </div>
+
+                <div>
+                    ${echapperHTML(
+                        lieu.description
+                    )}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    // ======================================================
+    // NOTES PERSONNELLES
+    // ======================================================
+
+    if (lieu.notes) {
+
+        html += `
+            <div class="fiche-notes">
+
+                <div class="fiche-sous-titre">
+                    Notes personnelles
+                </div>
+
+                <div>
+                    ${echapperHTML(
+                        lieu.notes
+                    )}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    // ======================================================
+    // FIN DE LA FICHE
+    // ======================================================
+
+    html += `
+        </div>
+    `;
+
+
     return html;
+}
+
 }
 
 
