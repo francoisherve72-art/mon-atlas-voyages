@@ -12,43 +12,26 @@
 
     <title>Mon Atlas</title>
 
-
-    <!-- ======================================================
-         MAPLIBRE
-         ====================================================== -->
-
+    <!-- MAPLIBRE -->
     <link
         href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"
         rel="stylesheet"
     >
 
-
     <style>
-
-        /* =====================================================
-           GLOBAL
-           ===================================================== */
 
         html,
         body {
-
             margin: 0;
             padding: 0;
-
             width: 100%;
             height: 100%;
-
             font-family: Arial, sans-serif;
         }
 
-
         body {
-
             display: flex;
-
             flex-direction: column;
-
-            background: #f5f5f5;
         }
 
 
@@ -57,13 +40,10 @@
            ===================================================== */
 
         header {
-
             min-height: 60px;
 
             display: flex;
-
             align-items: center;
-
             justify-content: space-between;
 
             gap: 15px;
@@ -81,11 +61,8 @@
 
 
         h1 {
-
             margin: 0;
-
             font-size: 22px;
-
             white-space: nowrap;
         }
 
@@ -95,7 +72,6 @@
            ===================================================== */
 
         #filtres {
-
             display: flex;
 
             align-items: center;
@@ -109,7 +85,6 @@
 
 
         .filtre {
-
             padding: 7px 10px;
 
             border: 1px solid #ccc;
@@ -120,16 +95,13 @@
 
             font-size: 13px;
 
-            max-width: 200px;
+            max-width: 180px;
         }
 
 
         #compteur {
-
             font-size: 13px;
-
             color: #666;
-
             white-space: nowrap;
         }
 
@@ -139,33 +111,27 @@
            ===================================================== */
 
         main {
-
             flex: 1;
-
             min-height: 0;
         }
 
 
         #map {
-
             width: 100%;
-
             height: 100%;
         }
 
 
         /* =====================================================
-           MESSAGE ERREUR
+           MESSAGE
            ===================================================== */
 
         #message {
-
             position: fixed;
 
             top: 70px;
 
             left: 10px;
-
             right: 10px;
 
             z-index: 1000;
@@ -190,7 +156,6 @@
            ===================================================== */
 
         .fiche-lieu {
-
             font-family: Arial, sans-serif;
 
             line-height: 1.4;
@@ -200,7 +165,6 @@
 
 
         .fiche-titre {
-
             font-size: 19px;
 
             font-weight: bold;
@@ -210,7 +174,6 @@
 
 
         .fiche-localisation {
-
             color: #666;
 
             margin-bottom: 10px;
@@ -218,19 +181,16 @@
 
 
         .fiche-rubrique {
-
             margin-top: 8px;
         }
 
 
         .fiche-infos {
-
             margin-top: 8px;
         }
 
 
         .fiche-sous-titre {
-
             font-weight: bold;
 
             margin-bottom: 5px;
@@ -238,7 +198,6 @@
 
 
         .fiche-description {
-
             margin-top: 12px;
 
             padding-top: 10px;
@@ -248,7 +207,6 @@
 
 
         .fiche-notes {
-
             margin-top: 10px;
 
             padding-top: 10px;
@@ -260,63 +218,10 @@
 
 
         /* =====================================================
-           VISITES
-           ===================================================== */
-
-        .fiche-visites {
-
-            margin-top: 14px;
-
-            padding-top: 10px;
-
-            border-top: 1px solid #ddd;
-        }
-
-
-        .fiche-visite {
-
-            padding: 8px 10px;
-
-            margin-top: 8px;
-
-            background: #f7f7f7;
-
-            border-radius: 6px;
-
-            border-left: 3px solid #ccc;
-        }
-
-
-        .fiche-visite:first-child {
-
-            margin-top: 4px;
-        }
-
-
-        .visite-titre {
-
-            font-weight: bold;
-
-            margin-bottom: 3px;
-        }
-
-
-        .visite-detail {
-
-            font-size: 13px;
-
-            color: #555;
-
-            margin-top: 3px;
-        }
-
-
-        /* =====================================================
-           PHOTO
+           PHOTOS
            ===================================================== */
 
         .fiche-photo {
-
             display: block;
 
             width: 100%;
@@ -333,12 +238,7 @@
         }
 
 
-        /* =====================================================
-           GALERIE
-           ===================================================== */
-
         .fiche-galerie {
-
             display: flex;
 
             gap: 6px;
@@ -352,7 +252,6 @@
 
 
         .fiche-miniature {
-
             width: 64px;
 
             height: 50px;
@@ -368,40 +267,67 @@
 
 
         .fiche-miniature:hover {
-
             opacity: 0.75;
         }
 
 
-        /* =====================================================
-           ICÔNES
-           ===================================================== */
-
         .icone {
-
             margin-right: 4px;
         }
 
 
         /* =====================================================
-           BADGES
+           VISITES
            ===================================================== */
 
-        .badge {
+        .fiche-visites {
+            margin-top: 14px;
 
-            display: inline-block;
+            padding-top: 10px;
 
-            padding: 2px 7px;
+            border-top: 1px solid #ddd;
+        }
 
-            margin-left: 4px;
 
-            border-radius: 10px;
+        .fiche-visite {
+            margin-top: 10px;
 
-            background: #e8e8e8;
+            padding: 9px;
 
-            font-size: 11px;
+            background: #f7f7f7;
+
+            border-radius: 7px;
+        }
+
+
+        .fiche-visite:first-child {
+            margin-top: 6px;
+        }
+
+
+        .visite-contexte {
+            font-weight: bold;
+
+            margin-bottom: 5px;
+        }
+
+
+        .visite-ligne {
+            margin-top: 4px;
+        }
+
+
+        .visite-description {
+            margin-top: 7px;
+        }
+
+
+        .visite-notes {
+            margin-top: 7px;
 
             color: #555;
+
+            font-style: italic;
         }
 
 
@@ -410,7 +336,6 @@
            ===================================================== */
 
         .maplibregl-marker {
-
             cursor: pointer;
         }
 
@@ -422,7 +347,6 @@
         @media (max-width: 700px) {
 
             header {
-
                 min-height: auto;
 
                 padding: 10px;
@@ -434,7 +358,6 @@
 
 
             #filtres {
-
                 width: 100%;
 
                 justify-content: flex-start;
@@ -442,7 +365,6 @@
 
 
             .filtre {
-
                 flex: 1;
 
                 min-width: 0;
@@ -452,7 +374,6 @@
 
 
             #compteur {
-
                 width: 100%;
             }
 
@@ -474,9 +395,7 @@
     <div id="filtres">
 
 
-        <!-- ==================================================
-             MODE D'AFFICHAGE
-             ================================================== -->
+        <!-- MODE D'AFFICHAGE -->
 
         <select
             id="modeCarte"
@@ -494,9 +413,7 @@
         </select>
 
 
-        <!-- ==================================================
-             FILTRE VOYAGE
-             ================================================== -->
+        <!-- FILTRE VOYAGE -->
 
         <select
             id="filtreVoyage"
@@ -510,9 +427,7 @@
         </select>
 
 
-        <!-- ==================================================
-             FILTRE CONTEXTE
-             ================================================== -->
+        <!-- FILTRE CONTEXTE -->
 
         <select
             id="filtreContexte"
@@ -526,9 +441,7 @@
         </select>
 
 
-        <!-- ==================================================
-             FILTRE TYPE DE LIEU
-             ================================================== -->
+        <!-- FILTRE TYPE DE LIEU -->
 
         <select
             id="filtreTypeLieu"
@@ -542,9 +455,7 @@
         </select>
 
 
-        <!-- ==================================================
-             FILTRE EXPERIENCE
-             ================================================== -->
+        <!-- FILTRE EXPERIENCE -->
 
         <select
             id="filtreExperience"
@@ -558,9 +469,7 @@
         </select>
 
 
-        <!-- ==================================================
-             COMPTEUR
-             ================================================== -->
+        <!-- COMPTEUR -->
 
         <span id="compteur">
             Chargement...
@@ -581,9 +490,9 @@
 </main>
 
 
-<!-- ==========================================================
+<!-- =========================================================
      MAPLIBRE
-     ========================================================== -->
+     ========================================================= -->
 
 <script
     src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js">
@@ -647,22 +556,22 @@ const modeCarte =
 
 let tousLesLieux = [];
 
-let tousLesVoyages = [];
-
 let toutesLesVisites = [];
 
-let toutesLesPhotos = [];
+let tousLesVoyages = [];
 
 let tousLesContextes = [];
+
+let toutesLesPhotos = [];
 
 
 let voyagesParId = {};
 
+let contextesParCode = {};
+
 let visitesParLieu = {};
 
 let photosParLieu = {};
-
-let contextesParCode = {};
 
 
 let marqueurs = [];
@@ -699,7 +608,6 @@ function echapperHTML(texte) {
         texte === null ||
         texte === undefined
     ) {
-
         return "";
     }
 
@@ -725,7 +633,6 @@ function echapperHTML(texte) {
 function formaterDate(date) {
 
     if (!date) {
-
         return "";
     }
 
@@ -735,7 +642,6 @@ function formaterDate(date) {
 
 
     if (morceaux.length !== 3) {
-
         return date;
     }
 
@@ -751,7 +657,7 @@ function formaterDate(date) {
 
 
 // ==========================================================
-// AFFICHER UNE PERIODE
+// PERIODE
 // ==========================================================
 
 function afficherPeriode(
@@ -770,7 +676,6 @@ function afficherPeriode(
 
 
     if (!dateDebut) {
-
         return "";
     }
 
@@ -797,20 +702,12 @@ function afficherPeriode(
 
 
 // ==========================================================
-// LIBELLE D'UN CONTEXTE
-// ==========================================================
-//
-// La table types_contexte peut évoluer.
-// On cherche donc plusieurs noms de colonnes possibles.
-//
-// Le code reste toujours utilisable même si la table ne
-// possède qu'une colonne "code".
+// NOM DU CONTEXTE
 // ==========================================================
 
-function obtenirLibelleContexte(code) {
+function obtenirNomContexte(code) {
 
     if (!code) {
-
         return "";
     }
 
@@ -820,10 +717,14 @@ function obtenirLibelleContexte(code) {
 
 
     if (!contexte) {
-
         return code;
     }
 
+
+    /*
+     * On accepte plusieurs noms possibles pour la colonne
+     * descriptive afin de rendre le HTML robuste.
+     */
 
     return (
         contexte.nom ||
@@ -837,69 +738,29 @@ function obtenirLibelleContexte(code) {
 
 
 // ==========================================================
-// RECUPERATION DES VISITES D'UN LIEU
+// NOM DU VOYAGE
 // ==========================================================
 
-function obtenirVisitesLieu(lieuId) {
+function obtenirNomVoyage(voyageId) {
+
+    if (!voyageId) {
+        return "";
+    }
+
+
+    const voyage =
+        voyagesParId[voyageId];
+
+
+    if (!voyage) {
+        return voyageId;
+    }
+
 
     return (
-        visitesParLieu[lieuId] ||
-        []
+        voyage.nom ||
+        voyage.voyage_id
     );
-}
-
-
-// ==========================================================
-// RECUPERATION DES CONTEXTES D'UN LIEU
-// ==========================================================
-
-function obtenirContextesLieu(lieuId) {
-
-    const visites =
-        obtenirVisitesLieu(lieuId);
-
-
-    return [
-        ...new Set(
-
-            visites
-
-                .map(
-                    visite =>
-                        visite.type_contexte
-                )
-
-                .filter(Boolean)
-
-        )
-    ];
-}
-
-
-// ==========================================================
-// RECUPERATION DES VOYAGES D'UN LIEU
-// ==========================================================
-
-function obtenirVoyagesLieu(lieuId) {
-
-    const visites =
-        obtenirVisitesLieu(lieuId);
-
-
-    return [
-        ...new Set(
-
-            visites
-
-                .map(
-                    visite =>
-                        visite.voyage_id
-                )
-
-                .filter(Boolean)
-
-        )
-    ];
 }
 
 
@@ -922,11 +783,8 @@ try {
                 MAPTILER_KEY,
 
             center: [
-
                 2.5,
-
                 46.5
-
             ],
 
             zoom: 4
@@ -934,9 +792,7 @@ try {
 
 
     map.addControl(
-
         new maplibregl.NavigationControl(),
-
         "top-right"
     );
 
@@ -944,9 +800,7 @@ try {
 } catch (erreur) {
 
     afficherErreur(
-
         "Impossible d'initialiser la carte : " +
-
         erreur.message
     );
 }
@@ -961,10 +815,14 @@ function creerFiche(
     photos
 ) {
 
+    const visites =
+        visitesParLieu[
+            lieu.lieu_id
+        ] || [];
+
+
     let html = `
-
         <div class="fiche-lieu">
-
     `;
 
 
@@ -978,39 +836,27 @@ function creerFiche(
     if (Array.isArray(photos)) {
 
         photoPrincipale =
-
             photos.find(
-
                 photo =>
                     photo.photo_principale === true
-
-            ) ||
-
-            photos[0];
+            ) || photos[0];
     }
 
 
     if (
-
         photoPrincipale &&
-
         photoPrincipale.fichier
-
     ) {
 
         const urlPhoto =
-
             SUPABASE_URL +
-
             "/storage/v1/object/public/photos/" +
-
             photoPrincipale.fichier;
 
 
         html += `
 
             <img
-
                 class="fiche-photo"
 
                 src="${echapperHTML(
@@ -1018,13 +864,9 @@ function creerFiche(
                 )}"
 
                 alt="${echapperHTML(
-
                     photoPrincipale.titre ||
-
                     lieu.nom
-
                 )}"
-
             >
 
         `;
@@ -1032,47 +874,36 @@ function creerFiche(
 
 
     // ======================================================
-    // GALERIE
+    // GALERIE PHOTO
     // ======================================================
 
     if (
-
         Array.isArray(photos) &&
-
         photos.length > 1
-
     ) {
 
         html += `
-
             <div class="fiche-galerie">
-
         `;
 
 
         photos.forEach(
-
             photo => {
 
                 if (!photo.fichier) {
-
                     return;
                 }
 
 
                 const urlPhoto =
-
                     SUPABASE_URL +
-
                     "/storage/v1/object/public/photos/" +
-
                     photo.fichier;
 
 
                 html += `
 
                     <img
-
                         class="fiche-miniature"
 
                         src="${echapperHTML(
@@ -1084,21 +915,14 @@ function creerFiche(
                         )}"
 
                         data-photo-titre="${echapperHTML(
-
                             photo.titre ||
-
                             lieu.nom
-
                         )}"
 
                         alt="${echapperHTML(
-
                             photo.titre ||
-
                             lieu.nom
-
                         )}"
-
                     >
 
                 `;
@@ -1107,9 +931,7 @@ function creerFiche(
 
 
         html += `
-
             </div>
-
         `;
     }
 
@@ -1121,9 +943,7 @@ function creerFiche(
     html += `
 
         <div class="fiche-titre">
-
             ${echapperHTML(lieu.nom)}
-
         </div>
 
     `;
@@ -1153,9 +973,7 @@ function creerFiche(
         html += `
 
             <div class="fiche-localisation">
-
                 📍 ${localisation}
-
             </div>
 
         `;
@@ -1165,17 +983,6 @@ function creerFiche(
     // ======================================================
     // INFORMATIONS PROPRES AU LIEU
     // ======================================================
-
-    html += `
-
-        <div class="fiche-infos">
-
-    `;
-
-
-    // ------------------------------------------------------
-    // TYPE DE LIEU
-    // ------------------------------------------------------
 
     if (lieu.type_lieu) {
 
@@ -1197,40 +1004,6 @@ function creerFiche(
     }
 
 
-    // ------------------------------------------------------
-    // NOTE DU LIEU
-    // ------------------------------------------------------
-
-    if (
-
-        lieu.note !== null &&
-
-        lieu.note !== undefined
-
-    ) {
-
-        html += `
-
-            <div class="fiche-rubrique">
-
-                <span class="icone">⭐</span>
-
-                <strong>Note :</strong>
-
-                ${echapperHTML(
-                    lieu.note
-                )}/5
-
-            </div>
-
-        `;
-    }
-
-
-    // ------------------------------------------------------
-    // ADRESSE
-    // ------------------------------------------------------
-
     if (lieu.adresse) {
 
         html += `
@@ -1251,22 +1024,9 @@ function creerFiche(
     }
 
 
-    html += `
-
-        </div>
-
-    `;
-
-
     // ======================================================
     // VISITES
     // ======================================================
-
-    const visites =
-        obtenirVisitesLieu(
-            lieu.lieu_id
-        );
-
 
     if (visites.length > 0) {
 
@@ -1275,83 +1035,65 @@ function creerFiche(
             <div class="fiche-visites">
 
                 <div class="fiche-sous-titre">
-
-                    🗓️ Visites
-
+                    ✨ Visite${visites.length > 1 ? "s" : ""}
                 </div>
 
         `;
 
 
         visites.forEach(
-
             visite => {
 
-                const voyage =
+                html += `
+                    <div class="fiche-visite">
+                `;
 
-                    visite.voyage_id
 
-                        ? voyagesParId[
-                            visite.voyage_id
-                        ]
-
-                        : null;
-
+                // ------------------------------------------
+                // CONTEXTE
+                // ------------------------------------------
 
                 const nomContexte =
-
-                    obtenirLibelleContexte(
-
+                    obtenirNomContexte(
                         visite.type_contexte
                     );
 
 
-                const periode =
+                if (nomContexte) {
 
-                    afficherPeriode(
+                    html += `
 
-                        visite.date_debut,
+                        <div class="visite-contexte">
 
-                        visite.date_fin,
-
-                        visite.date_precision,
-
-                        visite.date_texte
-                    );
-
-
-                html += `
-
-                    <div class="fiche-visite">
-
-                        <div class="visite-titre">
-
+                            🧭
                             ${echapperHTML(
-                                nomContexte ||
-                                "Visite"
+                                nomContexte
                             )}
 
                         </div>
 
-                `;
+                    `;
+                }
 
 
                 // ------------------------------------------
                 // VOYAGE
                 // ------------------------------------------
 
-                if (voyage) {
+                if (visite.voyage_id) {
 
                     html += `
 
-                        <div class="visite-detail">
+                        <div class="visite-ligne">
 
                             ✈️
 
                             <strong>Voyage :</strong>
 
                             ${echapperHTML(
-                                voyage.nom
+                                obtenirNomVoyage(
+                                    visite.voyage_id
+                                )
                             )}
 
                         </div>
@@ -1364,11 +1106,25 @@ function creerFiche(
                 // DATE
                 // ------------------------------------------
 
+                const periode =
+                    afficherPeriode(
+
+                        visite.date_debut,
+
+                        visite.date_fin,
+
+                        visite.date_precision,
+
+                        visite.date_texte
+
+                    );
+
+
                 if (periode) {
 
                     html += `
 
-                        <div class="visite-detail">
+                        <div class="visite-ligne">
 
                             📅
 
@@ -1390,16 +1146,14 @@ function creerFiche(
 
                     html += `
 
-                        <div class="visite-detail">
+                        <div class="visite-ligne">
 
                             ✨
 
                             <strong>Expérience :</strong>
 
                             ${echapperHTML(
-
                                 visite.type_experience
-
                             )}
 
                         </div>
@@ -1413,16 +1167,13 @@ function creerFiche(
                 // ------------------------------------------
 
                 if (
-
                     visite.note !== null &&
-
                     visite.note !== undefined
-
                 ) {
 
                     html += `
 
-                        <div class="visite-detail">
+                        <div class="visite-ligne">
 
                             ⭐
 
@@ -1446,7 +1197,7 @@ function creerFiche(
 
                     html += `
 
-                        <div class="visite-detail">
+                        <div class="visite-description">
 
                             ${echapperHTML(
                                 visite.description
@@ -1466,15 +1217,11 @@ function creerFiche(
 
                     html += `
 
-                        <div class="visite-detail">
+                        <div class="visite-notes">
 
-                            <em>
-
-                                ${echapperHTML(
-                                    visite.notes
-                                )}
-
-                            </em>
+                            ${echapperHTML(
+                                visite.notes
+                            )}
 
                         </div>
 
@@ -1483,24 +1230,20 @@ function creerFiche(
 
 
                 html += `
-
                     </div>
-
                 `;
             }
         );
 
 
         html += `
-
             </div>
-
         `;
     }
 
 
     // ======================================================
-    // DESCRIPTION DU LIEU
+    // DESCRIPTION PROPRE AU LIEU
     // ======================================================
 
     if (lieu.description) {
@@ -1510,17 +1253,13 @@ function creerFiche(
             <div class="fiche-description">
 
                 <div class="fiche-sous-titre">
-
-                    Description
-
+                    Description du lieu
                 </div>
 
                 <div>
-
                     ${echapperHTML(
                         lieu.description
                     )}
-
                 </div>
 
             </div>
@@ -1530,7 +1269,7 @@ function creerFiche(
 
 
     // ======================================================
-    // NOTES PERSONNELLES DU LIEU
+    // NOTES PROPRES AU LIEU
     // ======================================================
 
     if (lieu.notes) {
@@ -1540,17 +1279,13 @@ function creerFiche(
             <div class="fiche-notes">
 
                 <div class="fiche-sous-titre">
-
                     Notes personnelles
-
                 </div>
 
                 <div>
-
                     ${echapperHTML(
                         lieu.notes
                     )}
-
                 </div>
 
             </div>
@@ -1564,9 +1299,7 @@ function creerFiche(
     // ======================================================
 
     html += `
-
         </div>
-
     `;
 
 
@@ -1588,67 +1321,51 @@ function remplirFiltres() {
     filtreVoyage.innerHTML = `
 
         <option value="">
-
             Tous les voyages
-
         </option>
 
     `;
 
 
-    const voyagesTries =
+    [...tousLesVoyages]
 
-        [...tousLesVoyages]
+        .sort(
+            (a, b) =>
+                String(a.nom || "")
+                    .localeCompare(
+                        String(b.nom || ""),
+                        "fr"
+                    )
+        )
 
-            .sort(
+        .forEach(
+            voyage => {
 
-                (a, b) =>
-
-                    String(a.nom || "")
-
-                        .localeCompare(
-
-                            String(b.nom || ""),
-
-                            "fr"
-                        )
-            );
-
-
-    voyagesTries.forEach(
-
-        voyage => {
-
-            if (!voyage.voyage_id) {
-
-                return;
-            }
+                if (!voyage.voyage_id) {
+                    return;
+                }
 
 
-            const option =
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
-                document.createElement(
-                    "option"
+
+                option.value =
+                    voyage.voyage_id;
+
+
+                option.textContent =
+                    voyage.nom ||
+                    voyage.voyage_id;
+
+
+                filtreVoyage.appendChild(
+                    option
                 );
-
-
-            option.value =
-
-                voyage.voyage_id;
-
-
-            option.textContent =
-
-                voyage.nom ||
-
-                voyage.voyage_id;
-
-
-            filtreVoyage.appendChild(
-                option
-            );
-        }
-    );
+            }
+        );
 
 
     // ======================================================
@@ -1658,70 +1375,59 @@ function remplirFiltres() {
     filtreContexte.innerHTML = `
 
         <option value="">
-
             Tous les contextes
-
         </option>
 
     `;
 
 
-    const contextesCodes =
-
+    const codesContextes =
         [
-
             ...new Set(
 
                 toutesLesVisites
 
                     .map(
-
                         visite =>
-
                             visite.type_contexte
-
                     )
 
                     .filter(Boolean)
 
             )
-
         ];
 
 
-    contextesCodes
+    codesContextes
 
         .sort(
-
             (a, b) =>
-
-                obtenirLibelleContexte(a)
-
-                    .localeCompare(
-
-                        obtenirLibelleContexte(b),
-
-                        "fr"
-                    )
+                String(
+                    obtenirNomContexte(a)
+                )
+                .localeCompare(
+                    String(
+                        obtenirNomContexte(b)
+                    ),
+                    "fr"
+                )
         )
 
         .forEach(
-
             code => {
 
                 const option =
-
                     document.createElement(
                         "option"
                     );
 
 
-                option.value = code;
+                option.value =
+                    code;
 
 
                 option.textContent =
-
-                    obtenirLibelleContexte(
+                    obtenirNomContexte(
                         code
                     );
 
@@ -1740,73 +1446,62 @@ function remplirFiltres() {
     filtreTypeLieu.innerHTML = `
 
         <option value="">
-
             Tous les types
-
         </option>
 
     `;
 
 
     const typesLieu =
-
         [
-
             ...new Set(
 
                 tousLesLieux
 
                     .map(
-
                         lieu =>
-
                             lieu.type_lieu
-
                     )
 
                     .filter(Boolean)
 
             )
-
-        ]
-
-            .sort(
-
-                (a, b) =>
-
-                    String(a)
-
-                        .localeCompare(
-
-                            String(b),
-
-                            "fr"
-                        )
-            );
+        ];
 
 
-    typesLieu.forEach(
+    typesLieu
 
-        type => {
+        .sort(
+            (a, b) =>
+                String(a)
+                    .localeCompare(
+                        String(b),
+                        "fr"
+                    )
+        )
 
-            const option =
+        .forEach(
+            type => {
 
-                document.createElement(
-                    "option"
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    type;
+
+
+                option.textContent =
+                    type;
+
+
+                filtreTypeLieu.appendChild(
+                    option
                 );
-
-
-            option.value = type;
-
-
-            option.textContent = type;
-
-
-            filtreTypeLieu.appendChild(
-                option
-            );
-        }
-    );
+            }
+        );
 
 
     // ======================================================
@@ -1816,73 +1511,62 @@ function remplirFiltres() {
     filtreExperience.innerHTML = `
 
         <option value="">
-
             Toutes les expériences
-
         </option>
 
     `;
 
 
     const experiences =
-
         [
-
             ...new Set(
 
                 toutesLesVisites
 
                     .map(
-
                         visite =>
-
                             visite.type_experience
-
                     )
 
                     .filter(Boolean)
 
             )
-
-        ]
-
-            .sort(
-
-                (a, b) =>
-
-                    String(a)
-
-                        .localeCompare(
-
-                            String(b),
-
-                            "fr"
-                        )
-            );
+        ];
 
 
-    experiences.forEach(
+    experiences
 
-        experience => {
+        .sort(
+            (a, b) =>
+                String(a)
+                    .localeCompare(
+                        String(b),
+                        "fr"
+                    )
+        )
 
-            const option =
+        .forEach(
+            experience => {
 
-                document.createElement(
-                    "option"
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+
+                option.value =
+                    experience;
+
+
+                option.textContent =
+                    experience;
+
+
+                filtreExperience.appendChild(
+                    option
                 );
-
-
-            option.value = experience;
-
-
-            option.textContent = experience;
-
-
-            filtreExperience.appendChild(
-                option
-            );
-        }
-    );
+            }
+        );
 }
 
 
@@ -1893,7 +1577,6 @@ function remplirFiltres() {
 function supprimerMarqueurs() {
 
     marqueurs.forEach(
-
         marqueur => {
 
             marqueur.remove();
@@ -1913,11 +1596,8 @@ function supprimerMarqueurs() {
 function supprimerHeatmap() {
 
     if (
-
         !map ||
-
         !map.isStyleLoaded()
-
     ) {
 
         return;
@@ -1925,11 +1605,9 @@ function supprimerHeatmap() {
 
 
     if (
-
         map.getLayer(
             "heatmap-lieux"
         )
-
     ) {
 
         map.removeLayer(
@@ -1939,11 +1617,9 @@ function supprimerHeatmap() {
 
 
     if (
-
         map.getSource(
             "lieux-heatmap"
         )
-
     ) {
 
         map.removeSource(
@@ -1959,162 +1635,122 @@ function supprimerHeatmap() {
 
 function lieuCorrespondAuxFiltres(lieu) {
 
-
-    // ======================================================
-    // FILTRE VOYAGE
-    // ======================================================
-
     const voyageSelectionne =
-
         filtreVoyage.value;
 
 
-    if (voyageSelectionne) {
-
-        const voyages =
-
-            obtenirVoyagesLieu(
-                lieu.lieu_id
-            );
-
-
-        if (
-
-            !voyages.some(
-
-                voyageId =>
-
-                    String(voyageId) ===
-
-                    String(voyageSelectionne)
-
-            )
-
-        ) {
-
-            return false;
-        }
-    }
-
-
-    // ======================================================
-    // FILTRE CONTEXTE
-    // ======================================================
-
     const contexteSelectionne =
-
         filtreContexte.value;
 
 
-    if (contexteSelectionne) {
-
-        const contextes =
-
-            obtenirContextesLieu(
-                lieu.lieu_id
-            );
-
-
-        if (
-
-            !contextes.some(
-
-                contexte =>
-
-                    String(contexte) ===
-
-                    String(contexteSelectionne)
-
-            )
-
-        ) {
-
-            return false;
-        }
-    }
-
-
-    // ======================================================
-    // FILTRE TYPE DE LIEU
-    // ======================================================
-
     const typeLieuSelectionne =
-
         filtreTypeLieu.value;
 
 
-    if (
-
-        typeLieuSelectionne &&
-
-        lieu.type_lieu !==
-            typeLieuSelectionne
-
-    ) {
-
-        return false;
-    }
-
-
-    // ======================================================
-    // FILTRE EXPERIENCE
-    // ======================================================
-
     const experienceSelectionnee =
-
         filtreExperience.value;
 
 
-    if (experienceSelectionnee) {
-
-        const visites =
-
-            obtenirVisitesLieu(
-                lieu.lieu_id
-            );
-
-
-        const correspond =
-
-            visites.some(
-
-                visite =>
-
-                    visite.type_experience ===
-
-                    experienceSelectionnee
-
-            );
-
-
-        if (!correspond) {
-
-            return false;
-        }
-    }
-
-
     // ======================================================
-    // GEOLOCALISATION
+    // TYPE DE LIEU
     // ======================================================
 
     if (
-
-        lieu.latitude === null ||
-
-        lieu.longitude === null ||
-
-        lieu.latitude === undefined ||
-
-        lieu.longitude === undefined
-
+        typeLieuSelectionne &&
+        lieu.type_lieu !==
+            typeLieuSelectionne
     ) {
 
         return false;
     }
 
 
-    return true;
+    // ======================================================
+    // FILTRES PORTANT SUR LES VISITES
+    // ======================================================
+
+    const visites =
+        visitesParLieu[
+            lieu.lieu_id
+        ] || [];
+
+
+    /*
+     * Si aucun filtre de visite n'est sélectionné,
+     * le lieu passe automatiquement.
+     */
+
+    if (
+        !voyageSelectionne &&
+        !contexteSelectionne &&
+        !experienceSelectionnee
+    ) {
+
+        return true;
+    }
+
+
+    /*
+     * IMPORTANT :
+     *
+     * Tous les critères doivent être satisfaits
+     * par UNE MÊME visite.
+     *
+     * Cela permet d'éviter qu'un lieu soit affiché
+     * parce qu'il possède par exemple :
+     *
+     * - un voyage correspondant
+     * - mais une expérience correspondant à une autre visite.
+     */
+
+    return visites.some(
+        visite => {
+
+            if (
+                voyageSelectionne &&
+                String(
+                    visite.voyage_id
+                ) !==
+                String(
+                    voyageSelectionne
+                )
+            ) {
+
+                return false;
+            }
+
+
+            if (
+                contexteSelectionne &&
+                String(
+                    visite.type_contexte
+                ) !==
+                String(
+                    contexteSelectionne
+                )
+            ) {
+
+                return false;
+            }
+
+
+            if (
+                experienceSelectionnee &&
+                String(
+                    visite.type_experience
+                ) !==
+                String(
+                    experienceSelectionnee
+                )
+            ) {
+
+                return false;
+            }
+
+
+            return true;
+        }
+    );
 }
 
 
@@ -2124,63 +1760,73 @@ function lieuCorrespondAuxFiltres(lieu) {
 
 function afficherLieuxFiltres() {
 
-
-    // ======================================================
-    // ATTENDRE LA CARTE
-    // ======================================================
-
     if (
-
         !map ||
-
         !map.isStyleLoaded()
-
     ) {
 
         return;
     }
 
 
-    // ======================================================
+    // ------------------------------------------------------
     // NETTOYAGE
-    // ======================================================
+    // ------------------------------------------------------
 
     supprimerMarqueurs();
 
     supprimerHeatmap();
 
 
-    // ======================================================
+    // ------------------------------------------------------
     // FILTRAGE
-    // ======================================================
+    // ------------------------------------------------------
 
     const lieuxFiltres =
-
         tousLesLieux.filter(
+            lieu => {
 
-            lieu =>
+                if (
+                    !lieuCorrespondAuxFiltres(
+                        lieu
+                    )
+                ) {
 
-                lieuCorrespondAuxFiltres(
-                    lieu
-                )
+                    return false;
+                }
 
+
+                return (
+                    lieu.latitude !== null &&
+                    lieu.latitude !== undefined &&
+                    lieu.longitude !== null &&
+                    lieu.longitude !== undefined
+                );
+
+            }
         );
 
 
-    // ======================================================
+    // ------------------------------------------------------
     // COMPTEUR
-    // ======================================================
+    // ------------------------------------------------------
+
+    const lieuxAvecCoordonnees =
+        tousLesLieux.filter(
+            lieu =>
+                lieu.latitude !== null &&
+                lieu.longitude !== null
+        ).length;
+
 
     compteur.textContent =
-
         lieuxFiltres.length +
-
         " lieux";
 
 
-    // ======================================================
+    // ------------------------------------------------------
     // AUCUN RESULTAT
-    // ======================================================
+    // ------------------------------------------------------
 
     if (lieuxFiltres.length === 0) {
 
@@ -2188,17 +1834,15 @@ function afficherLieuxFiltres() {
     }
 
 
-    // ======================================================
+    // ------------------------------------------------------
     // BOUNDS
-    // ======================================================
+    // ------------------------------------------------------
 
     const bounds =
-
         new maplibregl.LngLatBounds();
 
 
     lieuxFiltres.forEach(
-
         lieu => {
 
             bounds.extend([
@@ -2212,6 +1856,7 @@ function afficherLieuxFiltres() {
                 )
 
             ]);
+
         }
     );
 
@@ -2221,31 +1866,22 @@ function afficherLieuxFiltres() {
     // ======================================================
 
     if (
-
-        modeAffichage ===
-        "heatmap"
-
+        modeAffichage === "heatmap"
     ) {
-
 
         const geojson = {
 
-            type:
-                "FeatureCollection",
+            type: "FeatureCollection",
 
             features:
-
                 lieuxFiltres.map(
-
                     lieu => ({
 
-                        type:
-                            "Feature",
+                        type: "Feature",
 
                         geometry: {
 
-                            type:
-                                "Point",
+                            type: "Point",
 
                             coordinates: [
 
@@ -2269,45 +1905,34 @@ function afficherLieuxFiltres() {
                         }
 
                     })
-
                 )
 
         };
 
 
         map.addSource(
-
             "lieux-heatmap",
-
             {
 
-                type:
-                    "geojson",
+                type: "geojson",
 
-                data:
-                    geojson
+                data: geojson
 
             }
-
         );
 
 
         map.addLayer({
 
-            id:
-                "heatmap-lieux",
+            id: "heatmap-lieux",
 
-            type:
-                "heatmap",
+            type: "heatmap",
 
-            source:
-                "lieux-heatmap",
+            source: "lieux-heatmap",
 
-            maxzoom:
-                12,
+            maxzoom: 12,
 
             paint: {
-
 
                 "heatmap-intensity": [
 
@@ -2435,14 +2060,11 @@ function afficherLieuxFiltres() {
 
             {
 
-                padding:
-                    70,
+                padding: 70,
 
-                maxZoom:
-                    6,
+                maxZoom: 6,
 
-                duration:
-                    700
+                duration: 700
 
             }
 
@@ -2458,22 +2080,18 @@ function afficherLieuxFiltres() {
     // ======================================================
 
     lieuxFiltres.forEach(
-
         lieu => {
 
             const photosLieu =
-
                 photosParLieu[
                     lieu.lieu_id
                 ] || [];
 
 
             const popup =
-
                 new maplibregl.Popup({
 
-                    offset:
-                        25,
+                    offset: 25,
 
                     maxWidth:
                         "420px"
@@ -2495,7 +2113,6 @@ function afficherLieuxFiltres() {
 
 
             const marqueur =
-
                 new maplibregl.Marker()
 
                     .setLngLat([
@@ -2537,14 +2154,11 @@ function afficherLieuxFiltres() {
 
         {
 
-            padding:
-                70,
+            padding: 70,
 
-            maxZoom:
-                6,
+            maxZoom: 6,
 
-            duration:
-                700
+            duration: 700
 
         }
 
@@ -2553,40 +2167,30 @@ function afficherLieuxFiltres() {
 
 
 // ==========================================================
-// FONCTION GENERIQUE SUPABASE
+// REQUETE SUPABASE GENERIQUE
 // ==========================================================
 
-async function chargerTable(
-
-    nomTable,
-
-    options = ""
-
+async function supabaseGet(
+    table,
+    params = ""
 ) {
 
     const url =
-
         SUPABASE_URL +
-
         "/rest/v1/" +
-
-        nomTable +
-
+        table +
         "?select=*" +
-
-        options;
+        params;
 
 
     const response =
-
         await fetch(
 
             url,
 
             {
 
-                method:
-                    "GET",
+                method: "GET",
 
                 headers: {
 
@@ -2609,19 +2213,24 @@ async function chargerTable(
 
     if (!response.ok) {
 
+        const texte =
+            await response.text();
+
+
         throw new Error(
 
-            nomTable +
-
+            table +
             " : HTTP " +
-
-            response.status
+            response.status +
+            " — " +
+            texte
 
         );
+
     }
 
 
-    return await response.json();
+    return response.json();
 }
 
 
@@ -2632,163 +2241,120 @@ async function chargerTable(
 async function chargerDonnees() {
 
     compteur.textContent =
-
         "Connexion à Supabase...";
 
 
     try {
 
+        // ==================================================
+        // CHARGEMENT PARALLELE
+        // ==================================================
+
+        const [
+
+            lieux,
+            visites,
+            voyages,
+            contextes,
+            photos
+
+        ] = await Promise.all([
+
+            supabaseGet(
+                "lieux",
+                "&order=lieu_id.asc"
+            ),
+
+            supabaseGet(
+                "visites",
+                "&order=visite_id.asc"
+            ),
+
+            supabaseGet(
+                "voyages",
+                "&order=voyage_id.asc"
+            ),
+
+            supabaseGet(
+                "types_contexte",
+                "&order=code.asc"
+            ),
+
+            supabaseGet(
+                "photos",
+                "&order=ordre.asc"
+            )
+
+        ]);
+
 
         // ==================================================
-        // 1. LIEUX
+        // STOCKAGE
         // ==================================================
 
         tousLesLieux =
+            lieux;
 
-            await chargerTable(
-
-                "lieux",
-
-                "&order=lieu_id.asc"
-
-            );
-
-
-        console.log(
-
-            "Lieux chargés :",
-
-            tousLesLieux.length
-
-        );
-
-
-        // ==================================================
-        // 2. VOYAGES
-        // ==================================================
-
-        tousLesVoyages =
-
-            await chargerTable(
-
-                "voyages",
-
-                "&order=voyage_id.asc"
-
-            );
-
-
-        console.log(
-
-            "Voyages chargés :",
-
-            tousLesVoyages.length
-
-        );
-
-
-        // ==================================================
-        // 3. VISITES
-        // ==================================================
 
         toutesLesVisites =
-
-            await chargerTable(
-
-                "visites",
-
-                "&order=visite_id.asc"
-
-            );
+            visites;
 
 
-        console.log(
-
-            "Visites chargées :",
-
-            toutesLesVisites.length
-
-        );
+        tousLesVoyages =
+            voyages;
 
 
-        // ==================================================
-        // 4. PHOTOS
-        // ==================================================
+        tousLesContextes =
+            contextes;
+
 
         toutesLesPhotos =
-
-            await chargerTable(
-
-                "photos",
-
-                "&order=ordre.asc"
-
-            );
+            photos;
 
 
         console.log(
-
-            "Photos chargées :",
-
-            toutesLesPhotos.length
-
+            "Lieux chargés :",
+            tousLesLieux.length
         );
 
 
-        // ==================================================
-        // 5. TYPES DE CONTEXTE
-        // ==================================================
-
-        try {
-
-            tousLesContextes =
-
-                await chargerTable(
-
-                    "types_contexte",
-
-                    "&order=code.asc"
-
-                );
-
-
-        } catch (erreurContexte) {
-
-            console.warn(
-
-                "Impossible de charger " +
-                "types_contexte :",
-
-                erreurContexte
-
-            );
-
-
-            tousLesContextes = [];
-        }
+        console.log(
+            "Visites chargées :",
+            toutesLesVisites.length
+        );
 
 
         console.log(
+            "Voyages chargés :",
+            tousLesVoyages.length
+        );
 
+
+        console.log(
             "Contextes chargés :",
-
             tousLesContextes.length
+        );
 
+
+        console.log(
+            "Photos chargées :",
+            toutesLesPhotos.length
         );
 
 
         // ==================================================
-        // 6. INDEX VOYAGES
+        // INDEX VOYAGES
         // ==================================================
 
         voyagesParId = {};
 
 
         tousLesVoyages.forEach(
-
             voyage => {
 
-                if (voyage.voyage_id) {
+                if (
+                    voyage.voyage_id
+                ) {
 
                     voyagesParId[
                         voyage.voyage_id
@@ -2797,33 +2363,55 @@ async function chargerDonnees() {
                 }
 
             }
-
         );
 
 
         // ==================================================
-        // 7. INDEX VISITES PAR LIEU
+        // INDEX CONTEXTES
+        // ==================================================
+
+        contextesParCode = {};
+
+
+        tousLesContextes.forEach(
+            contexte => {
+
+                if (
+                    contexte.code
+                ) {
+
+                    contextesParCode[
+                        contexte.code
+                    ] = contexte;
+
+                }
+
+            }
+        );
+
+
+        // ==================================================
+        // INDEX VISITES PAR LIEU
         // ==================================================
 
         visitesParLieu = {};
 
 
         toutesLesVisites.forEach(
-
             visite => {
 
-                if (!visite.lieu_id) {
+                if (
+                    !visite.lieu_id
+                ) {
 
                     return;
                 }
 
 
                 if (
-
                     !visitesParLieu[
                         visite.lieu_id
                     ]
-
                 ) {
 
                     visitesParLieu[
@@ -2836,39 +2424,35 @@ async function chargerDonnees() {
                 visitesParLieu[
                     visite.lieu_id
                 ].push(
-
                     visite
-
                 );
 
             }
-
         );
 
 
         // ==================================================
-        // 8. INDEX PHOTOS PAR LIEU
+        // INDEX PHOTOS PAR LIEU
         // ==================================================
 
         photosParLieu = {};
 
 
         toutesLesPhotos.forEach(
-
             photo => {
 
-                if (!photo.lieu_id) {
+                if (
+                    !photo.lieu_id
+                ) {
 
                     return;
                 }
 
 
                 if (
-
                     !photosParLieu[
                         photo.lieu_id
                     ]
-
                 ) {
 
                     photosParLieu[
@@ -2881,55 +2465,51 @@ async function chargerDonnees() {
                 photosParLieu[
                     photo.lieu_id
                 ].push(
-
                     photo
-
                 );
 
             }
-
         );
 
 
         // ==================================================
-        // 9. INDEX CONTEXTES
-        // ==================================================
-
-        contextesParCode = {};
-
-
-        tousLesContextes.forEach(
-
-            contexte => {
-
-                if (contexte.code) {
-
-                    contextesParCode[
-                        contexte.code
-                    ] = contexte;
-
-                }
-
-            }
-
-        );
-
-
-        // ==================================================
-        // 10. FILTRES
+        // FILTRES
         // ==================================================
 
         remplirFiltres();
 
 
         // ==================================================
-        // 11. AFFICHAGE INITIAL
+        // MESSAGE DE CONTROLE
+        // ==================================================
+
+        const lieuxAvecCoordonnees =
+            tousLesLieux.filter(
+                lieu =>
+                    lieu.latitude !== null &&
+                    lieu.longitude !== null
+            ).length;
+
+
+        console.log(
+            "Lieux cartographiables :",
+            lieuxAvecCoordonnees
+        );
+
+
+        console.log(
+            "Lieux sans coordonnées :",
+            tousLesLieux.length -
+            lieuxAvecCoordonnees
+        );
+
+
+        // ==================================================
+        // AFFICHAGE
         // ==================================================
 
         if (
-
             map.isStyleLoaded()
-
         ) {
 
             afficherLieuxFiltres();
@@ -2937,15 +2517,12 @@ async function chargerDonnees() {
         } else {
 
             map.once(
-
                 "load",
-
                 function() {
 
                     afficherLieuxFiltres();
 
                 }
-
             );
 
         }
@@ -2954,18 +2531,14 @@ async function chargerDonnees() {
     } catch (erreur) {
 
         console.error(
-
             "ERREUR ATLAS :",
-
             erreur
-
         );
 
 
         afficherErreur(
 
             "Impossible de charger les données : " +
-
             erreur.message
 
         );
@@ -2976,64 +2549,43 @@ async function chargerDonnees() {
 
 
 // ==========================================================
-// EVENEMENTS DES FILTRES
+// EVENEMENTS FILTRES
 // ==========================================================
 
 filtreVoyage.addEventListener(
-
     "change",
-
     afficherLieuxFiltres
-
 );
 
 
 filtreContexte.addEventListener(
-
     "change",
-
     afficherLieuxFiltres
-
 );
 
 
 filtreTypeLieu.addEventListener(
-
     "change",
-
     afficherLieuxFiltres
-
 );
 
 
 filtreExperience.addEventListener(
-
     "change",
-
     afficherLieuxFiltres
-
 );
 
 
-// ==========================================================
-// CHANGEMENT DU MODE CARTE
-// ==========================================================
-
 modeCarte.addEventListener(
-
     "change",
-
     function() {
 
         modeAffichage =
-
             modeCarte.value;
-
 
         afficherLieuxFiltres();
 
     }
-
 );
 
 
@@ -3042,70 +2594,52 @@ modeCarte.addEventListener(
 // ==========================================================
 
 document.addEventListener(
-
     "click",
 
     function(event) {
 
-
         const miniature =
-
             event.target.closest(
-
                 ".fiche-miniature"
-
             );
 
 
         if (!miniature) {
-
             return;
         }
 
 
         const popup =
-
             miniature.closest(
-
                 ".maplibregl-popup"
-
             );
 
 
         if (!popup) {
-
             return;
         }
 
 
         const grandePhoto =
-
             popup.querySelector(
-
                 ".fiche-photo"
-
             );
 
 
         if (!grandePhoto) {
-
             return;
         }
 
 
         grandePhoto.src =
-
             miniature.dataset.photoUrl;
 
 
         grandePhoto.alt =
-
             miniature.dataset.photoTitre ||
-
             "";
 
     }
-
 );
 
 
