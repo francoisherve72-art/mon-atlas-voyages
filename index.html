@@ -3,367 +3,565 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <title>Mon Atlas</title>
+<title>Mon Atlas</title>
 
-    <!-- MAPLIBRE -->
-    <link
-        href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"
-        rel="stylesheet"
-    >
+<link
+    href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"
+    rel="stylesheet"
+>
 
-    <style>
+<style>
 
-        html,
-        body {
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
 
-            margin: 0;
-            padding: 0;
+body {
+    display: flex;
+    flex-direction: column;
+}
 
-            width: 100%;
-            height: 100%;
 
-            font-family: Arial, sans-serif;
-        }
+/* ==========================================================
+   EN-TÊTE
+   ========================================================== */
 
+header {
 
-        body {
+    min-height: 60px;
 
-            display: flex;
-            flex-direction: column;
-        }
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
+    gap: 15px;
 
-        /* ==============================
-           EN-TÊTE
-           ============================== */
+    padding: 8px 20px;
 
-        header {
+    box-sizing: border-box;
 
-            min-height: 60px;
+    background: white;
 
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+    border-bottom: 1px solid #ddd;
 
-            gap: 15px;
+    z-index: 10;
+}
 
-            padding: 0 20px;
+h1 {
 
-            box-sizing: border-box;
+    margin: 0;
 
-            background: white;
+    font-size: 22px;
 
-            border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+}
 
-            z-index: 10;
-        }
 
+/* ==========================================================
+   FILTRES
+   ========================================================== */
 
-        h1 {
+#filtres {
 
-            margin: 0;
+    display: flex;
 
-            font-size: 22px;
+    align-items: center;
 
-            white-space: nowrap;
-        }
+    gap: 8px;
 
+    flex-wrap: wrap;
 
-        /* ==============================
-           FILTRES
-           ============================== */
+    justify-content: flex-end;
+}
 
-        #filtres {
+.filtre {
 
-            display: flex;
+    padding: 7px 10px;
 
-            align-items: center;
+    border: 1px solid #ccc;
 
-            gap: 8px;
+    border-radius: 6px;
 
-            flex-wrap: wrap;
+    background: white;
 
-            justify-content: flex-end;
-        }
+    font-size: 13px;
 
+    max-width: 190px;
+}
 
-        .filtre {
+#compteur {
 
-            padding: 7px 10px;
+    font-size: 13px;
 
-            border: 1px solid #ccc;
+    color: #666;
 
-            border-radius: 6px;
+    white-space: nowrap;
+}
 
-            background: white;
 
-            font-size: 13px;
+/* ==========================================================
+   AUTHENTIFICATION
+   ========================================================== */
 
-            max-width: 190px;
-        }
+#zone-auth {
 
+    display: flex;
 
-        #compteur {
+    align-items: center;
 
-            font-size: 13px;
+    gap: 6px;
 
-            color: #666;
+    white-space: nowrap;
+}
 
-            white-space: nowrap;
-        }
+.bouton {
 
+    padding: 7px 11px;
 
-        /* ==============================
-           CARTE
-           ============================== */
+    border: 1px solid #bbb;
 
-        main {
+    border-radius: 6px;
 
-            flex: 1;
+    background: white;
 
-            min-height: 0;
-        }
+    cursor: pointer;
 
+    font-size: 13px;
+}
 
-        #map {
+.bouton:hover {
+    background: #f3f3f3;
+}
 
-            width: 100%;
-            height: 100%;
-        }
+.bouton-principal {
 
+    background: #222;
 
-        /* ==============================
-           MESSAGE
-           ============================== */
+    color: white;
 
-        #message {
+    border-color: #222;
+}
 
-            position: fixed;
+.bouton-principal:hover {
+    background: #444;
+}
 
-            top: 70px;
-            left: 10px;
-            right: 10px;
+.bouton-danger {
 
-            z-index: 1000;
+    color: #b00020;
 
-            padding: 12px;
+    border-color: #d99;
+}
 
-            background: white;
+#statut-auth {
 
-            border-radius: 8px;
+    font-size: 12px;
 
-            box-shadow:
-                0 2px 8px rgba(0,0,0,0.2);
+    color: #555;
+}
 
-            display: none;
 
-            color: #b00020;
-        }
+/* ==========================================================
+   CARTE
+   ========================================================== */
 
+main {
 
-        /* ==============================
-           FICHE
-           ============================== */
+    flex: 1;
 
-        .fiche-lieu {
+    min-height: 0;
+}
 
-            font-family: Arial, sans-serif;
+#map {
 
-            line-height: 1.4;
+    width: 100%;
+    height: 100%;
+}
 
-            width: 100%;
-        }
 
+/* ==========================================================
+   MESSAGE
+   ========================================================== */
 
-        .fiche-titre {
+#message {
 
-            font-size: 19px;
+    position: fixed;
 
-            font-weight: bold;
+    top: 70px;
+    left: 10px;
+    right: 10px;
 
-            margin-bottom: 4px;
-        }
+    z-index: 2000;
 
+    padding: 12px;
 
-        .fiche-localisation {
+    background: white;
 
-            color: #666;
+    border-radius: 8px;
 
-            margin-bottom: 10px;
-        }
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.2);
 
+    display: none;
 
-        .fiche-rubrique {
+    color: #b00020;
+}
 
-            margin-top: 8px;
-        }
 
+/* ==========================================================
+   FICHE
+   ========================================================== */
 
-        .fiche-infos {
+.fiche-lieu {
 
-            margin-top: 8px;
-        }
+    font-family: Arial, sans-serif;
 
+    line-height: 1.4;
 
-        .fiche-sous-titre {
+    width: 100%;
+}
 
-            font-weight: bold;
+.fiche-titre {
 
-            margin-bottom: 5px;
-        }
+    font-size: 19px;
 
+    font-weight: bold;
 
-        .fiche-description {
+    margin-bottom: 4px;
+}
 
-            margin-top: 12px;
+.fiche-localisation {
 
-            padding-top: 10px;
+    color: #666;
 
-            border-top: 1px solid #ddd;
-        }
+    margin-bottom: 10px;
+}
 
+.fiche-rubrique {
 
-        .fiche-notes {
+    margin-top: 8px;
+}
 
-            margin-top: 10px;
+.fiche-infos {
 
-            padding-top: 10px;
+    margin-top: 8px;
+}
 
-            border-top: 1px solid #ddd;
+.fiche-sous-titre {
 
-            color: #555;
-        }
+    font-weight: bold;
 
+    margin-bottom: 5px;
+}
 
-        /* ==============================
-           PHOTO PRINCIPALE
-           ============================== */
+.fiche-description {
 
-        .fiche-photo {
+    margin-top: 12px;
 
-            display: block;
+    padding-top: 10px;
 
-            width: 100%;
+    border-top: 1px solid #ddd;
+}
 
-            height: 220px;
+.fiche-notes {
 
-            object-fit: cover;
+    margin-top: 10px;
 
-            border-radius: 8px;
+    padding-top: 10px;
 
-            margin-bottom: 10px;
+    border-top: 1px solid #ddd;
 
-            cursor: pointer;
-        }
+    color: #555;
+}
 
 
-        /* ==============================
-           GALERIE
-           ============================== */
+/* ==========================================================
+   PHOTOS
+   ========================================================== */
 
-        .fiche-galerie {
+.fiche-photo {
 
-            display: flex;
+    display: block;
 
-            gap: 6px;
+    width: 100%;
 
-            overflow-x: auto;
+    height: 220px;
 
-            margin-bottom: 12px;
+    object-fit: cover;
 
-            padding-bottom: 3px;
-        }
+    border-radius: 8px;
 
+    margin-bottom: 10px;
 
-        .fiche-miniature {
+    cursor: pointer;
+}
 
-            width: 64px;
+.fiche-galerie {
 
-            height: 50px;
+    display: flex;
 
-            object-fit: cover;
+    gap: 6px;
 
-            border-radius: 6px;
+    overflow-x: auto;
 
-            flex-shrink: 0;
+    margin-bottom: 12px;
 
-            cursor: pointer;
-        }
+    padding-bottom: 3px;
+}
 
+.fiche-miniature {
 
-        .fiche-miniature:hover {
+    width: 64px;
 
-            opacity: 0.75;
-        }
+    height: 50px;
 
+    object-fit: cover;
 
-        .icone {
+    border-radius: 6px;
 
-            margin-right: 4px;
-        }
+    flex-shrink: 0;
 
+    cursor: pointer;
+}
 
-        /* ==============================
-           MARQUEURS
-           ============================== */
+.fiche-miniature:hover {
 
-        .maplibregl-marker {
+    opacity: 0.75;
+}
 
-            cursor: pointer;
-        }
+.icone {
+    margin-right: 4px;
+}
 
 
-        /* ==============================
-           MOBILE
-           ============================== */
+/* ==========================================================
+   BOUTONS DANS POPUP
+   ========================================================== */
 
-        @media (max-width: 700px) {
+.actions-lieu {
 
-            header {
+    display: flex;
 
-                min-height: auto;
+    gap: 6px;
 
-                padding: 10px;
+    margin-top: 14px;
 
-                align-items: flex-start;
+    padding-top: 10px;
 
-                flex-direction: column;
-            }
+    border-top: 1px solid #ddd;
+}
 
 
-            #filtres {
+/* ==========================================================
+   MODALE
+   ========================================================== */
 
-                width: 100%;
+#fond-modal {
 
-                justify-content: flex-start;
-            }
+    position: fixed;
 
+    inset: 0;
 
-            .filtre {
+    background: rgba(0,0,0,0.45);
 
-                flex: 1;
+    z-index: 3000;
 
-                min-width: 0;
+    display: none;
 
-                max-width: none;
-            }
+    align-items: center;
 
+    justify-content: center;
 
-            #compteur {
+    padding: 20px;
 
-                width: 100%;
-            }
+    box-sizing: border-box;
+}
 
-        }
+#modal {
 
-    </style>
+    width: min(700px, 100%);
+
+    max-height: 90vh;
+
+    overflow-y: auto;
+
+    background: white;
+
+    border-radius: 10px;
+
+    box-shadow:
+        0 5px 30px rgba(0,0,0,0.3);
+
+    padding: 22px;
+
+    box-sizing: border-box;
+}
+
+#modal h2 {
+
+    margin-top: 0;
+}
+
+.form-grid {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 12px;
+}
+
+.form-groupe {
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+.form-groupe.large {
+
+    grid-column: 1 / -1;
+}
+
+.form-groupe label {
+
+    font-size: 13px;
+
+    font-weight: bold;
+}
+
+.form-groupe input,
+.form-groupe select,
+.form-groupe textarea {
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    padding: 8px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 6px;
+
+    font-family: Arial, sans-serif;
+
+    font-size: 14px;
+}
+
+.form-groupe textarea {
+
+    min-height: 90px;
+
+    resize: vertical;
+}
+
+#actions-formulaire {
+
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    margin-top: 18px;
+
+    padding-top: 15px;
+
+    border-top: 1px solid #ddd;
+}
+
+#message-formulaire {
+
+    margin-top: 10px;
+
+    color: #b00020;
+
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   MARQUEURS
+   ========================================================== */
+
+.maplibregl-marker {
+
+    cursor: pointer;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 700px) {
+
+    header {
+
+        min-height: auto;
+
+        padding: 10px;
+
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    #filtres {
+
+        width: 100%;
+
+        justify-content: flex-start;
+    }
+
+    .filtre {
+
+        flex: 1;
+
+        min-width: 0;
+
+        max-width: none;
+    }
+
+    #compteur {
+
+        width: 100%;
+    }
+
+    #zone-auth {
+
+        width: 100%;
+
+        justify-content: flex-end;
+    }
+
+    .form-grid {
+
+        grid-template-columns: 1fr;
+    }
+
+    .form-groupe.large {
+
+        grid-column: auto;
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -378,12 +576,7 @@
 
     <div id="filtres">
 
-        <!-- MODE D'AFFICHAGE -->
-
-        <select
-            id="modeCarte"
-            class="filtre"
-        >
+        <select id="modeCarte" class="filtre">
 
             <option value="marqueurs">
                 📍 Lieux
@@ -396,12 +589,7 @@
         </select>
 
 
-        <!-- FILTRE VOYAGE -->
-
-        <select
-            id="filtreVoyage"
-            class="filtre"
-        >
+        <select id="filtreVoyage" class="filtre">
 
             <option value="">
                 Tous les voyages
@@ -410,12 +598,7 @@
         </select>
 
 
-        <!-- FILTRE CONTEXTE -->
-
-        <select
-            id="filtreContexte"
-            class="filtre"
-        >
+        <select id="filtreContexte" class="filtre">
 
             <option value="">
                 Tous les contextes
@@ -424,12 +607,7 @@
         </select>
 
 
-        <!-- FILTRE TYPE DE LIEU -->
-
-        <select
-            id="filtreTypeLieu"
-            class="filtre"
-        >
+        <select id="filtreTypeLieu" class="filtre">
 
             <option value="">
                 Tous les types
@@ -438,12 +616,7 @@
         </select>
 
 
-        <!-- FILTRE EXPERIENCE -->
-
-        <select
-            id="filtreExperience"
-            class="filtre"
-        >
+        <select id="filtreExperience" class="filtre">
 
             <option value="">
                 Toutes les expériences
@@ -452,11 +625,41 @@
         </select>
 
 
-        <!-- COMPTEUR -->
-
         <span id="compteur">
             Chargement...
         </span>
+
+
+        <div id="zone-auth">
+
+            <span id="statut-auth">
+                Non connecté
+            </span>
+
+            <button
+                id="boutonConnexion"
+                class="bouton"
+            >
+                🔐 Connexion
+            </button>
+
+            <button
+                id="boutonDeconnexion"
+                class="bouton"
+                style="display:none"
+            >
+                Déconnexion
+            </button>
+
+            <button
+                id="boutonAjouter"
+                class="bouton bouton-principal"
+                style="display:none"
+            >
+                ＋ Ajouter
+            </button>
+
+        </div>
 
     </div>
 
@@ -473,10 +676,324 @@
 </main>
 
 
+<!-- ========================================================
+     MODALE FORMULAIRE
+     ======================================================== -->
+
+<div id="fond-modal">
+
+    <div id="modal">
+
+        <h2 id="titre-modal">
+            Ajouter un lieu
+        </h2>
+
+
+        <form id="formulaire-lieu">
+
+            <input
+                type="hidden"
+                id="champ-lieu-id"
+            >
+
+
+            <div class="form-grid">
+
+
+                <!-- NOM -->
+
+                <div class="form-groupe large">
+
+                    <label for="champ-nom">
+                        Nom du lieu *
+                    </label>
+
+                    <input
+                        id="champ-nom"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- VILLE -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-ville">
+                        Ville
+                    </label>
+
+                    <input id="champ-ville">
+
+                </div>
+
+
+                <!-- PAYS -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-pays">
+                        Pays
+                    </label>
+
+                    <input id="champ-pays">
+
+                </div>
+
+
+                <!-- LATITUDE -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-latitude">
+                        Latitude
+                    </label>
+
+                    <input
+                        id="champ-latitude"
+                        type="number"
+                        step="any"
+                    >
+
+                </div>
+
+
+                <!-- LONGITUDE -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-longitude">
+                        Longitude
+                    </label>
+
+                    <input
+                        id="champ-longitude"
+                        type="number"
+                        step="any"
+                    >
+
+                </div>
+
+
+                <!-- TYPE DE LIEU -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-type-lieu">
+                        Type de lieu
+                    </label>
+
+                    <input id="champ-type-lieu">
+
+                </div>
+
+
+                <!-- VOYAGE -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-voyage">
+                        Voyage
+                    </label>
+
+                    <select id="champ-voyage">
+
+                        <option value="">
+                            Aucun voyage
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- DATE DEBUT -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-debut">
+                        Date de début
+                    </label>
+
+                    <input
+                        id="champ-date-debut"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <!-- DATE FIN -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-fin">
+                        Date de fin
+                    </label>
+
+                    <input
+                        id="champ-date-fin"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <!-- DATE TEXTE -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-texte">
+                        Date en texte
+                    </label>
+
+                    <input
+                        id="champ-date-texte"
+                        placeholder="Ex. Été 2024"
+                    >
+
+                </div>
+
+
+                <!-- CONTEXTE -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-contexte">
+                        Contexte
+                    </label>
+
+                    <select id="champ-contexte">
+
+                        <option value="">
+                            Aucun contexte
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- EXPERIENCE -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-experience">
+                        Expérience
+                    </label>
+
+                    <input id="champ-experience">
+
+                </div>
+
+
+                <!-- NOTE -->
+
+                <div class="form-groupe">
+
+                    <label for="champ-note">
+                        Note /5
+                    </label>
+
+                    <input
+                        id="champ-note"
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="1"
+                    >
+
+                </div>
+
+
+                <!-- ADRESSE -->
+
+                <div class="form-groupe large">
+
+                    <label for="champ-adresse">
+                        Adresse
+                    </label>
+
+                    <input id="champ-adresse">
+
+                </div>
+
+
+                <!-- DESCRIPTION -->
+
+                <div class="form-groupe large">
+
+                    <label for="champ-description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="champ-description"
+                    ></textarea>
+
+                </div>
+
+
+                <!-- NOTES -->
+
+                <div class="form-groupe large">
+
+                    <label for="champ-notes">
+                        Notes personnelles
+                    </label>
+
+                    <textarea
+                        id="champ-notes"
+                    ></textarea>
+
+                </div>
+
+
+            </div>
+
+
+            <div id="message-formulaire"></div>
+
+
+            <div id="actions-formulaire">
+
+                <button
+                    type="button"
+                    id="boutonAnnuler"
+                    class="bouton"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    id="boutonEnregistrer"
+                    class="bouton bouton-principal"
+                >
+                    Enregistrer
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
 <!-- MAPLIBRE -->
 
 <script
     src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js">
+</script>
+
+
+<!-- SUPABASE JS -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 </script>
 
 
@@ -490,49 +1007,75 @@
 const SUPABASE_URL =
     "https://xiddtmzehxwfncnyuvid.supabase.co";
 
-
 const SUPABASE_KEY =
     "sb_publishable_5Sgu_vod3bSaf1ecQeaD8A_BqZ_8HYj";
-
 
 const MAPTILER_KEY =
     "knGFRadbYDcoOEytbBIZ";
 
 
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
 // ==========================================================
-// ELEMENTS HTML
+// ELEMENTS
 // ==========================================================
 
 const compteur =
     document.getElementById("compteur");
 
-
 const message =
     document.getElementById("message");
-
 
 const filtreVoyage =
     document.getElementById("filtreVoyage");
 
-
 const filtreContexte =
     document.getElementById("filtreContexte");
-
 
 const filtreTypeLieu =
     document.getElementById("filtreTypeLieu");
 
-
 const filtreExperience =
     document.getElementById("filtreExperience");
-
 
 const modeCarte =
     document.getElementById("modeCarte");
 
+const boutonConnexion =
+    document.getElementById("boutonConnexion");
+
+const boutonDeconnexion =
+    document.getElementById("boutonDeconnexion");
+
+const boutonAjouter =
+    document.getElementById("boutonAjouter");
+
+const statutAuth =
+    document.getElementById("statut-auth");
+
+const fondModal =
+    document.getElementById("fond-modal");
+
+const titreModal =
+    document.getElementById("titre-modal");
+
+const formulaireLieu =
+    document.getElementById("formulaire-lieu");
+
+const boutonAnnuler =
+    document.getElementById("boutonAnnuler");
+
+const messageFormulaire =
+    document.getElementById("message-formulaire");
+
 
 // ==========================================================
-// DONNEES GLOBALES
+// DONNEES
 // ==========================================================
 
 let tousLesLieux = [];
@@ -545,9 +1088,6 @@ let tousLesTypesContexte = [];
 
 let toutesLesPhotos = [];
 
-
-// Index des données
-
 let voyagesParId = {};
 
 let visitesParLieu = {};
@@ -556,24 +1096,20 @@ let typesContexteParCode = {};
 
 let photosParLieu = {};
 
-
-// Affichage
-
 let marqueurs = [];
 
 let modeAffichage = "marqueurs";
 
+let utilisateurConnecte = null;
+
 
 // ==========================================================
-// AFFICHAGE DES ERREURS
+// ERREURS
 // ==========================================================
 
 function afficherErreur(texte) {
 
     console.error(texte);
-
-    compteur.textContent =
-        "Erreur";
 
     message.textContent =
         "⚠️ " + texte;
@@ -597,7 +1133,6 @@ function echapperHTML(texte) {
         return "";
     }
 
-
     return String(texte)
 
         .replace(/&/g, "&amp;")
@@ -613,26 +1148,21 @@ function echapperHTML(texte) {
 
 
 // ==========================================================
-// FORMAT DATE
+// DATES
 // ==========================================================
 
 function formaterDate(date) {
 
     if (!date) {
-
         return "";
     }
-
 
     const morceaux =
         String(date).split("-");
 
-
     if (morceaux.length !== 3) {
-
         return String(date);
     }
-
 
     return (
         morceaux[2] +
@@ -644,10 +1174,6 @@ function formaterDate(date) {
 }
 
 
-// ==========================================================
-// PERIODE
-// ==========================================================
-
 function afficherPeriode(
     dateDebut,
     dateFin,
@@ -656,31 +1182,22 @@ function afficherPeriode(
 ) {
 
     if (dateTexte) {
-
-        return echapperHTML(
-            dateTexte
-        );
+        return echapperHTML(dateTexte);
     }
 
-
     if (!dateDebut) {
-
         return "";
     }
 
-
     const debut =
         formaterDate(dateDebut);
-
 
     if (
         !dateFin ||
         dateFin === dateDebut
     ) {
-
         return debut;
     }
-
 
     return (
         debut +
@@ -691,31 +1208,23 @@ function afficherPeriode(
 
 
 // ==========================================================
-// URL PHOTO SUPABASE STORAGE
+// PHOTOS
 // ==========================================================
 
-function construireUrlPhoto(
-    fichier
-) {
+function construireUrlPhoto(fichier) {
 
     if (!fichier) {
-
         return "";
     }
 
-
     const cheminEncode =
         String(fichier)
-
             .split("/")
-
             .map(
                 segment =>
                     encodeURIComponent(segment)
             )
-
             .join("/");
-
 
     return (
         SUPABASE_URL +
@@ -730,7 +1239,6 @@ function construireUrlPhoto(
 // ==========================================================
 
 let map;
-
 
 try {
 
@@ -757,7 +1265,6 @@ try {
         "top-right"
     );
 
-
 } catch (erreur) {
 
     afficherErreur(
@@ -768,60 +1275,42 @@ try {
 
 
 // ==========================================================
-// RECUPERATION DE LA VISITE D'UN LIEU
+// VISITE
 // ==========================================================
 
-function obtenirVisite(
-    lieu
-) {
+function obtenirVisite(lieu) {
 
     if (!lieu || !lieu.lieu_id) {
-
         return null;
     }
 
-
     const visites =
-        visitesParLieu[
-            lieu.lieu_id
-        ];
-
+        visitesParLieu[lieu.lieu_id];
 
     if (
         !Array.isArray(visites) ||
         visites.length === 0
     ) {
-
         return null;
     }
-
 
     return visites[0];
 }
 
 
-// ==========================================================
-// RECUPERATION DU CONTEXTE
-// ==========================================================
-
-function obtenirNomContexte(
-    visite
-) {
+function obtenirNomContexte(visite) {
 
     if (
         !visite ||
         !visite.type_contexte
     ) {
-
         return "";
     }
-
 
     const contexte =
         typesContexteParCode[
             visite.type_contexte
         ];
-
 
     if (contexte) {
 
@@ -832,13 +1321,12 @@ function obtenirNomContexte(
         );
     }
 
-
     return visite.type_contexte;
 }
 
 
 // ==========================================================
-// CREATION DE LA FICHE
+// FICHE
 // ==========================================================
 
 function creerFiche(
@@ -853,12 +1341,7 @@ function creerFiche(
     `;
 
 
-    // ======================================================
-    // PHOTO PRINCIPALE
-    // ======================================================
-
     let photoPrincipale = null;
-
 
     if (Array.isArray(photos)) {
 
@@ -880,7 +1363,6 @@ function creerFiche(
                 photoPrincipale.fichier
             );
 
-
         html += `
             <img
                 class="fiche-photo"
@@ -894,10 +1376,6 @@ function creerFiche(
     }
 
 
-    // ======================================================
-    // GALERIE PHOTO
-    // ======================================================
-
     if (
         Array.isArray(photos) &&
         photos.length > 1
@@ -907,39 +1385,27 @@ function creerFiche(
             <div class="fiche-galerie">
         `;
 
-
         photos.forEach(
             photo => {
 
                 if (!photo.fichier) {
-
                     return;
                 }
-
 
                 const urlPhoto =
                     construireUrlPhoto(
                         photo.fichier
                     );
 
-
                 html += `
                     <img
                         class="fiche-miniature"
-
-                        src="${echapperHTML(
-                            urlPhoto
-                        )}"
-
-                        data-photo-url="${echapperHTML(
-                            urlPhoto
-                        )}"
-
+                        src="${echapperHTML(urlPhoto)}"
+                        data-photo-url="${echapperHTML(urlPhoto)}"
                         data-photo-titre="${echapperHTML(
                             photo.titre ||
                             lieu.nom
                         )}"
-
                         alt="${echapperHTML(
                             photo.titre ||
                             lieu.nom
@@ -949,16 +1415,11 @@ function creerFiche(
             }
         );
 
-
         html += `
             </div>
         `;
     }
 
-
-    // ======================================================
-    // TITRE
-    // ======================================================
 
     html += `
         <div class="fiche-titre">
@@ -967,14 +1428,9 @@ function creerFiche(
     `;
 
 
-    // ======================================================
-    // LOCALISATION
-    // ======================================================
-
     const localisation = [
 
         lieu.ville,
-
         lieu.pays
 
     ]
@@ -993,67 +1449,43 @@ function creerFiche(
     }
 
 
-    // ======================================================
-    // INFORMATIONS PRINCIPALES
-    // ======================================================
-
     html += `
         <div class="fiche-infos">
     `;
 
 
-    // ------------------------------------------------------
-    // VOYAGE
-    // ------------------------------------------------------
-
     if (voyage) {
 
         html += `
             <div class="fiche-rubrique">
-                <span class="icone">✈️</span>
-                <strong>Voyage :</strong>
+                ✈️ <strong>Voyage :</strong>
                 ${echapperHTML(voyage.nom)}
             </div>
         `;
     }
 
 
-    // ------------------------------------------------------
-    // DATE
-    // ------------------------------------------------------
-
-    // On privilégie la date de la visite.
-    // Si elle n'existe pas, on utilise celle du lieu.
-
-    let dateDebut =
+    const dateDebut =
         visite?.date_debut ||
         lieu.date_debut;
 
-
-    let dateFin =
+    const dateFin =
         visite?.date_fin ||
         lieu.date_fin;
 
-
-    let datePrecision =
+    const datePrecision =
         visite?.date_precision ||
         lieu.date_precision;
 
-
-    let dateTexte =
+    const dateTexte =
         visite?.date_texte ||
         lieu.date_texte;
 
-
     const dateLieu =
         afficherPeriode(
-
             dateDebut,
-
             dateFin,
-
             datePrecision,
-
             dateTexte
         );
 
@@ -1062,49 +1494,33 @@ function creerFiche(
 
         html += `
             <div class="fiche-rubrique">
-                <span class="icone">📅</span>
-                <strong>Date :</strong>
+                📅 <strong>Date :</strong>
                 ${dateLieu}
             </div>
         `;
     }
 
 
-    // ------------------------------------------------------
-    // CONTEXTE
-    // ------------------------------------------------------
-
     const nomContexte =
-        obtenirNomContexte(
-            visite
-        );
+        obtenirNomContexte(visite);
 
 
     if (nomContexte) {
 
         html += `
             <div class="fiche-rubrique">
-                <span class="icone">🧭</span>
-                <strong>Contexte :</strong>
+                🧭 <strong>Contexte :</strong>
                 ${echapperHTML(nomContexte)}
             </div>
         `;
     }
 
 
-    // ------------------------------------------------------
-    // EXPERIENCE
-    // ------------------------------------------------------
-
-    if (
-        visite &&
-        visite.type_experience
-    ) {
+    if (visite?.type_experience) {
 
         html += `
             <div class="fiche-rubrique">
-                <span class="icone">✨</span>
-                <strong>Expérience :</strong>
+                ✨ <strong>Expérience :</strong>
                 ${echapperHTML(
                     visite.type_experience
                 )}
@@ -1112,10 +1528,6 @@ function creerFiche(
         `;
     }
 
-
-    // ------------------------------------------------------
-    // NOTE
-    // ------------------------------------------------------
 
     const note =
         visite?.note ??
@@ -1129,24 +1541,18 @@ function creerFiche(
 
         html += `
             <div class="fiche-rubrique">
-                <span class="icone">⭐</span>
-                <strong>Note :</strong>
+                ⭐ <strong>Note :</strong>
                 ${echapperHTML(note)}/5
             </div>
         `;
     }
 
 
-    // ------------------------------------------------------
-    // TYPE DE LIEU
-    // ------------------------------------------------------
-
     if (lieu.type_lieu) {
 
         html += `
             <div class="fiche-rubrique">
-                <span class="icone">📍</span>
-                <strong>Type :</strong>
+                📍 <strong>Type :</strong>
                 ${echapperHTML(
                     lieu.type_lieu
                 )}
@@ -1155,16 +1561,11 @@ function creerFiche(
     }
 
 
-    // ------------------------------------------------------
-    // ADRESSE
-    // ------------------------------------------------------
-
     if (lieu.adresse) {
 
         html += `
             <div class="fiche-rubrique">
-                <span class="icone">🏠</span>
-                <strong>Adresse :</strong><br>
+                🏠 <strong>Adresse :</strong><br>
                 ${echapperHTML(
                     lieu.adresse
                 )}
@@ -1177,10 +1578,6 @@ function creerFiche(
         </div>
     `;
 
-
-    // ======================================================
-    // DESCRIPTION
-    // ======================================================
 
     const description =
         visite?.description ||
@@ -1207,10 +1604,6 @@ function creerFiche(
     }
 
 
-    // ======================================================
-    // NOTES PERSONNELLES
-    // ======================================================
-
     const notes =
         visite?.notes ||
         lieu.notes;
@@ -1226,9 +1619,7 @@ function creerFiche(
                 </div>
 
                 <div>
-                    ${echapperHTML(
-                        notes
-                    )}
+                    ${echapperHTML(notes)}
                 </div>
 
             </div>
@@ -1237,28 +1628,51 @@ function creerFiche(
 
 
     // ======================================================
-    // FIN
+    // BOUTONS ADMIN
     // ======================================================
+
+    if (utilisateurConnecte) {
+
+        html += `
+            <div class="actions-lieu">
+
+                <button
+                    class="bouton bouton-modifier"
+                    data-lieu-id="${echapperHTML(
+                        lieu.lieu_id
+                    )}"
+                >
+                    ✏️ Modifier
+                </button>
+
+                <button
+                    class="bouton bouton-danger bouton-supprimer"
+                    data-lieu-id="${echapperHTML(
+                        lieu.lieu_id
+                    )}"
+                >
+                    🗑️ Supprimer
+                </button>
+
+            </div>
+        `;
+    }
+
 
     html += `
         </div>
     `;
-
 
     return html;
 }
 
 
 // ==========================================================
-// REMPLISSAGE DES FILTRES
+// FILTRES
 // ==========================================================
 
 function remplirFiltres() {
 
-
-    // ======================================================
-    // VOYAGES
-    // ======================================================
 
     filtreVoyage.innerHTML = `
         <option value="">
@@ -1267,51 +1681,42 @@ function remplirFiltres() {
     `;
 
 
-    const voyagesTries =
-        [...tousLesVoyages].sort(
+    [...tousLesVoyages]
+
+        .sort(
             (a, b) =>
                 String(a.nom || "")
                     .localeCompare(
                         String(b.nom || ""),
                         "fr"
                     )
+        )
+
+        .forEach(
+            voyage => {
+
+                if (!voyage.voyage_id) {
+                    return;
+                }
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    voyage.voyage_id;
+
+                option.textContent =
+                    voyage.nom ||
+                    voyage.voyage_id;
+
+                filtreVoyage.appendChild(
+                    option
+                );
+            }
         );
 
-
-    voyagesTries.forEach(
-        voyage => {
-
-            if (!voyage.voyage_id) {
-
-                return;
-            }
-
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                voyage.voyage_id;
-
-
-            option.textContent =
-                voyage.nom ||
-                voyage.voyage_id;
-
-
-            filtreVoyage.appendChild(
-                option
-            );
-        }
-    );
-
-
-    // ======================================================
-    // CONTEXTES
-    // ======================================================
 
     filtreContexte.innerHTML = `
         <option value="">
@@ -1322,76 +1727,57 @@ function remplirFiltres() {
 
     const contextesUtilises =
         new Set(
-
             toutesLesVisites
-
                 .map(
                     visite =>
                         visite.type_contexte
                 )
-
                 .filter(Boolean)
-
         );
 
 
-    const contextesTries =
-        [...tousLesTypesContexte]
+    [...tousLesTypesContexte]
 
-            .filter(
-                contexte =>
-                    contextesUtilises.has(
-                        contexte.code
-                    )
-            )
+        .filter(
+            contexte =>
+                contextesUtilises.has(
+                    contexte.code
+                )
+        )
 
-            .sort(
-                (a, b) =>
+        .sort(
+            (a, b) =>
+                String(
+                    a.nom || a.code || ""
+                ).localeCompare(
                     String(
-                        a.nom || a.code || ""
-                    ).localeCompare(
-                        String(
-                            b.nom || b.code || ""
-                        ),
-                        "fr"
-                    )
-            );
+                        b.nom || b.code || ""
+                    ),
+                    "fr"
+                )
+        )
 
+        .forEach(
+            contexte => {
 
-    contextesTries.forEach(
-        contexte => {
+                const option =
+                    document.createElement(
+                        "option"
+                    );
 
-            if (!contexte.code) {
+                option.value =
+                    contexte.code;
 
-                return;
-            }
+                option.textContent =
+                    contexte.nom ||
+                    contexte.code;
 
-
-            const option =
-                document.createElement(
-                    "option"
+                filtreContexte.appendChild(
+                    option
                 );
+            }
+        );
 
-
-            option.value =
-                contexte.code;
-
-
-            option.textContent =
-                contexte.nom ||
-                contexte.code;
-
-
-            filtreContexte.appendChild(
-                option
-            );
-        }
-    );
-
-
-    // ======================================================
-    // TYPES DE LIEU
-    // ======================================================
 
     filtreTypeLieu.innerHTML = `
         <option value="">
@@ -1400,21 +1786,16 @@ function remplirFiltres() {
     `;
 
 
-    const typesLieu =
-        [
-            ...new Set(
-
-                tousLesLieux
-
-                    .map(
-                        lieu =>
-                            lieu.type_lieu
-                    )
-
-                    .filter(Boolean)
-
-            )
-        ]
+    [
+        ...new Set(
+            tousLesLieux
+                .map(
+                    lieu =>
+                        lieu.type_lieu
+                )
+                .filter(Boolean)
+        )
+    ]
 
         .sort(
             (a, b) =>
@@ -1422,36 +1803,28 @@ function remplirFiltres() {
                     String(b),
                     "fr"
                 )
+        )
+
+        .forEach(
+            type => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    type;
+
+                option.textContent =
+                    type;
+
+                filtreTypeLieu.appendChild(
+                    option
+                );
+            }
         );
 
-
-    typesLieu.forEach(
-        type => {
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                type;
-
-
-            option.textContent =
-                type;
-
-
-            filtreTypeLieu.appendChild(
-                option
-            );
-        }
-    );
-
-
-    // ======================================================
-    // EXPERIENCES
-    // ======================================================
 
     filtreExperience.innerHTML = `
         <option value="">
@@ -1460,21 +1833,16 @@ function remplirFiltres() {
     `;
 
 
-    const experiences =
-        [
-            ...new Set(
-
-                toutesLesVisites
-
-                    .map(
-                        visite =>
-                            visite.type_experience
-                    )
-
-                    .filter(Boolean)
-
-            )
-        ]
+    [
+        ...new Set(
+            toutesLesVisites
+                .map(
+                    visite =>
+                        visite.type_experience
+                )
+                .filter(Boolean)
+        )
+    ]
 
         .sort(
             (a, b) =>
@@ -1482,66 +1850,146 @@ function remplirFiltres() {
                     String(b),
                     "fr"
                 )
+        )
+
+        .forEach(
+            experience => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    experience;
+
+                option.textContent =
+                    experience;
+
+                filtreExperience.appendChild(
+                    option
+                );
+            }
         );
 
 
-    experiences.forEach(
-        experience => {
+    // Formulaire voyage
 
-            const option =
-                document.createElement(
-                    "option"
+    const champVoyage =
+        document.getElementById(
+            "champ-voyage"
+        );
+
+    champVoyage.innerHTML = `
+        <option value="">
+            Aucun voyage
+        </option>
+    `;
+
+
+    [...tousLesVoyages]
+
+        .sort(
+            (a, b) =>
+                String(a.nom || "")
+                    .localeCompare(
+                        String(b.nom || ""),
+                        "fr"
+                    )
+        )
+
+        .forEach(
+            voyage => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    voyage.voyage_id;
+
+                option.textContent =
+                    voyage.nom;
+
+                champVoyage.appendChild(
+                    option
                 );
+            }
+        );
 
 
-            option.value =
-                experience;
+    // Formulaire contexte
+
+    const champContexte =
+        document.getElementById(
+            "champ-contexte"
+        );
+
+    champContexte.innerHTML = `
+        <option value="">
+            Aucun contexte
+        </option>
+    `;
 
 
-            option.textContent =
-                experience;
+    [...tousLesTypesContexte]
 
+        .sort(
+            (a, b) =>
+                String(
+                    a.nom || a.code || ""
+                ).localeCompare(
+                    String(
+                        b.nom || b.code || ""
+                    ),
+                    "fr"
+                )
+        )
 
-            filtreExperience.appendChild(
-                option
-            );
-        }
-    );
+        .forEach(
+            contexte => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    contexte.code;
+
+                option.textContent =
+                    contexte.nom ||
+                    contexte.code;
+
+                champContexte.appendChild(
+                    option
+                );
+            }
+        );
 }
 
 
 // ==========================================================
-// SUPPRESSION DES MARQUEURS
+// AFFICHAGE
 // ==========================================================
 
 function supprimerMarqueurs() {
 
     marqueurs.forEach(
-        marqueur => {
-
-            marqueur.remove();
-        }
+        marqueur =>
+            marqueur.remove()
     );
-
 
     marqueurs = [];
 }
 
 
-// ==========================================================
-// SUPPRESSION DE LA HEATMAP
-// ==========================================================
-
 function supprimerHeatmap() {
 
-    if (
-        !map ||
-        !map.isStyleLoaded()
-    ) {
-
+    if (!map || !map.isStyleLoaded()) {
         return;
     }
-
 
     if (
         map.getLayer(
@@ -1553,7 +2001,6 @@ function supprimerHeatmap() {
             "heatmap-lieux"
         );
     }
-
 
     if (
         map.getSource(
@@ -1568,89 +2015,50 @@ function supprimerHeatmap() {
 }
 
 
-// ==========================================================
-// AFFICHAGE DES LIEUX FILTRES
-// ==========================================================
-
 function afficherLieuxFiltres() {
-
-
-    // ------------------------------------------------------
-    // SECURITE
-    // ------------------------------------------------------
 
     if (
         !map ||
         !map.isStyleLoaded()
     ) {
-
         return;
     }
 
-
-    // ------------------------------------------------------
-    // NETTOYAGE
-    // ------------------------------------------------------
 
     supprimerMarqueurs();
 
     supprimerHeatmap();
 
 
-    // ------------------------------------------------------
-    // VALEURS DES FILTRES
-    // ------------------------------------------------------
-
     const voyageSelectionne =
         filtreVoyage.value;
-
 
     const contexteSelectionne =
         filtreContexte.value;
 
-
     const typeLieuSelectionne =
         filtreTypeLieu.value;
-
 
     const experienceSelectionnee =
         filtreExperience.value;
 
 
-    // ------------------------------------------------------
-    // FILTRAGE
-    // ------------------------------------------------------
-
     const lieuxFiltres =
         tousLesLieux.filter(
             lieu => {
-
-
-                // ------------------------------------------
-                // VOYAGE
-                // ------------------------------------------
 
                 if (
                     voyageSelectionne &&
                     String(lieu.voyage_id) !==
                         String(voyageSelectionne)
                 ) {
-
                     return false;
                 }
 
 
-                // ------------------------------------------
-                // VISITE
-                // ------------------------------------------
-
                 const visite =
                     obtenirVisite(lieu);
 
-
-                // ------------------------------------------
-                // CONTEXTE
-                // ------------------------------------------
 
                 if (
                     contexteSelectionne &&
@@ -1660,28 +2068,18 @@ function afficherLieuxFiltres() {
                             contexteSelectionne
                     )
                 ) {
-
                     return false;
                 }
 
-
-                // ------------------------------------------
-                // TYPE DE LIEU
-                // ------------------------------------------
 
                 if (
                     typeLieuSelectionne &&
                     lieu.type_lieu !==
                         typeLieuSelectionne
                 ) {
-
                     return false;
                 }
 
-
-                // ------------------------------------------
-                // EXPERIENCE
-                // ------------------------------------------
 
                 if (
                     experienceSelectionnee &&
@@ -1691,14 +2089,9 @@ function afficherLieuxFiltres() {
                             experienceSelectionnee
                     )
                 ) {
-
                     return false;
                 }
 
-
-                // ------------------------------------------
-                // GEOLOCALISATION
-                // ------------------------------------------
 
                 return (
                     lieu.latitude !== null &&
@@ -1709,10 +2102,6 @@ function afficherLieuxFiltres() {
         );
 
 
-    // ======================================================
-    // COMPTEUR
-    // ======================================================
-
     compteur.textContent =
         lieuxFiltres.length +
         (
@@ -1722,19 +2111,10 @@ function afficherLieuxFiltres() {
         );
 
 
-    // ======================================================
-    // AUCUN RESULTAT
-    // ======================================================
-
     if (lieuxFiltres.length === 0) {
-
         return;
     }
 
-
-    // ======================================================
-    // CADRAGE
-    // ======================================================
 
     const bounds =
         new maplibregl.LngLatBounds();
@@ -1758,10 +2138,6 @@ function afficherLieuxFiltres() {
         }
     );
 
-
-    // ======================================================
-    // MODE HEATMAP
-    // ======================================================
 
     if (
         modeAffichage === "heatmap"
@@ -1834,90 +2210,50 @@ function afficherLieuxFiltres() {
                 "heatmap-intensity": [
 
                     "interpolate",
-
                     ["linear"],
-
                     ["zoom"],
 
-                    2,
-                    0.7,
-
-                    4,
-                    0.9,
-
-                    6,
-                    1.15,
-
-                    8,
-                    1.4,
-
-                    10,
-                    1.7,
-
-                    12,
-                    2.0
+                    2, 0.7,
+                    4, 0.9,
+                    6, 1.15,
+                    8, 1.4,
+                    10, 1.7,
+                    12, 2.0
 
                 ],
-
 
                 "heatmap-radius": [
 
                     "interpolate",
-
                     ["linear"],
-
                     ["zoom"],
 
-                    2,
-                    14,
-
-                    4,
-                    20,
-
-                    6,
-                    27,
-
-                    8,
-                    34,
-
-                    10,
-                    40,
-
-                    12,
-                    46
+                    2, 14,
+                    4, 20,
+                    6, 27,
+                    8, 34,
+                    10, 40,
+                    12, 46
 
                 ],
-
 
                 "heatmap-opacity": [
 
                     "interpolate",
-
                     ["linear"],
-
                     ["zoom"],
 
-                    2,
-                    0.70,
-
-                    5,
-                    0.75,
-
-                    8,
-                    0.80,
-
-                    12,
-                    0.84
+                    2, 0.70,
+                    5, 0.75,
+                    8, 0.80,
+                    12, 0.84
 
                 ],
-
 
                 "heatmap-color": [
 
                     "interpolate",
-
                     ["linear"],
-
                     ["heatmap-density"],
 
                     0,
@@ -1952,43 +2288,28 @@ function afficherLieuxFiltres() {
 
 
         map.fitBounds(
-
             bounds,
-
             {
-
                 padding: 70,
-
                 maxZoom: 6,
-
                 duration: 700
-
             }
-
         );
-
 
         return;
     }
 
 
-    // ======================================================
-    // MODE MARQUEURS
-    // ======================================================
-
     lieuxFiltres.forEach(
         lieu => {
-
 
             const voyage =
                 voyagesParId[
                     lieu.voyage_id
                 ];
 
-
             const visite =
                 obtenirVisite(lieu);
-
 
             const photosLieu =
                 photosParLieu[
@@ -2012,11 +2333,8 @@ function afficherLieuxFiltres() {
                 creerFiche(
 
                     lieu,
-
                     voyage,
-
                     visite,
-
                     photosLieu
 
                 )
@@ -2052,10 +2370,6 @@ function afficherLieuxFiltres() {
     );
 
 
-    // ======================================================
-    // CADRAGE
-    // ======================================================
-
     map.fitBounds(
 
         bounds,
@@ -2075,7 +2389,7 @@ function afficherLieuxFiltres() {
 
 
 // ==========================================================
-// FONCTION GENERIQUE SUPABASE
+// LECTURE SUPABASE
 // ==========================================================
 
 async function recupererTable(
@@ -2130,30 +2444,12 @@ async function recupererTable(
 
     if (!response.ok) {
 
-        let details = "";
-
-        try {
-
-            details =
-                await response.text();
-
-        } catch (_) {
-
-            details = "";
-        }
-
-
         throw new Error(
-
             table +
             " : HTTP " +
             response.status +
-            (
-                details
-                    ? " — " + details
-                    : ""
-            )
-
+            " — " +
+            await response.text()
         );
     }
 
@@ -2163,7 +2459,7 @@ async function recupererTable(
 
 
 // ==========================================================
-// CHARGEMENT DES DONNEES
+// CHARGEMENT
 // ==========================================================
 
 async function chargerDonnees() {
@@ -2171,17 +2467,7 @@ async function chargerDonnees() {
     compteur.textContent =
         "Connexion à Supabase...";
 
-
-    message.style.display =
-        "none";
-
-
     try {
-
-
-        // ==================================================
-        // CHARGEMENT DES 5 TABLES
-        // ==================================================
 
         const [
 
@@ -2226,66 +2512,23 @@ async function chargerDonnees() {
         ]);
 
 
-        // ==================================================
-        // STOCKAGE
-        // ==================================================
-
         tousLesLieux =
             lieux;
-
 
         tousLesVoyages =
             voyages;
 
-
         toutesLesVisites =
             visites;
 
-
         tousLesTypesContexte =
             typesContexte;
-
 
         toutesLesPhotos =
             photos;
 
 
-        console.log(
-            "Lieux chargés :",
-            tousLesLieux.length
-        );
-
-
-        console.log(
-            "Voyages chargés :",
-            tousLesVoyages.length
-        );
-
-
-        console.log(
-            "Visites chargées :",
-            toutesLesVisites.length
-        );
-
-
-        console.log(
-            "Contextes chargés :",
-            tousLesTypesContexte.length
-        );
-
-
-        console.log(
-            "Photos chargées :",
-            toutesLesPhotos.length
-        );
-
-
-        // ==================================================
-        // INDEX VOYAGES
-        // ==================================================
-
         voyagesParId = {};
-
 
         tousLesVoyages.forEach(
             voyage => {
@@ -2302,21 +2545,14 @@ async function chargerDonnees() {
         );
 
 
-        // ==================================================
-        // INDEX VISITES PAR LIEU
-        // ==================================================
-
         visitesParLieu = {};
-
 
         toutesLesVisites.forEach(
             visite => {
 
                 if (!visite.lieu_id) {
-
                     return;
                 }
-
 
                 if (
                     !visitesParLieu[
@@ -2327,8 +2563,8 @@ async function chargerDonnees() {
                     visitesParLieu[
                         visite.lieu_id
                     ] = [];
-                }
 
+                }
 
                 visitesParLieu[
                     visite.lieu_id
@@ -2338,12 +2574,7 @@ async function chargerDonnees() {
         );
 
 
-        // ==================================================
-        // INDEX CONTEXTES
-        // ==================================================
-
         typesContexteParCode = {};
-
 
         tousLesTypesContexte.forEach(
             contexte => {
@@ -2360,21 +2591,14 @@ async function chargerDonnees() {
         );
 
 
-        // ==================================================
-        // INDEX PHOTOS
-        // ==================================================
-
         photosParLieu = {};
-
 
         toutesLesPhotos.forEach(
             photo => {
 
                 if (!photo.lieu_id) {
-
                     return;
                 }
-
 
                 if (
                     !photosParLieu[
@@ -2385,8 +2609,8 @@ async function chargerDonnees() {
                     photosParLieu[
                         photo.lieu_id
                     ] = [];
-                }
 
+                }
 
                 photosParLieu[
                     photo.lieu_id
@@ -2396,48 +2620,1048 @@ async function chargerDonnees() {
         );
 
 
-        // ==================================================
-        // FILTRES
-        // ==================================================
-
         remplirFiltres();
 
+        afficherLieuxFiltres();
 
-        // ==================================================
-        // AFFICHAGE INITIAL
-        // ==================================================
 
-        if (map.isStyleLoaded()) {
+    } catch (erreur) {
 
-            afficherLieuxFiltres();
+        console.error(erreur);
 
-        } else {
+        afficherErreur(
+            "Impossible de charger les données : " +
+            erreur.message
+        );
+    }
+}
 
-            map.once(
-                "load",
-                function() {
 
-                    afficherLieuxFiltres();
+// ==========================================================
+// AUTHENTIFICATION
+// ==========================================================
 
-                }
+async function mettreAJourAuthentification() {
+
+    const {
+        data: {
+            session
+        }
+    } =
+        await supabaseClient.auth.getSession();
+
+
+    utilisateurConnecte =
+        session?.user || null;
+
+
+    if (utilisateurConnecte) {
+
+        statutAuth.textContent =
+            "Connecté";
+
+        boutonConnexion.style.display =
+            "none";
+
+        boutonDeconnexion.style.display =
+            "inline-block";
+
+        boutonAjouter.style.display =
+            "inline-block";
+
+    } else {
+
+        statutAuth.textContent =
+            "Non connecté";
+
+        boutonConnexion.style.display =
+            "inline-block";
+
+        boutonDeconnexion.style.display =
+            "none";
+
+        boutonAjouter.style.display =
+            "none";
+    }
+
+
+    afficherLieuxFiltres();
+}
+
+
+// ==========================================================
+// CONNEXION
+// ==========================================================
+
+boutonConnexion.addEventListener(
+    "click",
+    async function() {
+
+        const email =
+            prompt(
+                "Adresse e-mail :"
             );
 
+        if (!email) {
+            return;
         }
+
+
+        const motDePasse =
+            prompt(
+                "Mot de passe :"
+            );
+
+        if (!motDePasse) {
+            return;
+        }
+
+
+        message.style.display =
+            "none";
+
+
+        const {
+            error
+        } =
+            await supabaseClient.auth.signInWithPassword({
+
+                email:
+                    email,
+
+                password:
+                    motDePasse
+
+            });
+
+
+        if (error) {
+
+            afficherErreur(
+                "Connexion impossible : " +
+                error.message
+            );
+
+            return;
+        }
+
+
+        await mettreAJourAuthentification();
+
+    }
+);
+
+
+// ==========================================================
+// DECONNEXION
+// ==========================================================
+
+boutonDeconnexion.addEventListener(
+    "click",
+    async function() {
+
+        const {
+            error
+        } =
+            await supabaseClient.auth.signOut();
+
+
+        if (error) {
+
+            afficherErreur(
+                "Erreur de déconnexion : " +
+                error.message
+            );
+
+            return;
+        }
+
+
+        await mettreAJourAuthentification();
+
+    }
+);
+
+
+// ==========================================================
+// GENERATION ID LIEU
+// ==========================================================
+
+function genererNouvelIdLieu() {
+
+    let maximum = 0;
+
+
+    tousLesLieux.forEach(
+        lieu => {
+
+            const match =
+                String(
+                    lieu.lieu_id || ""
+                ).match(
+                    /^L(\d+)$/
+                );
+
+            if (match) {
+
+                maximum =
+                    Math.max(
+                        maximum,
+                        Number(match[1])
+                    );
+
+            }
+
+        }
+    );
+
+
+    return (
+        "L" +
+        String(
+            maximum + 1
+        ).padStart(4, "0")
+    );
+}
+
+
+// ==========================================================
+// GENERATION ID VISITE
+// ==========================================================
+
+function genererNouvelIdVisite() {
+
+    return (
+        "VIS-" +
+        crypto.randomUUID()
+    );
+}
+
+
+// ==========================================================
+// OUVRIR FORMULAIRE AJOUT
+// ==========================================================
+
+function ouvrirFormulaireAjout() {
+
+    formulaireLieu.reset();
+
+    document.getElementById(
+        "champ-lieu-id"
+    ).value = "";
+
+
+    titreModal.textContent =
+        "Ajouter un lieu";
+
+
+    messageFormulaire.textContent =
+        "";
+
+
+    fondModal.style.display =
+        "flex";
+}
+
+
+// ==========================================================
+// OUVRIR FORMULAIRE MODIFICATION
+// ==========================================================
+
+function ouvrirFormulaireModification(
+    lieuId
+) {
+
+    const lieu =
+        tousLesLieux.find(
+            item =>
+                item.lieu_id === lieuId
+        );
+
+
+    if (!lieu) {
+
+        afficherErreur(
+            "Lieu introuvable."
+        );
+
+        return;
+    }
+
+
+    const visite =
+        obtenirVisite(lieu);
+
+
+    titreModal.textContent =
+        "Modifier : " +
+        lieu.nom;
+
+
+    document.getElementById(
+        "champ-lieu-id"
+    ).value =
+        lieu.lieu_id || "";
+
+
+    document.getElementById(
+        "champ-nom"
+    ).value =
+        lieu.nom || "";
+
+
+    document.getElementById(
+        "champ-ville"
+    ).value =
+        lieu.ville || "";
+
+
+    document.getElementById(
+        "champ-pays"
+    ).value =
+        lieu.pays || "";
+
+
+    document.getElementById(
+        "champ-latitude"
+    ).value =
+        lieu.latitude ?? "";
+
+
+    document.getElementById(
+        "champ-longitude"
+    ).value =
+        lieu.longitude ?? "";
+
+
+    document.getElementById(
+        "champ-type-lieu"
+    ).value =
+        lieu.type_lieu || "";
+
+
+    document.getElementById(
+        "champ-voyage"
+    ).value =
+        visite?.voyage_id ||
+        lieu.voyage_id ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-debut"
+    ).value =
+        visite?.date_debut ||
+        lieu.date_debut ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-fin"
+    ).value =
+        visite?.date_fin ||
+        lieu.date_fin ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-texte"
+    ).value =
+        visite?.date_texte ||
+        lieu.date_texte ||
+        "";
+
+
+    document.getElementById(
+        "champ-contexte"
+    ).value =
+        visite?.type_contexte ||
+        "";
+
+
+    document.getElementById(
+        "champ-experience"
+    ).value =
+        visite?.type_experience ||
+        lieu.type_experience ||
+        "";
+
+
+    document.getElementById(
+        "champ-note"
+    ).value =
+        visite?.note ??
+        lieu.note ??
+        "";
+
+
+    document.getElementById(
+        "champ-adresse"
+    ).value =
+        lieu.adresse || "";
+
+
+    document.getElementById(
+        "champ-description"
+    ).value =
+        visite?.description ||
+        lieu.description ||
+        "";
+
+
+    document.getElementById(
+        "champ-notes"
+    ).value =
+        visite?.notes ||
+        lieu.notes ||
+        "";
+
+
+    messageFormulaire.textContent =
+        "";
+
+
+    fondModal.style.display =
+        "flex";
+}
+
+
+// ==========================================================
+// FERMER FORMULAIRE
+// ==========================================================
+
+function fermerFormulaire() {
+
+    fondModal.style.display =
+        "none";
+}
+
+
+boutonAjouter.addEventListener(
+    "click",
+    ouvrirFormulaireAjout
+);
+
+
+boutonAnnuler.addEventListener(
+    "click",
+    fermerFormulaire
+);
+
+
+fondModal.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            fondModal
+        ) {
+
+            fermerFormulaire();
+
+        }
+
+    }
+);
+
+
+// ==========================================================
+// ENREGISTREMENT
+// ==========================================================
+
+formulaireLieu.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        if (!utilisateurConnecte) {
+
+            messageFormulaire.textContent =
+                "Vous devez être connecté.";
+
+            return;
+        }
+
+
+        const lieuId =
+            document.getElementById(
+                "champ-lieu-id"
+            ).value;
+
+
+        const modification =
+            Boolean(lieuId);
+
+
+        const nom =
+            document.getElementById(
+                "champ-nom"
+            ).value.trim();
+
+
+        if (!nom) {
+
+            messageFormulaire.textContent =
+                "Le nom du lieu est obligatoire.";
+
+            return;
+        }
+
+
+        const voyageId =
+            document.getElementById(
+                "champ-voyage"
+            ).value || null;
+
+
+        const dateDebut =
+            document.getElementById(
+                "champ-date-debut"
+            ).value || null;
+
+
+        const dateFin =
+            document.getElementById(
+                "champ-date-fin"
+            ).value || null;
+
+
+        const dateTexte =
+            document.getElementById(
+                "champ-date-texte"
+            ).value.trim() || null;
+
+
+        const contexte =
+            document.getElementById(
+                "champ-contexte"
+            ).value || null;
+
+
+        const experience =
+            document.getElementById(
+                "champ-experience"
+            ).value.trim() || null;
+
+
+        const noteValeur =
+            document.getElementById(
+                "champ-note"
+            ).value;
+
+
+        const note =
+            noteValeur === ""
+                ? null
+                : Number(noteValeur);
+
+
+        const description =
+            document.getElementById(
+                "champ-description"
+            ).value.trim() || null;
+
+
+        const notes =
+            document.getElementById(
+                "champ-notes"
+            ).value.trim() || null;
+
+
+        const latitudeTexte =
+            document.getElementById(
+                "champ-latitude"
+            ).value;
+
+
+        const longitudeTexte =
+            document.getElementById(
+                "champ-longitude"
+            ).value;
+
+
+        const latitude =
+            latitudeTexte === ""
+                ? null
+                : Number(latitudeTexte);
+
+
+        const longitude =
+            longitudeTexte === ""
+                ? null
+                : Number(longitudeTexte);
+
+
+        const lieuData = {
+
+            nom:
+
+                nom,
+
+            ville:
+
+                document.getElementById(
+                    "champ-ville"
+                ).value.trim() || null,
+
+            pays:
+
+                document.getElementById(
+                    "champ-pays"
+                ).value.trim() || null,
+
+            latitude:
+
+                latitude,
+
+            longitude:
+
+                longitude,
+
+            type_lieu:
+
+                document.getElementById(
+                    "champ-type-lieu"
+                ).value.trim() || null,
+
+            voyage_id:
+
+                voyageId,
+
+            date_debut:
+
+                dateDebut,
+
+            date_fin:
+
+                dateFin,
+
+            date_texte:
+
+                dateTexte,
+
+            adresse:
+
+                document.getElementById(
+                    "champ-adresse"
+                ).value.trim() || null
+
+        };
+
+
+        messageFormulaire.textContent =
+            "Enregistrement...";
+
+
+        try {
+
+
+            // ==================================================
+            // AJOUT
+            // ==================================================
+
+            if (!modification) {
+
+                const nouvelId =
+                    genererNouvelIdLieu();
+
+
+                lieuData.lieu_id =
+                    nouvelId;
+
+
+                const {
+                    error:
+                    erreurLieu
+                } =
+                    await supabaseClient
+
+                        .from("lieux")
+
+                        .insert(
+                            lieuData
+                        );
+
+
+                if (erreurLieu) {
+                    throw erreurLieu;
+                }
+
+
+                // ----------------------------------------------
+                // CREATION DE LA VISITE
+                // ----------------------------------------------
+
+                if (contexte) {
+
+                    const {
+                        error:
+                        erreurVisite
+                    } =
+                        await supabaseClient
+
+                            .from("visites")
+
+                            .insert({
+
+                                visite_id:
+                                    genererNouvelIdVisite(),
+
+                                lieu_id:
+                                    nouvelId,
+
+                                voyage_id:
+                                    voyageId,
+
+                                type_contexte:
+                                    contexte,
+
+                                date_debut:
+                                    dateDebut,
+
+                                date_fin:
+                                    dateFin,
+
+                                date_texte:
+                                    dateTexte,
+
+                                type_experience:
+                                    experience,
+
+                                description:
+                                    description,
+
+                                note:
+                                    note,
+
+                                notes:
+                                    notes
+
+                            });
+
+
+                    if (erreurVisite) {
+
+                        // tentative de nettoyage
+                        await supabaseClient
+                            .from("lieux")
+                            .delete()
+                            .eq(
+                                "lieu_id",
+                                nouvelId
+                            );
+
+                        throw erreurVisite;
+                    }
+
+                }
+
+
+            } else {
+
+
+                // ==================================================
+                // MODIFICATION DU LIEU
+                // ==================================================
+
+                const {
+                    error:
+                    erreurLieu
+                } =
+                    await supabaseClient
+
+                        .from("lieux")
+
+                        .update(
+                            lieuData
+                        )
+
+                        .eq(
+                            "lieu_id",
+                            lieuId
+                        );
+
+
+                if (erreurLieu) {
+                    throw erreurLieu;
+                }
+
+
+                const visite =
+                    obtenirVisite(
+                        tousLesLieux.find(
+                            l =>
+                                l.lieu_id ===
+                                lieuId
+                        )
+                    );
+
+
+                if (visite) {
+
+                    const {
+                        error:
+                        erreurVisite
+                    } =
+                        await supabaseClient
+
+                            .from("visites")
+
+                            .update({
+
+                                voyage_id:
+                                    voyageId,
+
+                                type_contexte:
+                                    contexte,
+
+                                date_debut:
+                                    dateDebut,
+
+                                date_fin:
+                                    dateFin,
+
+                                date_texte:
+                                    dateTexte,
+
+                                type_experience:
+                                    experience,
+
+                                description:
+                                    description,
+
+                                note:
+                                    note,
+
+                                notes:
+                                    notes
+
+                            })
+
+                            .eq(
+                                "visite_id",
+                                visite.visite_id
+                            );
+
+
+                    if (erreurVisite) {
+                        throw erreurVisite;
+                    }
+
+                } else if (contexte) {
+
+
+                    const {
+                        error:
+                        erreurVisite
+                    } =
+                        await supabaseClient
+
+                            .from("visites")
+
+                            .insert({
+
+                                visite_id:
+                                    genererNouvelIdVisite(),
+
+                                lieu_id:
+                                    lieuId,
+
+                                voyage_id:
+                                    voyageId,
+
+                                type_contexte:
+                                    contexte,
+
+                                date_debut:
+                                    dateDebut,
+
+                                date_fin:
+                                    dateFin,
+
+                                date_texte:
+                                    dateTexte,
+
+                                type_experience:
+                                    experience,
+
+                                description:
+                                    description,
+
+                                note:
+                                    note,
+
+                                notes:
+                                    notes
+
+                            });
+
+
+                    if (erreurVisite) {
+                        throw erreurVisite;
+                    }
+
+                }
+
+            }
+
+
+            fermerFormulaire();
+
+            await chargerDonnees();
+
+            message.style.display =
+                "none";
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur enregistrement :",
+                erreur
+            );
+
+
+            messageFormulaire.textContent =
+                "Erreur : " +
+                (
+                    erreur.message ||
+                    String(erreur)
+                );
+        }
+
+    }
+);
+
+
+// ==========================================================
+// SUPPRESSION D'UN LIEU
+// ==========================================================
+
+async function supprimerLieu(lieuId) {
+
+    if (!utilisateurConnecte) {
+
+        afficherErreur(
+            "Vous devez être connecté."
+        );
+
+        return;
+    }
+
+
+    const lieu =
+        tousLesLieux.find(
+            item =>
+                item.lieu_id === lieuId
+        );
+
+
+    if (!lieu) {
+        return;
+    }
+
+
+    const confirmation =
+        confirm(
+            "Supprimer définitivement « " +
+            lieu.nom +
+            " » ?\n\n" +
+            "Le lieu, sa visite et ses photos seront supprimés."
+        );
+
+
+    if (!confirmation) {
+        return;
+    }
+
+
+    try {
+
+        const visites =
+            visitesParLieu[
+                lieuId
+            ] || [];
+
+
+        // ----------------------------------------------
+        // Les visites doivent être supprimées avant le lieu
+        // car la FK est actuellement NO ACTION.
+        // ----------------------------------------------
+
+        for (
+            const visite
+            of visites
+        ) {
+
+            const {
+                error
+            } =
+                await supabaseClient
+
+                    .from("visites")
+
+                    .delete()
+
+                    .eq(
+                        "visite_id",
+                        visite.visite_id
+                    );
+
+
+            if (error) {
+                throw error;
+            }
+
+        }
+
+
+        // ----------------------------------------------
+        // Puis suppression du lieu.
+        // Les photos liées au lieu seront supprimées
+        // automatiquement grâce à ON DELETE CASCADE.
+        // ----------------------------------------------
+
+        const {
+            error
+        } =
+            await supabaseClient
+
+                .from("lieux")
+
+                .delete()
+
+                .eq(
+                    "lieu_id",
+                    lieuId
+                );
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        await chargerDonnees();
 
 
     } catch (erreur) {
 
         console.error(
-            "ERREUR ATLAS :",
+            "Erreur suppression :",
             erreur
         );
 
 
         afficherErreur(
-
-            "Impossible de charger les données : " +
-            erreur.message
-
+            "Impossible de supprimer le lieu : " +
+            (
+                erreur.message ||
+                String(erreur)
+            )
         );
 
     }
@@ -2445,7 +3669,93 @@ async function chargerDonnees() {
 
 
 // ==========================================================
-// EVENEMENTS DES FILTRES
+// CLICS DANS LES POPUPS
+// ==========================================================
+
+document.addEventListener(
+    "click",
+    function(event) {
+
+
+        const boutonModifier =
+            event.target.closest(
+                ".bouton-modifier"
+            );
+
+
+        if (boutonModifier) {
+
+            ouvrirFormulaireModification(
+                boutonModifier.dataset.lieuId
+            );
+
+            return;
+        }
+
+
+        const boutonSupprimer =
+            event.target.closest(
+                ".bouton-supprimer"
+            );
+
+
+        if (boutonSupprimer) {
+
+            supprimerLieu(
+                boutonSupprimer.dataset.lieuId
+            );
+
+            return;
+        }
+
+
+        const miniature =
+            event.target.closest(
+                ".fiche-miniature"
+            );
+
+
+        if (!miniature) {
+            return;
+        }
+
+
+        const popup =
+            miniature.closest(
+                ".maplibregl-popup"
+            );
+
+
+        if (!popup) {
+            return;
+        }
+
+
+        const grandePhoto =
+            popup.querySelector(
+                ".fiche-photo"
+            );
+
+
+        if (!grandePhoto) {
+            return;
+        }
+
+
+        grandePhoto.src =
+            miniature.dataset.photoUrl;
+
+
+        grandePhoto.alt =
+            miniature.dataset.photoTitre ||
+            "";
+
+    }
+);
+
+
+// ==========================================================
+// EVENEMENTS FILTRES
 // ==========================================================
 
 filtreVoyage.addEventListener(
@@ -2453,18 +3763,15 @@ filtreVoyage.addEventListener(
     afficherLieuxFiltres
 );
 
-
 filtreContexte.addEventListener(
     "change",
     afficherLieuxFiltres
 );
 
-
 filtreTypeLieu.addEventListener(
     "change",
     afficherLieuxFiltres
 );
-
 
 filtreExperience.addEventListener(
     "change",
@@ -2486,58 +3793,13 @@ modeCarte.addEventListener(
 
 
 // ==========================================================
-// GALERIE PHOTO
+// AUTH STATE
 // ==========================================================
 
-document.addEventListener(
-    "click",
+supabaseClient.auth.onAuthStateChange(
+    async function() {
 
-    function(event) {
-
-
-        const miniature =
-            event.target.closest(
-                ".fiche-miniature"
-            );
-
-
-        if (!miniature) {
-
-            return;
-        }
-
-
-        const popup =
-            miniature.closest(
-                ".maplibregl-popup"
-            );
-
-
-        if (!popup) {
-
-            return;
-        }
-
-
-        const grandePhoto =
-            popup.querySelector(
-                ".fiche-photo"
-            );
-
-
-        if (!grandePhoto) {
-
-            return;
-        }
-
-
-        grandePhoto.src =
-            miniature.dataset.photoUrl;
-
-
-        grandePhoto.alt =
-            miniature.dataset.photoTitre ||
-            "";
+        await mettreAJourAuthentification();
 
     }
 );
@@ -2547,11 +3809,19 @@ document.addEventListener(
 // LANCEMENT
 // ==========================================================
 
-chargerDonnees();
+async function initialiser() {
+
+    await chargerDonnees();
+
+    await mettreAJourAuthentification();
+
+}
+
+
+initialiser();
 
 
 </script>
-
 
 </body>
 
