@@ -38,32 +38,21 @@ body {
    ========================================================== */
 
 header {
-
     min-height: 60px;
-
     display: flex;
     align-items: center;
     justify-content: space-between;
-
     gap: 15px;
-
     padding: 8px 20px;
-
     box-sizing: border-box;
-
     background: white;
-
     border-bottom: 1px solid #ddd;
-
     z-index: 10;
 }
 
 h1 {
-
     margin: 0;
-
     font-size: 22px;
-
     white-space: nowrap;
 }
 
@@ -73,39 +62,25 @@ h1 {
    ========================================================== */
 
 #filtres {
-
     display: flex;
-
     align-items: center;
-
     gap: 8px;
-
     flex-wrap: wrap;
-
     justify-content: flex-end;
 }
 
 .filtre {
-
     padding: 7px 10px;
-
     border: 1px solid #ccc;
-
     border-radius: 6px;
-
     background: white;
-
     font-size: 13px;
-
     max-width: 190px;
 }
 
 #compteur {
-
     font-size: 13px;
-
     color: #666;
-
     white-space: nowrap;
 }
 
@@ -115,28 +90,18 @@ h1 {
    ========================================================== */
 
 #zone-auth {
-
     display: flex;
-
     align-items: center;
-
     gap: 6px;
-
     white-space: nowrap;
 }
 
 .bouton {
-
     padding: 7px 11px;
-
     border: 1px solid #bbb;
-
     border-radius: 6px;
-
     background: white;
-
     cursor: pointer;
-
     font-size: 13px;
 }
 
@@ -145,11 +110,8 @@ h1 {
 }
 
 .bouton-principal {
-
     background: #222;
-
     color: white;
-
     border-color: #222;
 }
 
@@ -158,23 +120,17 @@ h1 {
 }
 
 .bouton-danger {
-
     color: #b00020;
-
     border-color: #d99;
 }
 
 .bouton:disabled {
-
     opacity: 0.6;
-
     cursor: wait;
 }
 
 #statut-auth {
-
     font-size: 12px;
-
     color: #555;
 }
 
@@ -184,14 +140,11 @@ h1 {
    ========================================================== */
 
 main {
-
     flex: 1;
-
     min-height: 0;
 }
 
 #map {
-
     width: 100%;
     height: 100%;
 }
@@ -202,26 +155,17 @@ main {
    ========================================================== */
 
 #message {
-
     position: fixed;
-
     top: 70px;
     left: 10px;
     right: 10px;
-
     z-index: 2000;
-
     padding: 12px;
-
     background: white;
-
     border-radius: 8px;
-
     box-shadow:
         0 2px 8px rgba(0,0,0,0.2);
-
     display: none;
-
     color: #b00020;
 }
 
@@ -231,64 +175,45 @@ main {
    ========================================================== */
 
 .fiche-lieu {
-
     font-family: Arial, sans-serif;
-
     line-height: 1.4;
-
     width: 100%;
 }
 
 .fiche-titre {
-
     font-size: 19px;
-
     font-weight: bold;
-
     margin-bottom: 4px;
 }
 
 .fiche-localisation {
-
     color: #666;
-
     margin-bottom: 10px;
 }
 
 .fiche-rubrique {
-
     margin-top: 8px;
 }
 
 .fiche-infos {
-
     margin-top: 8px;
 }
 
 .fiche-sous-titre {
-
     font-weight: bold;
-
     margin-bottom: 5px;
 }
 
 .fiche-description {
-
     margin-top: 12px;
-
     padding-top: 10px;
-
     border-top: 1px solid #ddd;
 }
 
 .fiche-notes {
-
     margin-top: 10px;
-
     padding-top: 10px;
-
     border-top: 1px solid #ddd;
-
     color: #555;
 }
 
@@ -298,52 +223,33 @@ main {
    ========================================================== */
 
 .fiche-photo {
-
     display: block;
-
     width: 100%;
-
     height: 220px;
-
     object-fit: cover;
-
     border-radius: 8px;
-
     margin-bottom: 10px;
-
     cursor: pointer;
 }
 
 .fiche-galerie {
-
     display: flex;
-
     gap: 6px;
-
     overflow-x: auto;
-
     margin-bottom: 12px;
-
     padding-bottom: 3px;
 }
 
 .fiche-miniature {
-
     width: 64px;
-
     height: 50px;
-
     object-fit: cover;
-
     border-radius: 6px;
-
     flex-shrink: 0;
-
     cursor: pointer;
 }
 
 .fiche-miniature:hover {
-
     opacity: 0.75;
 }
 
@@ -357,15 +263,10 @@ main {
    ========================================================== */
 
 .actions-lieu {
-
     display: flex;
-
     gap: 6px;
-
     margin-top: 14px;
-
     padding-top: 10px;
-
     border-top: 1px solid #ddd;
 }
 
@@ -375,128 +276,83 @@ main {
    ========================================================== */
 
 #fond-modal {
-
     position: fixed;
-
     inset: 0;
-
     background: rgba(0,0,0,0.45);
-
     z-index: 3000;
-
     display: none;
-
     align-items: center;
-
     justify-content: center;
-
     padding: 20px;
-
     box-sizing: border-box;
 }
 
 #modal {
-
     width: min(700px, 100%);
-
     max-height: 90vh;
-
     overflow-y: auto;
-
     background: white;
-
     border-radius: 10px;
-
     box-shadow:
         0 5px 30px rgba(0,0,0,0.3);
-
     padding: 22px;
-
     box-sizing: border-box;
 }
 
 #modal h2 {
-
     margin-top: 0;
 }
 
 .form-grid {
-
     display: grid;
-
     grid-template-columns: 1fr 1fr;
-
     gap: 12px;
 }
 
 .form-groupe {
-
     display: flex;
-
     flex-direction: column;
-
     gap: 5px;
 }
 
 .form-groupe.large {
-
     grid-column: 1 / -1;
 }
 
 .form-groupe label {
-
     font-size: 13px;
-
     font-weight: bold;
 }
 
 .form-groupe input,
 .form-groupe select,
 .form-groupe textarea {
-
     box-sizing: border-box;
-
     width: 100%;
-
     padding: 8px;
-
     border: 1px solid #ccc;
-
     border-radius: 6px;
-
     font-family: Arial, sans-serif;
-
     font-size: 14px;
 }
 
 .form-groupe textarea {
-
     min-height: 90px;
-
     resize: vertical;
 }
 
 #actions-formulaire {
-
     display: flex;
-
     justify-content: flex-end;
-
     gap: 8px;
-
     margin-top: 18px;
-
     padding-top: 15px;
-
     border-top: 1px solid #ddd;
 }
 
 #message-formulaire {
-
     margin-top: 10px;
-
     color: #b00020;
-
     font-size: 13px;
 }
 
@@ -506,7 +362,6 @@ main {
    ========================================================== */
 
 .maplibregl-marker {
-
     cursor: pointer;
 }
 
@@ -518,51 +373,37 @@ main {
 @media (max-width: 700px) {
 
     header {
-
         min-height: auto;
-
         padding: 10px;
-
         align-items: flex-start;
-
         flex-direction: column;
     }
 
     #filtres {
-
         width: 100%;
-
         justify-content: flex-start;
     }
 
     .filtre {
-
         flex: 1;
-
         min-width: 0;
-
         max-width: none;
     }
 
     #compteur {
-
         width: 100%;
     }
 
     #zone-auth {
-
         width: 100%;
-
         justify-content: flex-end;
     }
 
     .form-grid {
-
         grid-template-columns: 1fr;
     }
 
     .form-groupe.large {
-
         grid-column: auto;
     }
 
@@ -707,8 +548,6 @@ main {
             <div class="form-grid">
 
 
-                <!-- NOM -->
-
                 <div class="form-groupe large">
 
                     <label for="champ-nom">
@@ -723,8 +562,6 @@ main {
                 </div>
 
 
-                <!-- VILLE -->
-
                 <div class="form-groupe">
 
                     <label for="champ-ville">
@@ -736,8 +573,6 @@ main {
                 </div>
 
 
-                <!-- PAYS -->
-
                 <div class="form-groupe">
 
                     <label for="champ-pays">
@@ -748,8 +583,6 @@ main {
 
                 </div>
 
-
-                <!-- LATITUDE -->
 
                 <div class="form-groupe">
 
@@ -766,8 +599,6 @@ main {
                 </div>
 
 
-                <!-- LONGITUDE -->
-
                 <div class="form-groupe">
 
                     <label for="champ-longitude">
@@ -783,8 +614,6 @@ main {
                 </div>
 
 
-                <!-- TYPE DE LIEU -->
-
                 <div class="form-groupe">
 
                     <label for="champ-type-lieu">
@@ -795,8 +624,6 @@ main {
 
                 </div>
 
-
-                <!-- VOYAGE -->
 
                 <div class="form-groupe">
 
@@ -815,8 +642,6 @@ main {
                 </div>
 
 
-                <!-- DATE DEBUT -->
-
                 <div class="form-groupe">
 
                     <label for="champ-date-debut">
@@ -830,8 +655,6 @@ main {
 
                 </div>
 
-
-                <!-- DATE FIN -->
 
                 <div class="form-groupe">
 
@@ -847,8 +670,6 @@ main {
                 </div>
 
 
-                <!-- DATE TEXTE -->
-
                 <div class="form-groupe">
 
                     <label for="champ-date-texte">
@@ -862,8 +683,6 @@ main {
 
                 </div>
 
-
-                <!-- CONTEXTE -->
 
                 <div class="form-groupe">
 
@@ -882,8 +701,6 @@ main {
                 </div>
 
 
-                <!-- EXPERIENCE -->
-
                 <div class="form-groupe">
 
                     <label for="champ-experience">
@@ -894,8 +711,6 @@ main {
 
                 </div>
 
-
-                <!-- NOTE -->
 
                 <div class="form-groupe">
 
@@ -914,8 +729,6 @@ main {
                 </div>
 
 
-                <!-- ADRESSE -->
-
                 <div class="form-groupe large">
 
                     <label for="champ-adresse">
@@ -926,8 +739,6 @@ main {
 
                 </div>
 
-
-                <!-- DESCRIPTION -->
 
                 <div class="form-groupe large">
 
@@ -941,8 +752,6 @@ main {
 
                 </div>
 
-
-                <!-- NOTES -->
 
                 <div class="form-groupe large">
 
@@ -990,14 +799,10 @@ main {
 </div>
 
 
-<!-- MAPLIBRE -->
-
 <script
     src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js">
 </script>
 
-
-<!-- SUPABASE JS -->
 
 <script
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
@@ -1139,20 +944,15 @@ function echapperHTML(texte) {
         texte === null ||
         texte === undefined
     ) {
-
         return "";
     }
 
     return String(texte)
 
         .replace(/&/g, "&amp;")
-
         .replace(/</g, "&lt;")
-
         .replace(/>/g, "&gt;")
-
         .replace(/"/g, "&quot;")
-
         .replace(/'/g, "&#039;");
 }
 
@@ -1274,6 +1074,18 @@ try {
         new maplibregl.NavigationControl(),
         "top-right"
     );
+
+
+    // Important :
+    // les données peuvent être chargées avant que
+    // le style de la carte soit prêt.
+    map.on(
+        "load",
+        function() {
+            afficherLieuxFiltres();
+        }
+    );
+
 
 } catch (erreur) {
 
@@ -1680,7 +1492,6 @@ function creerFiche(
 // ==========================================================
 
 function remplirFiltres() {
-
 
     filtreVoyage.innerHTML = `
         <option value="">
@@ -2463,7 +2274,7 @@ async function recupererTable(
 
 
 // ==========================================================
-// CHARGEMENT
+// CHARGEMENT INITIAL
 // ==========================================================
 
 async function chargerDonnees() {
@@ -2532,97 +2343,7 @@ async function chargerDonnees() {
             photos;
 
 
-        voyagesParId = {};
-
-        tousLesVoyages.forEach(
-            voyage => {
-
-                if (voyage.voyage_id) {
-
-                    voyagesParId[
-                        voyage.voyage_id
-                    ] = voyage;
-
-                }
-
-            }
-        );
-
-
-        visitesParLieu = {};
-
-        toutesLesVisites.forEach(
-            visite => {
-
-                if (!visite.lieu_id) {
-                    return;
-                }
-
-                if (
-                    !visitesParLieu[
-                        visite.lieu_id
-                    ]
-                ) {
-
-                    visitesParLieu[
-                        visite.lieu_id
-                    ] = [];
-
-                }
-
-                visitesParLieu[
-                    visite.lieu_id
-                ].push(visite);
-
-            }
-        );
-
-
-        typesContexteParCode = {};
-
-        tousLesTypesContexte.forEach(
-            contexte => {
-
-                if (contexte.code) {
-
-                    typesContexteParCode[
-                        contexte.code
-                    ] = contexte;
-
-                }
-
-            }
-        );
-
-
-        photosParLieu = {};
-
-        toutesLesPhotos.forEach(
-            photo => {
-
-                if (!photo.lieu_id) {
-                    return;
-                }
-
-                if (
-                    !photosParLieu[
-                        photo.lieu_id
-                    ]
-                ) {
-
-                    photosParLieu[
-                        photo.lieu_id
-                    ] = [];
-
-                }
-
-                photosParLieu[
-                    photo.lieu_id
-                ].push(photo);
-
-            }
-        );
-
+        reconstruireTousLesIndex();
 
         remplirFiltres();
 
@@ -2642,25 +2363,126 @@ async function chargerDonnees() {
 
 
 // ==========================================================
+// RECONSTRUIRE TOUS LES INDEX
+// ==========================================================
+
+function reconstruireTousLesIndex() {
+
+    voyagesParId = {};
+
+    tousLesVoyages.forEach(
+        voyage => {
+
+            if (voyage.voyage_id) {
+
+                voyagesParId[
+                    voyage.voyage_id
+                ] = voyage;
+
+            }
+
+        }
+    );
+
+
+    reconstruireIndexVisites();
+
+
+    typesContexteParCode = {};
+
+    tousLesTypesContexte.forEach(
+        contexte => {
+
+            if (contexte.code) {
+
+                typesContexteParCode[
+                    contexte.code
+                ] = contexte;
+
+            }
+
+        }
+    );
+
+
+    photosParLieu = {};
+
+    toutesLesPhotos.forEach(
+        photo => {
+
+            if (!photo.lieu_id) {
+                return;
+            }
+
+            if (
+                !photosParLieu[
+                    photo.lieu_id
+                ]
+            ) {
+
+                photosParLieu[
+                    photo.lieu_id
+                ] = [];
+
+            }
+
+            photosParLieu[
+                photo.lieu_id
+            ].push(photo);
+
+        }
+    );
+}
+
+
+// ==========================================================
+// RECONSTRUIRE INDEX VISITES
+// ==========================================================
+
+function reconstruireIndexVisites() {
+
+    visitesParLieu = {};
+
+    toutesLesVisites.forEach(
+        visite => {
+
+            if (!visite.lieu_id) {
+                return;
+            }
+
+            if (
+                !visitesParLieu[
+                    visite.lieu_id
+                ]
+            ) {
+
+                visitesParLieu[
+                    visite.lieu_id
+                ] = [];
+
+            }
+
+            visitesParLieu[
+                visite.lieu_id
+            ].push(visite);
+
+        }
+    );
+}
+
+
+// ==========================================================
 // AUTHENTIFICATION
 // ==========================================================
 
-async function mettreAJourAuthentification() {
-
-    const {
-        data: {
-            session
-        }
-    } =
-        await supabaseClient.auth.getSession();
-
+function mettreAJourInterfaceAvecSession(
+    session
+) {
 
     utilisateurConnecte =
         session?.user || null;
 
-
     afficherInterfaceAuthentification();
-
 }
 
 
@@ -2695,10 +2517,6 @@ function afficherInterfaceAuthentification() {
             "none";
     }
 
-
-    // On ne recharge pas Supabase ici.
-    // On reconstruit simplement les popups pour
-    // faire apparaître/disparaître les boutons admin.
 
     afficherLieuxFiltres();
 }
@@ -2760,10 +2578,6 @@ boutonConnexion.addEventListener(
             return;
         }
 
-
-        // onAuthStateChange s'occupe maintenant
-        // de mettre à jour l'interface.
-
     }
 );
 
@@ -2791,10 +2605,6 @@ boutonDeconnexion.addEventListener(
 
             return;
         }
-
-
-        // onAuthStateChange s'occupe maintenant
-        // de mettre à jour l'interface.
 
     }
 );
@@ -2856,7 +2666,7 @@ function genererNouvelIdVisite() {
 
 
 // ==========================================================
-// OUVRIR FORMULAIRE AJOUT
+// OUVRIR AJOUT
 // ==========================================================
 
 function ouvrirFormulaireAjout() {
@@ -2882,7 +2692,7 @@ function ouvrirFormulaireAjout() {
 
 
 // ==========================================================
-// OUVRIR FORMULAIRE MODIFICATION
+// OUVRIR MODIFICATION
 // ==========================================================
 
 function ouvrirFormulaireModification(
@@ -3084,42 +2894,6 @@ fondModal.addEventListener(
 
 
 // ==========================================================
-// RECONSTRUIRE LES INDEX LOCAUX
-// ==========================================================
-
-function reconstruireIndexVisites() {
-
-    visitesParLieu = {};
-
-    toutesLesVisites.forEach(
-        visite => {
-
-            if (!visite.lieu_id) {
-                return;
-            }
-
-            if (
-                !visitesParLieu[
-                    visite.lieu_id
-                ]
-            ) {
-
-                visitesParLieu[
-                    visite.lieu_id
-                ] = [];
-
-            }
-
-            visitesParLieu[
-                visite.lieu_id
-            ].push(visite);
-
-        }
-    );
-}
-
-
-// ==========================================================
 // ENREGISTREMENT
 // ==========================================================
 
@@ -3297,7 +3071,6 @@ formulaireLieu.addEventListener(
         messageFormulaire.textContent =
             "Enregistrement...";
 
-
         boutonEnregistrer.disabled =
             true;
 
@@ -3319,21 +3092,27 @@ formulaireLieu.addEventListener(
                     nouvelId;
 
 
+                /*
+                 * INSERT sans .select()
+                 *
+                 * Cela évite également d'avoir besoin
+                 * d'une politique SELECT authenticated.
+                 */
+
                 const {
-                    data: nouveauLieu,
-                    error: erreurLieu
+                    error: erreurLieu,
+                    count: nombreLieux
                 } =
                     await supabaseClient
 
                         .from("lieux")
 
                         .insert(
-                            lieuData
-                        )
-
-                        .select()
-
-                        .single();
+                            lieuData,
+                            {
+                                count: "exact"
+                            }
+                        );
 
 
                 if (erreurLieu) {
@@ -3341,17 +3120,17 @@ formulaireLieu.addEventListener(
                 }
 
 
-                if (!nouveauLieu) {
+                /*
+                 * On considère l'insertion réussie si Supabase
+                 * ne renvoie pas d'erreur.
+                 *
+                 * On possède déjà toutes les données du nouveau lieu
+                 * grâce au formulaire.
+                 */
 
-                    throw new Error(
-                        "Le lieu n'a pas été créé."
-                    );
-                }
-
-
-                tousLesLieux.push(
-                    nouveauLieu
-                );
+                tousLesLieux.push({
+                    ...lieuData
+                });
 
 
                 // ----------------------------------------------
@@ -3360,57 +3139,62 @@ formulaireLieu.addEventListener(
 
                 if (contexte) {
 
+                    const nouvelleVisiteData = {
+
+                        visite_id:
+                            genererNouvelIdVisite(),
+
+                        lieu_id:
+                            nouvelId,
+
+                        voyage_id:
+                            voyageId,
+
+                        type_contexte:
+                            contexte,
+
+                        date_debut:
+                            dateDebut,
+
+                        date_fin:
+                            dateFin,
+
+                        date_texte:
+                            dateTexte,
+
+                        type_experience:
+                            experience,
+
+                        description:
+                            description,
+
+                        note:
+                            note,
+
+                        notes:
+                            notes
+
+                    };
+
+
                     const {
-                        data: nouvelleVisite,
                         error: erreurVisite
                     } =
                         await supabaseClient
 
                             .from("visites")
 
-                            .insert({
-
-                                visite_id:
-                                    genererNouvelIdVisite(),
-
-                                lieu_id:
-                                    nouvelId,
-
-                                voyage_id:
-                                    voyageId,
-
-                                type_contexte:
-                                    contexte,
-
-                                date_debut:
-                                    dateDebut,
-
-                                date_fin:
-                                    dateFin,
-
-                                date_texte:
-                                    dateTexte,
-
-                                type_experience:
-                                    experience,
-
-                                description:
-                                    description,
-
-                                note:
-                                    note,
-
-                                notes:
-                                    notes
-
-                            })
-
-                            .select()
-
-                            .single();
+                            .insert(
+                                nouvelleVisiteData
+                            );
 
 
                     if (erreurVisite) {
+
+                        /*
+                         * Si la visite échoue, on supprime
+                         * le lieu que nous venons de créer.
+                         */
 
                         await supabaseClient
                             .from("lieux")
@@ -3420,26 +3204,32 @@ formulaireLieu.addEventListener(
                                 nouvelId
                             );
 
+
+                        /*
+                         * Et on retire également le lieu
+                         * des données locales.
+                         */
+
+                        tousLesLieux =
+                            tousLesLieux.filter(
+                                item =>
+                                    item.lieu_id !==
+                                    nouvelId
+                            );
+
+
                         throw erreurVisite;
                     }
 
 
-                    if (!nouvelleVisite) {
-
-                        throw new Error(
-                            "La visite n'a pas été créée."
-                        );
-                    }
-
-
                     toutesLesVisites.push(
-                        nouvelleVisite
+                        nouvelleVisiteData
                     );
 
                 }
 
 
-                reconstruireIndexVisites();
+                reconstruireTousLesIndex();
 
                 remplirFiltres();
 
@@ -3455,7 +3245,7 @@ formulaireLieu.addEventListener(
 
 
                 // ==================================================
-                // MODIFICATION DU LIEU
+                // MODIFICATION
                 // ==================================================
 
                 const lieuExistant =
@@ -3484,8 +3274,17 @@ formulaireLieu.addEventListener(
                 // MODIFICATION DE lieux
                 // ----------------------------------------------
 
+                /*
+                 * IMPORTANT :
+                 *
+                 * Pas de .select()
+                 * Pas de .single()
+                 *
+                 * On demande uniquement à Supabase
+                 * d'effectuer l'UPDATE.
+                 */
+
                 const {
-                    data: lieuModifie,
                     error: erreurLieu
                 } =
                     await supabaseClient
@@ -3499,179 +3298,11 @@ formulaireLieu.addEventListener(
                         .eq(
                             "lieu_id",
                             lieuId
-                        )
-
-                        .select()
-
-                        .single();
+                        );
 
 
                 if (erreurLieu) {
                     throw erreurLieu;
-                }
-
-
-                if (!lieuModifie) {
-
-                    throw new Error(
-                        "Aucun lieu n'a été modifié. Vérifie la politique UPDATE de la table « lieux » dans Supabase."
-                    );
-                }
-
-
-                // ----------------------------------------------
-                // MODIFICATION DE visites
-                // ----------------------------------------------
-
-                if (visiteExistante) {
-
-                    const {
-                        data: visiteModifiee,
-                        error: erreurVisite
-                    } =
-                        await supabaseClient
-
-                            .from("visites")
-
-                            .update({
-
-                                voyage_id:
-                                    voyageId,
-
-                                type_contexte:
-                                    contexte,
-
-                                date_debut:
-                                    dateDebut,
-
-                                date_fin:
-                                    dateFin,
-
-                                date_texte:
-                                    dateTexte,
-
-                                type_experience:
-                                    experience,
-
-                                description:
-                                    description,
-
-                                note:
-                                    note,
-
-                                notes:
-                                    notes
-
-                            })
-
-                            .eq(
-                                "visite_id",
-                                visiteExistante.visite_id
-                            )
-
-                            .select()
-
-                            .single();
-
-
-                    if (erreurVisite) {
-                        throw erreurVisite;
-                    }
-
-
-                    if (!visiteModifiee) {
-
-                        throw new Error(
-                            "Le lieu a été modifié mais la visite n'a pas pu être modifiée. Vérifie la politique UPDATE de « visites »."
-                        );
-                    }
-
-
-                    const indexVisite =
-                        toutesLesVisites.findIndex(
-                            item =>
-                                item.visite_id ===
-                                visiteExistante.visite_id
-                        );
-
-
-                    if (indexVisite !== -1) {
-
-                        toutesLesVisites[
-                            indexVisite
-                        ] =
-                            visiteModifiee;
-
-                    }
-
-                } else if (contexte) {
-
-                    const {
-                        data: nouvelleVisite,
-                        error: erreurVisite
-                    } =
-                        await supabaseClient
-
-                            .from("visites")
-
-                            .insert({
-
-                                visite_id:
-                                    genererNouvelIdVisite(),
-
-                                lieu_id:
-                                    lieuId,
-
-                                voyage_id:
-                                    voyageId,
-
-                                type_contexte:
-                                    contexte,
-
-                                date_debut:
-                                    dateDebut,
-
-                                date_fin:
-                                    dateFin,
-
-                                date_texte:
-                                    dateTexte,
-
-                                type_experience:
-                                    experience,
-
-                                description:
-                                    description,
-
-                                note:
-                                    note,
-
-                                notes:
-                                    notes
-
-                            })
-
-                            .select()
-
-                            .single();
-
-
-                    if (erreurVisite) {
-                        throw erreurVisite;
-                    }
-
-
-                    if (!nouvelleVisite) {
-
-                        throw new Error(
-                            "La visite n'a pas pu être créée."
-                        );
-                    }
-
-
-                    toutesLesVisites.push(
-                        nouvelleVisite
-                    );
                 }
 
 
@@ -3691,13 +3322,226 @@ formulaireLieu.addEventListener(
 
                     tousLesLieux[
                         indexLieu
-                    ] =
-                        lieuModifie;
+                    ] = {
+
+                        ...tousLesLieux[
+                            indexLieu
+                        ],
+
+                        ...lieuData
+
+                    };
 
                 }
 
 
-                reconstruireIndexVisites();
+                // ----------------------------------------------
+                // MODIFICATION DE visites
+                // ----------------------------------------------
+
+                if (visiteExistante) {
+
+                    /*
+                     * IMPORTANT :
+                     *
+                     * visites.type_contexte est NOT NULL.
+                     *
+                     * Donc si l'utilisateur choisit
+                     * "Aucun contexte", on supprime la visite
+                     * plutôt que d'essayer de mettre
+                     * type_contexte = null.
+                     */
+
+                    if (contexte) {
+
+                        const visiteData = {
+
+                            voyage_id:
+                                voyageId,
+
+                            type_contexte:
+                                contexte,
+
+                            date_debut:
+                                dateDebut,
+
+                            date_fin:
+                                dateFin,
+
+                            date_texte:
+                                dateTexte,
+
+                            type_experience:
+                                experience,
+
+                            description:
+                                description,
+
+                            note:
+                                note,
+
+                            notes:
+                                notes
+
+                        };
+
+
+                        const {
+                            error: erreurVisite
+                        } =
+                            await supabaseClient
+
+                                .from("visites")
+
+                                .update(
+                                    visiteData
+                                )
+
+                                .eq(
+                                    "visite_id",
+                                    visiteExistante.visite_id
+                                );
+
+
+                        if (erreurVisite) {
+                            throw erreurVisite;
+                        }
+
+
+                        const indexVisite =
+                            toutesLesVisites.findIndex(
+                                item =>
+                                    item.visite_id ===
+                                    visiteExistante.visite_id
+                            );
+
+
+                        if (indexVisite !== -1) {
+
+                            toutesLesVisites[
+                                indexVisite
+                            ] = {
+
+                                ...toutesLesVisites[
+                                    indexVisite
+                                ],
+
+                                ...visiteData
+
+                            };
+
+                        }
+
+                    } else {
+
+                        /*
+                         * Suppression de la visite
+                         * si aucun contexte n'est sélectionné.
+                         */
+
+                        const {
+                            error: erreurSuppressionVisite
+                        } =
+                            await supabaseClient
+
+                                .from("visites")
+
+                                .delete()
+
+                                .eq(
+                                    "visite_id",
+                                    visiteExistante.visite_id
+                                );
+
+
+                        if (erreurSuppressionVisite) {
+                            throw erreurSuppressionVisite;
+                        }
+
+
+                        toutesLesVisites =
+                            toutesLesVisites.filter(
+                                visite =>
+                                    visite.visite_id !==
+                                    visiteExistante.visite_id
+                            );
+
+                    }
+
+                } else if (contexte) {
+
+                    /*
+                     * Le lieu n'avait pas encore de visite.
+                     * On en crée une si un contexte est choisi.
+                     */
+
+                    const nouvelleVisiteData = {
+
+                        visite_id:
+                            genererNouvelIdVisite(),
+
+                        lieu_id:
+                            lieuId,
+
+                        voyage_id:
+                            voyageId,
+
+                        type_contexte:
+                            contexte,
+
+                        date_debut:
+                            dateDebut,
+
+                        date_fin:
+                            dateFin,
+
+                        date_texte:
+                            dateTexte,
+
+                        type_experience:
+                            experience,
+
+                        description:
+                            description,
+
+                        note:
+                            note,
+
+                        notes:
+                            notes
+
+                    };
+
+
+                    const {
+                        error: erreurVisite
+                    } =
+                        await supabaseClient
+
+                            .from("visites")
+
+                            .insert(
+                                nouvelleVisiteData
+                            );
+
+
+                    if (erreurVisite) {
+                        throw erreurVisite;
+                    }
+
+
+                    toutesLesVisites.push(
+                        nouvelleVisiteData
+                    );
+
+                }
+
+
+                // ----------------------------------------------
+                // RAFRAICHISSEMENT LOCAL
+                // ----------------------------------------------
+
+                reconstruireTousLesIndex();
 
                 remplirFiltres();
 
@@ -3707,6 +3551,8 @@ formulaireLieu.addEventListener(
 
                 message.style.display =
                     "none";
+
+
             }
 
 
@@ -3834,7 +3680,7 @@ async function supprimerLieu(lieuId) {
 
 
         // ----------------------------------------------
-        // Mise à jour locale sans recharger Supabase
+        // MISE A JOUR LOCALE
         // ----------------------------------------------
 
         tousLesLieux =
@@ -3858,12 +3704,14 @@ async function supprimerLieu(lieuId) {
             );
 
 
-        reconstruireIndexVisites();
-
+        reconstruireTousLesIndex();
 
         remplirFiltres();
 
         afficherLieuxFiltres();
+
+        message.style.display =
+            "none";
 
 
     } catch (erreur) {
@@ -4017,6 +3865,13 @@ modeCarte.addEventListener(
 supabaseClient.auth.onAuthStateChange(
     function(event, session) {
 
+        /*
+         * On utilise directement la session fournie
+         * par Supabase.
+         *
+         * Pas de getSession() supplémentaire.
+         */
+
         utilisateurConnecte =
             session?.user || null;
 
@@ -4033,16 +3888,46 @@ supabaseClient.auth.onAuthStateChange(
 
 async function initialiser() {
 
-    // Les données et la session sont indépendantes :
-    // on peut les charger en parallèle.
+    try {
 
-    await Promise.all([
+        /*
+         * On récupère la session initiale et les données
+         * en parallèle.
+         */
 
-        chargerDonnees(),
+        const [
+            resultatSession
+        ] =
+            await Promise.all([
 
-        mettreAJourAuthentification()
+                supabaseClient.auth.getSession(),
 
-    ]);
+                chargerDonnees()
+
+            ]);
+
+
+        mettreAJourInterfaceAvecSession(
+            resultatSession.data.session
+        );
+
+
+    } catch (erreur) {
+
+        console.error(
+            "Erreur initialisation :",
+            erreur
+        );
+
+        afficherErreur(
+            "Erreur lors de l'initialisation : " +
+            (
+                erreur.message ||
+                String(erreur)
+            )
+        );
+
+    }
 
 }
 
