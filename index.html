@@ -164,6 +164,13 @@ h1 {
     border-color: #d99;
 }
 
+.bouton:disabled {
+
+    opacity: 0.6;
+
+    cursor: wait;
+}
+
 #statut-auth {
 
     font-size: 12px;
@@ -1070,6 +1077,9 @@ const formulaireLieu =
 const boutonAnnuler =
     document.getElementById("boutonAnnuler");
 
+const boutonEnregistrer =
+    document.getElementById("boutonEnregistrer");
+
 const messageFormulaire =
     document.getElementById("message-formulaire");
 
@@ -1619,17 +1629,15 @@ function creerFiche(
                 </div>
 
                 <div>
-                    ${echapperHTML(notes)}
+                    ${echapperHTML(
+                        notes
+                    )}
                 </div>
 
             </div>
         `;
     }
 
-
-    // ======================================================
-    // BOUTONS ADMIN
-    // ======================================================
 
     if (utilisateurConnecte) {
 
@@ -1873,8 +1881,6 @@ function remplirFiltres() {
         );
 
 
-    // Formulaire voyage
-
     const champVoyage =
         document.getElementById(
             "champ-voyage"
@@ -1918,8 +1924,6 @@ function remplirFiltres() {
             }
         );
 
-
-    // Formulaire contexte
 
     const champContexte =
         document.getElementById(
@@ -2655,6 +2659,13 @@ async function mettreAJourAuthentification() {
         session?.user || null;
 
 
+    afficherInterfaceAuthentification();
+
+}
+
+
+function afficherInterfaceAuthentification() {
+
     if (utilisateurConnecte) {
 
         statutAuth.textContent =
@@ -2684,6 +2695,10 @@ async function mettreAJourAuthentification() {
             "none";
     }
 
+
+    // On ne recharge pas Supabase ici.
+    // On reconstruit simplement les popups pour
+    // faire apparaître/disparaître les boutons admin.
 
     afficherLieuxFiltres();
 }
@@ -2724,15 +2739,15 @@ boutonConnexion.addEventListener(
         const {
             error
         } =
-            await supabaseClient.auth.signInWithPassword({
+        await supabaseClient.auth.signInWithPassword({
 
-                email:
-                    email,
+            email:
+                email,
 
-                password:
-                    motDePasse
+            password:
+                motDePasse
 
-            });
+        });
 
 
         if (error) {
@@ -2746,7 +2761,8 @@ boutonConnexion.addEventListener(
         }
 
 
-        await mettreAJourAuthentification();
+        // onAuthStateChange s'occupe maintenant
+        // de mettre à jour l'interface.
 
     }
 );
@@ -2763,7 +2779,7 @@ boutonDeconnexion.addEventListener(
         const {
             error
         } =
-            await supabaseClient.auth.signOut();
+        await supabaseClient.auth.signOut();
 
 
         if (error) {
@@ -2777,7 +2793,8 @@ boutonDeconnexion.addEventListener(
         }
 
 
-        await mettreAJourAuthentification();
+        // onAuthStateChange s'occupe maintenant
+        // de mettre à jour l'interface.
 
     }
 );
@@ -3067,6 +3084,42 @@ fondModal.addEventListener(
 
 
 // ==========================================================
+// RECONSTRUIRE LES INDEX LOCAUX
+// ==========================================================
+
+function reconstruireIndexVisites() {
+
+    visitesParLieu = {};
+
+    toutesLesVisites.forEach(
+        visite => {
+
+            if (!visite.lieu_id) {
+                return;
+            }
+
+            if (
+                !visitesParLieu[
+                    visite.lieu_id
+                ]
+            ) {
+
+                visitesParLieu[
+                    visite.lieu_id
+                ] = [];
+
+            }
+
+            visitesParLieu[
+                visite.lieu_id
+            ].push(visite);
+
+        }
+    );
+}
+
+
+// ==========================================================
 // ENREGISTREMENT
 // ==========================================================
 
@@ -3089,7 +3142,7 @@ formulaireLieu.addEventListener(
         const lieuId =
             document.getElementById(
                 "champ-lieu-id"
-            ).value;
+            ).value.trim();
 
 
         const modification =
@@ -3198,53 +3251,42 @@ formulaireLieu.addEventListener(
         const lieuData = {
 
             nom:
-
                 nom,
 
             ville:
-
                 document.getElementById(
                     "champ-ville"
                 ).value.trim() || null,
 
             pays:
-
                 document.getElementById(
                     "champ-pays"
                 ).value.trim() || null,
 
             latitude:
-
                 latitude,
 
             longitude:
-
                 longitude,
 
             type_lieu:
-
                 document.getElementById(
                     "champ-type-lieu"
                 ).value.trim() || null,
 
             voyage_id:
-
                 voyageId,
 
             date_debut:
-
                 dateDebut,
 
             date_fin:
-
                 dateFin,
 
             date_texte:
-
                 dateTexte,
 
             adresse:
-
                 document.getElementById(
                     "champ-adresse"
                 ).value.trim() || null
@@ -3254,6 +3296,10 @@ formulaireLieu.addEventListener(
 
         messageFormulaire.textContent =
             "Enregistrement...";
+
+
+        boutonEnregistrer.disabled =
+            true;
 
 
         try {
@@ -3274,8 +3320,8 @@ formulaireLieu.addEventListener(
 
 
                 const {
-                    error:
-                    erreurLieu
+                    data: nouveauLieu,
+                    error: erreurLieu
                 } =
                     await supabaseClient
 
@@ -3283,12 +3329,29 @@ formulaireLieu.addEventListener(
 
                         .insert(
                             lieuData
-                        );
+                        )
+
+                        .select()
+
+                        .single();
 
 
                 if (erreurLieu) {
                     throw erreurLieu;
                 }
+
+
+                if (!nouveauLieu) {
+
+                    throw new Error(
+                        "Le lieu n'a pas été créé."
+                    );
+                }
+
+
+                tousLesLieux.push(
+                    nouveauLieu
+                );
 
 
                 // ----------------------------------------------
@@ -3298,8 +3361,8 @@ formulaireLieu.addEventListener(
                 if (contexte) {
 
                     const {
-                        error:
-                        erreurVisite
+                        data: nouvelleVisite,
+                        error: erreurVisite
                     } =
                         await supabaseClient
 
@@ -3340,12 +3403,15 @@ formulaireLieu.addEventListener(
                                 notes:
                                     notes
 
-                            });
+                            })
+
+                            .select()
+
+                            .single();
 
 
                     if (erreurVisite) {
 
-                        // tentative de nettoyage
                         await supabaseClient
                             .from("lieux")
                             .delete()
@@ -3357,7 +3423,32 @@ formulaireLieu.addEventListener(
                         throw erreurVisite;
                     }
 
+
+                    if (!nouvelleVisite) {
+
+                        throw new Error(
+                            "La visite n'a pas été créée."
+                        );
+                    }
+
+
+                    toutesLesVisites.push(
+                        nouvelleVisite
+                    );
+
                 }
+
+
+                reconstruireIndexVisites();
+
+                remplirFiltres();
+
+                afficherLieuxFiltres();
+
+                fermerFormulaire();
+
+                message.style.display =
+                    "none";
 
 
             } else {
@@ -3367,9 +3458,35 @@ formulaireLieu.addEventListener(
                 // MODIFICATION DU LIEU
                 // ==================================================
 
+                const lieuExistant =
+                    tousLesLieux.find(
+                        lieu =>
+                            lieu.lieu_id ===
+                            lieuId
+                    );
+
+
+                if (!lieuExistant) {
+
+                    throw new Error(
+                        "Lieu introuvable dans les données locales."
+                    );
+                }
+
+
+                const visiteExistante =
+                    obtenirVisite(
+                        lieuExistant
+                    );
+
+
+                // ----------------------------------------------
+                // MODIFICATION DE lieux
+                // ----------------------------------------------
+
                 const {
-                    error:
-                    erreurLieu
+                    data: lieuModifie,
+                    error: erreurLieu
                 } =
                     await supabaseClient
 
@@ -3382,7 +3499,11 @@ formulaireLieu.addEventListener(
                         .eq(
                             "lieu_id",
                             lieuId
-                        );
+                        )
+
+                        .select()
+
+                        .single();
 
 
                 if (erreurLieu) {
@@ -3390,21 +3511,23 @@ formulaireLieu.addEventListener(
                 }
 
 
-                const visite =
-                    obtenirVisite(
-                        tousLesLieux.find(
-                            l =>
-                                l.lieu_id ===
-                                lieuId
-                        )
+                if (!lieuModifie) {
+
+                    throw new Error(
+                        "Aucun lieu n'a été modifié. Vérifie la politique UPDATE de la table « lieux » dans Supabase."
                     );
+                }
 
 
-                if (visite) {
+                // ----------------------------------------------
+                // MODIFICATION DE visites
+                // ----------------------------------------------
+
+                if (visiteExistante) {
 
                     const {
-                        error:
-                        erreurVisite
+                        data: visiteModifiee,
+                        error: erreurVisite
                     } =
                         await supabaseClient
 
@@ -3443,20 +3566,49 @@ formulaireLieu.addEventListener(
 
                             .eq(
                                 "visite_id",
-                                visite.visite_id
-                            );
+                                visiteExistante.visite_id
+                            )
+
+                            .select()
+
+                            .single();
 
 
                     if (erreurVisite) {
                         throw erreurVisite;
                     }
 
+
+                    if (!visiteModifiee) {
+
+                        throw new Error(
+                            "Le lieu a été modifié mais la visite n'a pas pu être modifiée. Vérifie la politique UPDATE de « visites »."
+                        );
+                    }
+
+
+                    const indexVisite =
+                        toutesLesVisites.findIndex(
+                            item =>
+                                item.visite_id ===
+                                visiteExistante.visite_id
+                        );
+
+
+                    if (indexVisite !== -1) {
+
+                        toutesLesVisites[
+                            indexVisite
+                        ] =
+                            visiteModifiee;
+
+                    }
+
                 } else if (contexte) {
 
-
                     const {
-                        error:
-                        erreurVisite
+                        data: nouvelleVisite,
+                        error: erreurVisite
                     } =
                         await supabaseClient
 
@@ -3497,24 +3649,65 @@ formulaireLieu.addEventListener(
                                 notes:
                                     notes
 
-                            });
+                            })
+
+                            .select()
+
+                            .single();
 
 
                     if (erreurVisite) {
                         throw erreurVisite;
                     }
 
+
+                    if (!nouvelleVisite) {
+
+                        throw new Error(
+                            "La visite n'a pas pu être créée."
+                        );
+                    }
+
+
+                    toutesLesVisites.push(
+                        nouvelleVisite
+                    );
                 }
 
+
+                // ----------------------------------------------
+                // MISE A JOUR LOCALE DU LIEU
+                // ----------------------------------------------
+
+                const indexLieu =
+                    tousLesLieux.findIndex(
+                        item =>
+                            item.lieu_id ===
+                            lieuId
+                    );
+
+
+                if (indexLieu !== -1) {
+
+                    tousLesLieux[
+                        indexLieu
+                    ] =
+                        lieuModifie;
+
+                }
+
+
+                reconstruireIndexVisites();
+
+                remplirFiltres();
+
+                afficherLieuxFiltres();
+
+                fermerFormulaire();
+
+                message.style.display =
+                    "none";
             }
-
-
-            fermerFormulaire();
-
-            await chargerDonnees();
-
-            message.style.display =
-                "none";
 
 
         } catch (erreur) {
@@ -3531,6 +3724,12 @@ formulaireLieu.addEventListener(
                     erreur.message ||
                     String(erreur)
                 );
+
+        } finally {
+
+            boutonEnregistrer.disabled =
+                false;
+
         }
 
     }
@@ -3587,11 +3786,6 @@ async function supprimerLieu(lieuId) {
             ] || [];
 
 
-        // ----------------------------------------------
-        // Les visites doivent être supprimées avant le lieu
-        // car la FK est actuellement NO ACTION.
-        // ----------------------------------------------
-
         for (
             const visite
             of visites
@@ -3619,12 +3813,6 @@ async function supprimerLieu(lieuId) {
         }
 
 
-        // ----------------------------------------------
-        // Puis suppression du lieu.
-        // Les photos liées au lieu seront supprimées
-        // automatiquement grâce à ON DELETE CASCADE.
-        // ----------------------------------------------
-
         const {
             error
         } =
@@ -3645,7 +3833,37 @@ async function supprimerLieu(lieuId) {
         }
 
 
-        await chargerDonnees();
+        // ----------------------------------------------
+        // Mise à jour locale sans recharger Supabase
+        // ----------------------------------------------
+
+        tousLesLieux =
+            tousLesLieux.filter(
+                item =>
+                    item.lieu_id !== lieuId
+            );
+
+
+        toutesLesVisites =
+            toutesLesVisites.filter(
+                visite =>
+                    visite.lieu_id !== lieuId
+            );
+
+
+        toutesLesPhotos =
+            toutesLesPhotos.filter(
+                photo =>
+                    photo.lieu_id !== lieuId
+            );
+
+
+        reconstruireIndexVisites();
+
+
+        remplirFiltres();
+
+        afficherLieuxFiltres();
 
 
     } catch (erreur) {
@@ -3797,9 +4015,13 @@ modeCarte.addEventListener(
 // ==========================================================
 
 supabaseClient.auth.onAuthStateChange(
-    async function() {
+    function(event, session) {
 
-        await mettreAJourAuthentification();
+        utilisateurConnecte =
+            session?.user || null;
+
+
+        afficherInterfaceAuthentification();
 
     }
 );
@@ -3811,9 +4033,16 @@ supabaseClient.auth.onAuthStateChange(
 
 async function initialiser() {
 
-    await chargerDonnees();
+    // Les données et la session sont indépendantes :
+    // on peut les charger en parallèle.
 
-    await mettreAJourAuthentification();
+    await Promise.all([
+
+        chargerDonnees(),
+
+        mettreAJourAuthentification()
+
+    ]);
 
 }
 
