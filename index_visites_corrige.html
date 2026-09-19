@@ -1,0 +1,5165 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Mon Atlas</title>
+
+<link
+    href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"
+    rel="stylesheet"
+>
+
+<style>
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ==========================================================
+   EN-TÊTE
+   ========================================================== */
+
+header {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 8px 20px;
+    box-sizing: border-box;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    z-index: 10;
+}
+
+h1 {
+    margin: 0;
+    font-size: 22px;
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   FILTRES
+   ========================================================== */
+
+#filtres {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.filtre {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: white;
+    font-size: 13px;
+    max-width: 190px;
+}
+
+#compteur {
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   AUTHENTIFICATION
+   ========================================================== */
+
+#zone-auth {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.bouton {
+    padding: 7px 11px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.bouton:hover {
+    background: #f3f3f3;
+}
+
+.bouton-principal {
+    background: #222;
+    color: white;
+    border-color: #222;
+}
+
+.bouton-principal:hover {
+    background: #444;
+}
+
+.bouton-danger {
+    color: #b00020;
+    border-color: #d99;
+}
+
+.bouton:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+#statut-auth {
+    font-size: 12px;
+    color: #555;
+}
+
+
+/* ==========================================================
+   CARTE
+   ========================================================== */
+
+main {
+    flex: 1;
+    min-height: 0;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* ==========================================================
+   MESSAGE
+   ========================================================== */
+
+#message {
+    position: fixed;
+    top: 70px;
+    left: 10px;
+    right: 10px;
+    z-index: 2000;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.2);
+    display: none;
+    color: #b00020;
+}
+
+
+/* ==========================================================
+   FICHE
+   ========================================================== */
+
+.fiche-lieu {
+    font-family: Arial, sans-serif;
+    line-height: 1.4;
+    width: 100%;
+}
+
+.fiche-titre {
+    font-size: 19px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.fiche-localisation {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.fiche-rubrique {
+    margin-top: 8px;
+}
+
+.fiche-infos {
+    margin-top: 8px;
+}
+
+.fiche-sous-titre {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.fiche-description {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+/* ==========================================================
+   HISTORIQUE DES VISITES DANS LA FICHE
+   ========================================================== */
+
+.fiche-visites {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.fiche-visite {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    line-height: 1.45;
+}
+
+.fiche-visite:last-child {
+    border-bottom: none;
+}
+
+.fiche-visite-description {
+    margin-top: 5px;
+    color: #444;
+}
+
+.fiche-notes {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+    color: #555;
+}
+
+
+/* ==========================================================
+   PHOTOS
+   ========================================================== */
+
+.fiche-photo {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.fiche-galerie {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin-bottom: 12px;
+    padding-bottom: 3px;
+}
+
+.fiche-miniature {
+    width: 64px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.fiche-miniature:hover {
+    opacity: 0.75;
+}
+
+.icone {
+    margin-right: 4px;
+}
+
+
+/* ==========================================================
+   BOUTONS DANS POPUP
+   ========================================================== */
+
+.actions-lieu {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+
+/* ==========================================================
+   MODALE
+   ========================================================== */
+
+#fond-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#modal {
+    width: min(700px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow:
+        0 5px 30px rgba(0,0,0,0.3);
+    padding: 22px;
+    box-sizing: border-box;
+}
+
+#modal h2 {
+    margin-top: 0;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-groupe {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-groupe.large {
+    grid-column: 1 / -1;
+}
+
+.form-groupe label {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.form-groupe input,
+.form-groupe select,
+.form-groupe textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+.form-groupe textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+#actions-formulaire {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+#message-formulaire {
+    margin-top: 10px;
+    color: #b00020;
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   MARQUEURS
+   ========================================================== */
+
+.maplibregl-marker {
+    cursor: pointer;
+}
+
+
+/* ==========================================================
+   GESTION VOYAGES / PHOTOS
+   ========================================================== */
+
+.fond-modal-gestion {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-gestion {
+    width: min(900px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+    padding: 22px;
+    box-sizing: border-box;
+}
+
+.modal-gestion h2 {
+    margin-top: 0;
+}
+
+.liste-gestion {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.ligne-gestion {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    background: #fafafa;
+}
+
+.ligne-gestion-principale {
+    min-width: 0;
+    flex: 1;
+}
+
+.ligne-gestion-titre {
+    font-weight: bold;
+}
+
+.ligne-gestion-meta {
+    color: #666;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.actions-gestion {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.formulaire-gestion {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.photo-gestion-apercu {
+    width: 110px;
+    height: 75px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+    .ligne-gestion {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .actions-gestion {
+        width: 100%;
+    }
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 700px) {
+
+    header {
+        min-height: auto;
+        padding: 10px;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #filtres {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .filtre {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+    }
+
+    #compteur {
+        width: 100%;
+    }
+
+    #zone-auth {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-groupe.large {
+        grid-column: auto;
+    }
+
+}
+
+
+/* ==========================================================
+   GESTION DES VISITES
+   ========================================================== */
+
+.modal-visites {
+    width: min(900px, 96vw);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.liste-visites-gestion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 16px 0;
+}
+
+.visite-gestion {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fafafa;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.visite-gestion-titre {
+    font-weight: 700;
+}
+
+.visite-gestion-meta {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 4px;
+}
+
+.visite-gestion-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.form-visite-gestion {
+    border-top: 1px solid #ddd;
+    margin-top: 18px;
+    padding-top: 18px;
+}
+
+@media (max-width: 650px) {
+    .visite-gestion {
+        grid-template-columns: 1fr;
+    }
+    .visite-gestion-actions {
+        justify-content: flex-start;
+    }
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>Mon Atlas</h1>
+
+
+    <div id="filtres">
+
+        <select id="modeCarte" class="filtre">
+
+            <option value="marqueurs">
+                📍 Lieux
+            </option>
+
+            <option value="heatmap">
+                🔥 Heatmap
+            </option>
+
+        </select>
+
+
+        <select id="filtreVoyage" class="filtre">
+
+            <option value="">
+                Tous les voyages
+            </option>
+
+        </select>
+
+
+        <select id="filtreContexte" class="filtre">
+
+            <option value="">
+                Tous les contextes
+            </option>
+
+        </select>
+
+
+        <select id="filtreTypeLieu" class="filtre">
+
+            <option value="">
+                Tous les types
+            </option>
+
+        </select>
+
+
+        <select id="filtreExperience" class="filtre">
+
+            <option value="">
+                Toutes les expériences
+            </option>
+
+        </select>
+
+
+        <span id="compteur">
+            Chargement...
+        </span>
+
+
+        <div id="zone-auth">
+
+            <span id="statut-auth">
+                Non connecté
+            </span>
+
+            <button
+                id="boutonConnexion"
+                class="bouton"
+            >
+                🔐 Connexion
+            </button>
+
+            <button
+                id="boutonDeconnexion"
+                class="bouton"
+                style="display:none"
+            >
+                Déconnexion
+            </button>
+
+            <button
+                id="boutonAjouter"
+                class="bouton bouton-principal"
+                style="display:none"
+            >
+                ＋ Ajouter
+            </button>
+
+            <button
+                id="boutonVoyages"
+                class="bouton"
+                style="display:none"
+            >
+                ✈️ Voyages
+            </button>
+
+            <button
+                id="boutonPhotos"
+                class="bouton"
+                style="display:none"
+            >
+                🖼️ Photos
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<div id="message"></div>
+
+
+<main>
+
+    <div id="map"></div>
+
+</main>
+
+
+<!-- ========================================================
+     MODALE FORMULAIRE
+     ======================================================== -->
+
+<div id="fond-modal">
+
+    <div id="modal">
+
+        <h2 id="titre-modal">
+            Ajouter un lieu
+        </h2>
+
+
+        <form id="formulaire-lieu">
+
+            <input
+                type="hidden"
+                id="champ-lieu-id"
+            >
+
+
+            <div class="form-grid">
+
+
+                <div class="form-groupe large">
+
+                    <label for="champ-nom">
+                        Nom du lieu *
+                    </label>
+
+                    <input
+                        id="champ-nom"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-ville">
+                        Ville
+                    </label>
+
+                    <input id="champ-ville">
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-pays">
+                        Pays
+                    </label>
+
+                    <input id="champ-pays">
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-latitude">
+                        Latitude
+                    </label>
+
+                    <input
+                        id="champ-latitude"
+                        type="number"
+                        step="any"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-longitude">
+                        Longitude
+                    </label>
+
+                    <input
+                        id="champ-longitude"
+                        type="number"
+                        step="any"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-type-lieu">
+                        Type de lieu
+                    </label>
+
+                    <input id="champ-type-lieu">
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-voyage">
+                        Voyage
+                    </label>
+
+                    <select id="champ-voyage">
+
+                        <option value="">
+                            Aucun voyage
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-debut">
+                        Date de début
+                    </label>
+
+                    <input
+                        id="champ-date-debut"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-fin">
+                        Date de fin
+                    </label>
+
+                    <input
+                        id="champ-date-fin"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-texte">
+                        Date en texte
+                    </label>
+
+                    <input
+                        id="champ-date-texte"
+                        placeholder="Ex. Été 2024"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-contexte">
+                        Contexte
+                    </label>
+
+                    <select id="champ-contexte">
+
+                        <option value="">
+                            Aucun contexte
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-experience">
+                        Expérience
+                    </label>
+
+                    <input id="champ-experience">
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-note">
+                        Note /5
+                    </label>
+
+                    <input
+                        id="champ-note"
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="1"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe large">
+
+                    <label for="champ-adresse">
+                        Adresse
+                    </label>
+
+                    <input id="champ-adresse">
+
+                </div>
+
+
+                <div class="form-groupe large">
+
+                    <label for="champ-description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="champ-description"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-groupe large">
+
+                    <label for="champ-notes">
+                        Notes personnelles
+                    </label>
+
+                    <textarea
+                        id="champ-notes"
+                    ></textarea>
+
+                </div>
+
+
+            </div>
+
+
+            <div id="message-formulaire"></div>
+
+
+            <div id="actions-formulaire">
+
+                <button
+                    type="button"
+                    id="boutonAnnuler"
+                    class="bouton"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="button"
+                    id="boutonGererVisites"
+                    class="bouton"
+                    style="display:none"
+                >
+                    🗓️ Gérer les visites
+                </button>
+
+                <button
+                    type="submit"
+                    id="boutonEnregistrer"
+                    class="bouton bouton-principal"
+                >
+                    Enregistrer
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================
+     MODALE GESTION DES VISITES
+     ======================================================== -->
+
+<div id="fond-modal-visites" class="fond-modal-gestion">
+    <div id="modal-visites" class="modal-visites">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+            <h2 id="titre-modal-visites">Visites</h2>
+            <button type="button" id="boutonFermerVisites" class="bouton">Fermer</button>
+        </div>
+
+        <div id="liste-visites-gestion" class="liste-visites-gestion"></div>
+
+        <div class="form-visite-gestion">
+            <h3 id="titre-form-visite">Ajouter une visite</h3>
+            <input type="hidden" id="champ-visite-id-gestion">
+            <input type="hidden" id="champ-visite-lieu-id-gestion">
+
+            <div class="form-grid">
+                <div class="form-groupe">
+                    <label for="champ-visite-voyage">Voyage</label>
+                    <select id="champ-visite-voyage">
+                        <option value="">Aucun voyage</option>
+                    </select>
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-contexte">Contexte *</label>
+                    <select id="champ-visite-contexte">
+                        <option value="">Choisir un contexte</option>
+                    </select>
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-date-debut">Date de début</label>
+                    <input id="champ-visite-date-debut" type="date">
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-date-fin">Date de fin</label>
+                    <input id="champ-visite-date-fin" type="date">
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-date-texte">Date en texte</label>
+                    <input id="champ-visite-date-texte" placeholder="Ex. Été 2024">
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-experience">Expérience</label>
+                    <input id="champ-visite-experience">
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-note">Note /5</label>
+                    <input id="champ-visite-note" type="number" min="0" max="5" step="1">
+                </div>
+
+                <div class="form-groupe large">
+                    <label for="champ-visite-description">Description</label>
+                    <textarea id="champ-visite-description"></textarea>
+                </div>
+
+                <div class="form-groupe large">
+                    <label for="champ-visite-notes">Notes personnelles</label>
+                    <textarea id="champ-visite-notes"></textarea>
+                </div>
+            </div>
+
+            <div id="message-visite-formulaire"></div>
+
+            <div id="actions-visite-formulaire" style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button type="button" id="boutonAnnulerVisite" class="bouton">+ Nouvelle visite</button>
+                <button type="button" id="boutonEnregistrerVisite" class="bouton bouton-principal">Enregistrer la visite</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ========================================================
+     MODALE GESTION DES VOYAGES
+     ======================================================== -->
+
+<div id="fond-modal-voyages" class="fond-modal-gestion">
+    <div class="modal-gestion">
+        <h2>Gestion des voyages</h2>
+
+        <div class="formulaire-gestion">
+            <form id="formulaire-voyage">
+                <input type="hidden" id="champ-voyage-id-gestion">
+                <div class="form-grid">
+                    <div class="form-groupe large">
+                        <label for="champ-voyage-nom">Nom du voyage *</label>
+                        <input id="champ-voyage-nom" required>
+                    </div>
+                    <div class="form-groupe">
+                        <label for="champ-voyage-date-debut">Date de début</label>
+                        <input id="champ-voyage-date-debut" type="date">
+                    </div>
+                    <div class="form-groupe">
+                        <label for="champ-voyage-date-fin">Date de fin</label>
+                        <input id="champ-voyage-date-fin" type="date">
+                    </div>
+                    <div class="form-groupe">
+                        <label for="champ-voyage-pays">Pays principal</label>
+                        <input id="champ-voyage-pays">
+                    </div>
+                    <div class="form-groupe">
+                        <label for="champ-voyage-photo">Photo de couverture</label>
+                        <input id="champ-voyage-photo">
+                    </div>
+                    <div class="form-groupe large">
+                        <label for="champ-voyage-date-texte">Date en texte</label>
+                        <input id="champ-voyage-date-texte" placeholder="Ex. Été 2024">
+                    </div>
+                    <div class="form-groupe large">
+                        <label for="champ-voyage-description">Description</label>
+                        <textarea id="champ-voyage-description"></textarea>
+                    </div>
+                    <div class="form-groupe large">
+                        <label for="champ-voyage-notes">Notes personnelles</label>
+                        <textarea id="champ-voyage-notes"></textarea>
+                    </div>
+                </div>
+                <div id="message-voyage-formulaire"></div>
+                <div class="actions-gestion-formulaire">
+                    <button type="button" id="boutonNouveauVoyage" class="bouton">Nouveau</button>
+                    <button type="submit" id="boutonEnregistrerVoyage" class="bouton bouton-principal">Enregistrer</button>
+                    <button type="button" id="boutonFermerVoyages" class="bouton">Fermer</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="liste-voyages-gestion" class="liste-gestion"></div>
+    </div>
+</div>
+
+<!-- ========================================================
+     MODALE GESTION DES PHOTOS
+     ======================================================== -->
+
+<div id="fond-modal-photos" class="fond-modal-gestion">
+    <div class="modal-gestion">
+        <h2>Gestion des photos</h2>
+
+        <div class="formulaire-gestion">
+            <form id="formulaire-photo">
+                <input type="hidden" id="champ-photo-id-gestion">
+                <div class="form-grid">
+                    <div class="form-groupe large">
+                        <label for="champ-photo-lieu">Lieu *</label>
+                        <select id="champ-photo-lieu" required></select>
+                    </div>
+                    <div class="form-groupe large">
+                        <label for="champ-photo-fichier">Fichier photo *</label>
+                        <input id="champ-photo-fichier" type="file" accept="image/*">
+                    </div>
+                    <div class="form-groupe">
+                        <label for="champ-photo-titre">Titre</label>
+                        <input id="champ-photo-titre">
+                    </div>
+                    <div class="form-groupe">
+                        <label for="champ-photo-date">Date de la photo</label>
+                        <input id="champ-photo-date" type="date">
+                    </div>
+                    <div class="form-groupe">
+                        <label for="champ-photo-ordre">Ordre</label>
+                        <input id="champ-photo-ordre" type="number" min="1" step="1" value="1">
+                    </div>
+                    <div class="form-groupe">
+                        <label for="champ-photo-principale">Photo principale</label>
+                        <select id="champ-photo-principale">
+                            <option value="false">Non</option>
+                            <option value="true">Oui</option>
+                        </select>
+                    </div>
+                    <div class="form-groupe large">
+                        <label for="champ-photo-description">Description</label>
+                        <textarea id="champ-photo-description"></textarea>
+                    </div>
+                </div>
+                <div id="message-photo-formulaire"></div>
+                <div class="actions-gestion-formulaire">
+                    <button type="button" id="boutonNouveauPhoto" class="bouton">Nouveau</button>
+                    <button type="submit" id="boutonEnregistrerPhoto" class="bouton bouton-principal">Enregistrer</button>
+                    <button type="button" id="boutonFermerPhotos" class="bouton">Fermer</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="liste-photos-gestion" class="liste-gestion"></div>
+    </div>
+</div>
+
+
+<script
+    src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js">
+</script>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
+
+<script>
+
+
+// ==========================================================
+// CONFIGURATION
+// ==========================================================
+
+const SUPABASE_URL =
+    "https://xiddtmzehxwfncnyuvid.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_5Sgu_vod3bSaf1ecQeaD8A_BqZ_8HYj";
+
+const MAPTILER_KEY =
+    "knGFRadbYDcoOEytbBIZ";
+
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+// ==========================================================
+// ELEMENTS
+// ==========================================================
+
+const compteur =
+    document.getElementById("compteur");
+
+const message =
+    document.getElementById("message");
+
+const filtreVoyage =
+    document.getElementById("filtreVoyage");
+
+const filtreContexte =
+    document.getElementById("filtreContexte");
+
+const filtreTypeLieu =
+    document.getElementById("filtreTypeLieu");
+
+const filtreExperience =
+    document.getElementById("filtreExperience");
+
+const modeCarte =
+    document.getElementById("modeCarte");
+
+const boutonConnexion =
+    document.getElementById("boutonConnexion");
+
+const boutonDeconnexion =
+    document.getElementById("boutonDeconnexion");
+
+const boutonAjouter =
+    document.getElementById("boutonAjouter");
+
+const boutonVoyages =
+    document.getElementById("boutonVoyages");
+
+const boutonPhotos =
+    document.getElementById("boutonPhotos");
+
+const statutAuth =
+    document.getElementById("statut-auth");
+
+const fondModal =
+    document.getElementById("fond-modal");
+
+const titreModal =
+    document.getElementById("titre-modal");
+
+const formulaireLieu =
+    document.getElementById("formulaire-lieu");
+
+const boutonAnnuler =
+    document.getElementById("boutonAnnuler");
+
+const boutonEnregistrer =
+    document.getElementById("boutonEnregistrer");
+
+const messageFormulaire =
+    document.getElementById("message-formulaire");
+
+
+// ==========================================================
+// DONNEES
+// ==========================================================
+
+let tousLesLieux = [];
+
+let tousLesVoyages = [];
+
+let toutesLesVisites = [];
+
+let tousLesTypesContexte = [];
+
+let toutesLesPhotos = [];
+
+let voyagesParId = {};
+
+let visitesParLieu = {};
+
+let typesContexteParCode = {};
+
+let photosParLieu = {};
+
+let marqueurs = [];
+
+let modeAffichage = "marqueurs";
+
+let utilisateurConnecte = null;
+
+
+// ==========================================================
+// ERREURS
+// ==========================================================
+
+function afficherErreur(texte) {
+
+    console.error(texte);
+
+    message.textContent =
+        "⚠️ " + texte;
+
+    message.style.display =
+        "block";
+}
+
+
+// ==========================================================
+// ECHAPPEMENT HTML
+// ==========================================================
+
+function echapperHTML(texte) {
+
+    if (
+        texte === null ||
+        texte === undefined
+    ) {
+        return "";
+    }
+
+    return String(texte)
+
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// ==========================================================
+// DATES
+// ==========================================================
+
+function formaterDate(date) {
+
+    if (!date) {
+        return "";
+    }
+
+    const morceaux =
+        String(date).split("-");
+
+    if (morceaux.length !== 3) {
+        return String(date);
+    }
+
+    return (
+        morceaux[2] +
+        "/" +
+        morceaux[1] +
+        "/" +
+        morceaux[0]
+    );
+}
+
+
+function afficherPeriode(
+    dateDebut,
+    dateFin,
+    precision,
+    dateTexte
+) {
+
+    if (dateTexte) {
+        return echapperHTML(dateTexte);
+    }
+
+    if (!dateDebut) {
+        return "";
+    }
+
+    const debut =
+        formaterDate(dateDebut);
+
+    if (
+        !dateFin ||
+        dateFin === dateDebut
+    ) {
+        return debut;
+    }
+
+    return (
+        debut +
+        " → " +
+        formaterDate(dateFin)
+    );
+}
+
+
+// ==========================================================
+// PHOTOS
+// ==========================================================
+
+function construireUrlPhoto(fichier) {
+
+    if (!fichier) {
+        return "";
+    }
+
+    const cheminEncode =
+        String(fichier)
+            .split("/")
+            .map(
+                segment =>
+                    encodeURIComponent(segment)
+            )
+            .join("/");
+
+    return (
+        SUPABASE_URL +
+        "/storage/v1/object/public/photos/" +
+        cheminEncode
+    );
+}
+
+
+// ==========================================================
+// CARTE
+// ==========================================================
+
+let map;
+
+try {
+
+    map =
+        new maplibregl.Map({
+
+            container: "map",
+
+            style:
+                "https://api.maptiler.com/maps/streets-v4/style.json?key=" +
+                MAPTILER_KEY,
+
+            center: [
+                2.5,
+                46.5
+            ],
+
+            zoom: 4
+        });
+
+
+    map.addControl(
+        new maplibregl.NavigationControl(),
+        "top-right"
+    );
+
+
+    // Important :
+    // les données peuvent être chargées avant que
+    // le style de la carte soit prêt.
+    map.on(
+        "load",
+        function() {
+            afficherLieuxFiltres();
+        }
+    );
+
+
+} catch (erreur) {
+
+    afficherErreur(
+        "Impossible d'initialiser la carte : " +
+        erreur.message
+    );
+}
+
+
+// ==========================================================
+// VISITE
+// ==========================================================
+
+function obtenirVisites(lieu) {
+
+    if (!lieu || !lieu.lieu_id) {
+        return [];
+    }
+
+    const visites =
+        visitesParLieu[lieu.lieu_id];
+
+    if (!Array.isArray(visites)) {
+        return [];
+    }
+
+    return visites;
+}
+
+
+function obtenirVisite(lieu) {
+
+    const visites = obtenirVisites(lieu);
+
+    return visites.length ? visites[0] : null;
+}
+
+
+function obtenirNomContexte(visite) {
+
+    if (
+        !visite ||
+        !visite.type_contexte
+    ) {
+        return "";
+    }
+
+    const contexte =
+        typesContexteParCode[
+            visite.type_contexte
+        ];
+
+    if (contexte) {
+
+        return (
+            contexte.nom ||
+            contexte.code ||
+            visite.type_contexte
+        );
+    }
+
+    return visite.type_contexte;
+}
+
+
+// ==========================================================
+// FICHE
+// ==========================================================
+
+function creerFiche(
+    lieu,
+    voyage,
+    visite,
+    photos,
+    visites = []
+) {
+
+    let html = `
+        <div class="fiche-lieu">
+    `;
+
+
+    let photoPrincipale = null;
+
+    if (Array.isArray(photos)) {
+
+        photoPrincipale =
+            photos.find(
+                photo =>
+                    photo.photo_principale === true
+            ) || photos[0];
+    }
+
+
+    if (
+        photoPrincipale &&
+        photoPrincipale.fichier
+    ) {
+
+        const urlPhoto =
+            construireUrlPhoto(
+                photoPrincipale.fichier
+            );
+
+        html += `
+            <img
+                class="fiche-photo"
+                src="${echapperHTML(urlPhoto)}"
+                alt="${echapperHTML(
+                    photoPrincipale.titre ||
+                    lieu.nom
+                )}"
+            >
+        `;
+    }
+
+
+    if (
+        Array.isArray(photos) &&
+        photos.length > 1
+    ) {
+
+        html += `
+            <div class="fiche-galerie">
+        `;
+
+        photos.forEach(
+            photo => {
+
+                if (!photo.fichier) {
+                    return;
+                }
+
+                const urlPhoto =
+                    construireUrlPhoto(
+                        photo.fichier
+                    );
+
+                html += `
+                    <img
+                        class="fiche-miniature"
+                        src="${echapperHTML(urlPhoto)}"
+                        data-photo-url="${echapperHTML(urlPhoto)}"
+                        data-photo-titre="${echapperHTML(
+                            photo.titre ||
+                            lieu.nom
+                        )}"
+                        alt="${echapperHTML(
+                            photo.titre ||
+                            lieu.nom
+                        )}"
+                    >
+                `;
+            }
+        );
+
+        html += `
+            </div>
+        `;
+    }
+
+
+    html += `
+        <div class="fiche-titre">
+            ${echapperHTML(lieu.nom)}
+        </div>
+    `;
+
+
+    const localisation = [
+
+        lieu.ville,
+        lieu.pays
+
+    ]
+        .filter(Boolean)
+        .map(echapperHTML)
+        .join(" · ");
+
+
+    if (localisation) {
+
+        html += `
+            <div class="fiche-localisation">
+                📍 ${localisation}
+            </div>
+        `;
+    }
+
+
+    html += `
+        <div class="fiche-infos">
+    `;
+
+
+    if (voyage) {
+
+        html += `
+            <div class="fiche-rubrique">
+                ✈️ <strong>Voyage :</strong>
+                ${echapperHTML(voyage.nom)}
+            </div>
+        `;
+    }
+
+
+    const dateDebut =
+        visite?.date_debut ||
+        lieu.date_debut;
+
+    const dateFin =
+        visite?.date_fin ||
+        lieu.date_fin;
+
+    const datePrecision =
+        visite?.date_precision ||
+        lieu.date_precision;
+
+    const dateTexte =
+        visite?.date_texte ||
+        lieu.date_texte;
+
+    const dateLieu =
+        afficherPeriode(
+            dateDebut,
+            dateFin,
+            datePrecision,
+            dateTexte
+        );
+
+
+    if (dateLieu) {
+
+        html += `
+            <div class="fiche-rubrique">
+                📅 <strong>Date :</strong>
+                ${dateLieu}
+            </div>
+        `;
+    }
+
+
+    const nomContexte =
+        obtenirNomContexte(visite);
+
+
+    if (nomContexte) {
+
+        html += `
+            <div class="fiche-rubrique">
+                🧭 <strong>Contexte :</strong>
+                ${echapperHTML(nomContexte)}
+            </div>
+        `;
+    }
+
+
+    if (visite?.type_experience) {
+
+        html += `
+            <div class="fiche-rubrique">
+                ✨ <strong>Expérience :</strong>
+                ${echapperHTML(
+                    visite.type_experience
+                )}
+            </div>
+        `;
+    }
+
+
+    const note =
+        visite?.note ??
+        lieu.note;
+
+
+    if (
+        note !== null &&
+        note !== undefined
+    ) {
+
+        html += `
+            <div class="fiche-rubrique">
+                ⭐ <strong>Note :</strong>
+                ${echapperHTML(note)}/5
+            </div>
+        `;
+    }
+
+
+    if (lieu.type_lieu) {
+
+        html += `
+            <div class="fiche-rubrique">
+                📍 <strong>Type :</strong>
+                ${echapperHTML(
+                    lieu.type_lieu
+                )}
+            </div>
+        `;
+    }
+
+
+    if (lieu.adresse) {
+
+        html += `
+            <div class="fiche-rubrique">
+                🏠 <strong>Adresse :</strong><br>
+                ${echapperHTML(
+                    lieu.adresse
+                )}
+            </div>
+        `;
+    }
+
+
+    html += `
+        </div>
+    `;
+
+
+    const description =
+        visite?.description ||
+        lieu.description;
+
+
+    if (description) {
+
+        html += `
+            <div class="fiche-description">
+
+                <div class="fiche-sous-titre">
+                    Description
+                </div>
+
+                <div>
+                    ${echapperHTML(
+                        description
+                    )}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    const notes =
+        visite?.notes ||
+        lieu.notes;
+
+
+    if (notes) {
+
+        html += `
+            <div class="fiche-notes">
+
+                <div class="fiche-sous-titre">
+                    Notes personnelles
+                </div>
+
+                <div>
+                    ${echapperHTML(
+                        notes
+                    )}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    /*
+     * HISTORIQUE DES VISITES
+     *
+     * Un lieu peut être visité plusieurs fois. On affiche
+     * maintenant toutes les visites dans la fiche, et non
+     * uniquement visites[0].
+     */
+    if (Array.isArray(visites) && visites.length > 0) {
+
+        const visitesTriees =
+            visites
+                .slice()
+                .sort((a, b) => {
+                    const da =
+                        a.date_debut ||
+                        a.date_texte ||
+                        "9999";
+
+                    const db =
+                        b.date_debut ||
+                        b.date_texte ||
+                        "9999";
+
+                    return String(db).localeCompare(
+                        String(da)
+                    );
+                });
+
+        html += `
+            <div class="fiche-visites">
+                <div class="fiche-sous-titre">
+                    🗓️ ${visitesTriees.length > 1 ? "Visites" : "Visite"}
+                </div>
+        `;
+
+        visitesTriees.forEach(
+            visiteHistorique => {
+
+                const nomContexteHistorique =
+                    obtenirNomContexte(
+                        visiteHistorique
+                    );
+
+                const nomVoyageHistorique =
+                    obtenirNomVoyage(
+                        visiteHistorique.voyage_id
+                    );
+
+                const dateHistorique =
+                    afficherPeriode(
+                        visiteHistorique.date_debut,
+                        visiteHistorique.date_fin,
+                        visiteHistorique.date_precision,
+                        visiteHistorique.date_texte
+                    ) ||
+                    "Date non renseignée";
+
+                html += `
+                    <div class="fiche-visite">
+                        <div>
+                            📅 <strong>${echapperHTML(dateHistorique)}</strong>
+                        </div>
+                `;
+
+                if (nomContexteHistorique) {
+                    html += `
+                        <div>
+                            🧭 ${echapperHTML(nomContexteHistorique)}
+                        </div>
+                    `;
+                }
+
+                if (nomVoyageHistorique) {
+                    html += `
+                        <div>
+                            ✈️ ${echapperHTML(nomVoyageHistorique)}
+                        </div>
+                    `;
+                }
+
+                if (visiteHistorique.type_experience) {
+                    html += `
+                        <div>
+                            ✨ ${echapperHTML(
+                                visiteHistorique.type_experience
+                            )}
+                        </div>
+                    `;
+                }
+
+                if (
+                    visiteHistorique.note !== null &&
+                    visiteHistorique.note !== undefined
+                ) {
+                    html += `
+                        <div>
+                            ⭐ ${echapperHTML(
+                                visiteHistorique.note
+                            )}/5
+                        </div>
+                    `;
+                }
+
+                if (visiteHistorique.description) {
+                    html += `
+                        <div class="fiche-visite-description">
+                            ${echapperHTML(
+                                visiteHistorique.description
+                            )}
+                        </div>
+                    `;
+                }
+
+                html += `
+                    </div>
+                `;
+            }
+        );
+
+        html += `
+            </div>
+        `;
+    }
+
+
+    if (utilisateurConnecte) {
+
+        html += `
+            <div class="actions-lieu">
+
+                <button
+                    class="bouton bouton-modifier"
+                    data-lieu-id="${echapperHTML(
+                        lieu.lieu_id
+                    )}"
+                >
+                    ✏️ Modifier
+                </button>
+
+                <button
+                    class="bouton bouton-danger bouton-supprimer"
+                    data-lieu-id="${echapperHTML(
+                        lieu.lieu_id
+                    )}"
+                >
+                    🗑️ Supprimer
+                </button>
+
+            </div>
+        `;
+    }
+
+
+    html += `
+        </div>
+    `;
+
+    return html;
+}
+
+
+// ==========================================================
+// FILTRES
+// ==========================================================
+
+function remplirFiltres() {
+
+    filtreVoyage.innerHTML = `
+        <option value="">
+            Tous les voyages
+        </option>
+    `;
+
+
+    [...tousLesVoyages]
+
+        .sort(
+            (a, b) =>
+                String(a.nom || "")
+                    .localeCompare(
+                        String(b.nom || ""),
+                        "fr"
+                    )
+        )
+
+        .forEach(
+            voyage => {
+
+                if (!voyage.voyage_id) {
+                    return;
+                }
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    voyage.voyage_id;
+
+                option.textContent =
+                    voyage.nom ||
+                    voyage.voyage_id;
+
+                filtreVoyage.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    filtreContexte.innerHTML = `
+        <option value="">
+            Tous les contextes
+        </option>
+    `;
+
+
+    const contextesUtilises =
+        new Set(
+            toutesLesVisites
+                .map(
+                    visite =>
+                        visite.type_contexte
+                )
+                .filter(Boolean)
+        );
+
+
+    [...tousLesTypesContexte]
+
+        .filter(
+            contexte =>
+                contextesUtilises.has(
+                    contexte.code
+                )
+        )
+
+        .sort(
+            (a, b) =>
+                String(
+                    a.nom || a.code || ""
+                ).localeCompare(
+                    String(
+                        b.nom || b.code || ""
+                    ),
+                    "fr"
+                )
+        )
+
+        .forEach(
+            contexte => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    contexte.code;
+
+                option.textContent =
+                    contexte.nom ||
+                    contexte.code;
+
+                filtreContexte.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    filtreTypeLieu.innerHTML = `
+        <option value="">
+            Tous les types
+        </option>
+    `;
+
+
+    [
+        ...new Set(
+            tousLesLieux
+                .map(
+                    lieu =>
+                        lieu.type_lieu
+                )
+                .filter(Boolean)
+        )
+    ]
+
+        .sort(
+            (a, b) =>
+                String(a).localeCompare(
+                    String(b),
+                    "fr"
+                )
+        )
+
+        .forEach(
+            type => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    type;
+
+                option.textContent =
+                    type;
+
+                filtreTypeLieu.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    filtreExperience.innerHTML = `
+        <option value="">
+            Toutes les expériences
+        </option>
+    `;
+
+
+    [
+        ...new Set(
+            toutesLesVisites
+                .map(
+                    visite =>
+                        visite.type_experience
+                )
+                .filter(Boolean)
+        )
+    ]
+
+        .sort(
+            (a, b) =>
+                String(a).localeCompare(
+                    String(b),
+                    "fr"
+                )
+        )
+
+        .forEach(
+            experience => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    experience;
+
+                option.textContent =
+                    experience;
+
+                filtreExperience.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    const champVoyage =
+        document.getElementById(
+            "champ-voyage"
+        );
+
+    champVoyage.innerHTML = `
+        <option value="">
+            Aucun voyage
+        </option>
+    `;
+
+
+    [...tousLesVoyages]
+
+        .sort(
+            (a, b) =>
+                String(a.nom || "")
+                    .localeCompare(
+                        String(b.nom || ""),
+                        "fr"
+                    )
+        )
+
+        .forEach(
+            voyage => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    voyage.voyage_id;
+
+                option.textContent =
+                    voyage.nom;
+
+                champVoyage.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    const champContexte =
+        document.getElementById(
+            "champ-contexte"
+        );
+
+    champContexte.innerHTML = `
+        <option value="">
+            Aucun contexte
+        </option>
+    `;
+
+
+    [...tousLesTypesContexte]
+
+        .sort(
+            (a, b) =>
+                String(
+                    a.nom || a.code || ""
+                ).localeCompare(
+                    String(
+                        b.nom || b.code || ""
+                    ),
+                    "fr"
+                )
+        )
+
+        .forEach(
+            contexte => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    contexte.code;
+
+                option.textContent =
+                    contexte.nom ||
+                    contexte.code;
+
+                champContexte.appendChild(
+                    option
+                );
+            }
+        );
+}
+
+
+// ==========================================================
+// AFFICHAGE
+// ==========================================================
+
+function supprimerMarqueurs() {
+
+    marqueurs.forEach(
+        marqueur =>
+            marqueur.remove()
+    );
+
+    marqueurs = [];
+}
+
+
+function supprimerHeatmap() {
+
+    if (!map || !map.isStyleLoaded()) {
+        return;
+    }
+
+    if (
+        map.getLayer(
+            "heatmap-lieux"
+        )
+    ) {
+
+        map.removeLayer(
+            "heatmap-lieux"
+        );
+    }
+
+    if (
+        map.getSource(
+            "lieux-heatmap"
+        )
+    ) {
+
+        map.removeSource(
+            "lieux-heatmap"
+        );
+    }
+}
+
+
+function afficherLieuxFiltres() {
+
+    if (
+        !map ||
+        !map.isStyleLoaded()
+    ) {
+        return;
+    }
+
+
+    supprimerMarqueurs();
+
+    supprimerHeatmap();
+
+
+    const voyageSelectionne =
+        filtreVoyage.value;
+
+    const contexteSelectionne =
+        filtreContexte.value;
+
+    const typeLieuSelectionne =
+        filtreTypeLieu.value;
+
+    const experienceSelectionnee =
+        filtreExperience.value;
+
+
+    const lieuxFiltres =
+        tousLesLieux.filter(
+            lieu => {
+
+                const visites =
+                    obtenirVisites(lieu);
+
+
+                /*
+                 * Un lieu peut maintenant avoir plusieurs visites.
+                 * Un filtre "voyage / contexte / expérience" doit
+                 * conserver le lieu si AU MOINS UNE de ses visites
+                 * correspond.
+                 */
+
+                if (voyageSelectionne) {
+
+                    const correspond =
+                        visites.some(
+                            visite =>
+                                String(visite.voyage_id || "") ===
+                                String(voyageSelectionne)
+                        ) ||
+                        String(lieu.voyage_id || "") ===
+                            String(voyageSelectionne);
+
+                    if (!correspond) {
+                        return false;
+                    }
+                }
+
+
+                if (contexteSelectionne) {
+
+                    const correspond =
+                        visites.some(
+                            visite =>
+                                visite.type_contexte ===
+                                contexteSelectionne
+                        );
+
+                    if (!correspond) {
+                        return false;
+                    }
+                }
+
+
+                if (
+                    typeLieuSelectionne &&
+                    lieu.type_lieu !==
+                        typeLieuSelectionne
+                ) {
+                    return false;
+                }
+
+
+                if (experienceSelectionnee) {
+
+                    const correspond =
+                        visites.some(
+                            visite =>
+                                visite.type_experience ===
+                                experienceSelectionnee
+                        );
+
+                    if (!correspond) {
+                        return false;
+                    }
+                }
+
+
+                return (
+                    lieu.latitude !== null &&
+                    lieu.longitude !== null
+                );
+
+            }
+        );
+
+
+    compteur.textContent =
+        lieuxFiltres.length +
+        (
+            lieuxFiltres.length > 1
+                ? " lieux"
+                : " lieu"
+        );
+
+
+    if (lieuxFiltres.length === 0) {
+        return;
+    }
+
+
+    const bounds =
+        new maplibregl.LngLatBounds();
+
+
+    lieuxFiltres.forEach(
+        lieu => {
+
+            bounds.extend([
+
+                Number(
+                    lieu.longitude
+                ),
+
+                Number(
+                    lieu.latitude
+                )
+
+            ]);
+
+        }
+    );
+
+
+    if (
+        modeAffichage === "heatmap"
+    ) {
+
+        const geojson = {
+
+            type: "FeatureCollection",
+
+            features:
+                lieuxFiltres.map(
+                    lieu => ({
+
+                        type: "Feature",
+
+                        geometry: {
+
+                            type: "Point",
+
+                            coordinates: [
+
+                                Number(
+                                    lieu.longitude
+                                ),
+
+                                Number(
+                                    lieu.latitude
+                                )
+
+                            ]
+
+                        },
+
+                        properties: {
+
+                            lieu_id:
+                                lieu.lieu_id
+
+                        }
+
+                    })
+                )
+        };
+
+
+        map.addSource(
+            "lieux-heatmap",
+            {
+
+                type: "geojson",
+
+                data: geojson
+
+            }
+        );
+
+
+        map.addLayer({
+
+            id: "heatmap-lieux",
+
+            type: "heatmap",
+
+            source: "lieux-heatmap",
+
+            maxzoom: 12,
+
+            paint: {
+
+                "heatmap-intensity": [
+
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+
+                    2, 0.7,
+                    4, 0.9,
+                    6, 1.15,
+                    8, 1.4,
+                    10, 1.7,
+                    12, 2.0
+
+                ],
+
+                "heatmap-radius": [
+
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+
+                    2, 14,
+                    4, 20,
+                    6, 27,
+                    8, 34,
+                    10, 40,
+                    12, 46
+
+                ],
+
+                "heatmap-opacity": [
+
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+
+                    2, 0.70,
+                    5, 0.75,
+                    8, 0.80,
+                    12, 0.84
+
+                ],
+
+                "heatmap-color": [
+
+                    "interpolate",
+                    ["linear"],
+                    ["heatmap-density"],
+
+                    0,
+                    "rgba(33,102,172,0)",
+
+                    0.08,
+                    "rgba(33,102,172,0.30)",
+
+                    0.20,
+                    "rgba(103,169,207,0.55)",
+
+                    0.35,
+                    "rgba(209,229,240,0.70)",
+
+                    0.50,
+                    "rgba(253,219,199,0.78)",
+
+                    0.65,
+                    "rgba(239,138,98,0.84)",
+
+                    0.80,
+                    "rgba(215,48,39,0.90)",
+
+                    1,
+                    "rgba(165,0,38,0.96)"
+
+                ]
+
+            }
+
+        });
+
+
+        map.fitBounds(
+            bounds,
+            {
+                padding: 70,
+                maxZoom: 6,
+                duration: 700
+            }
+        );
+
+        return;
+    }
+
+
+    lieuxFiltres.forEach(
+        lieu => {
+
+            const voyage =
+                voyagesParId[
+                    lieu.voyage_id
+                ];
+
+            const visites =
+                obtenirVisites(lieu);
+
+            const visite =
+                visites[0] || null;
+
+            const photosLieu =
+                photosParLieu[
+                    lieu.lieu_id
+                ] || [];
+
+
+            const popup =
+                new maplibregl.Popup({
+
+                    offset: 25,
+
+                    maxWidth:
+                        "420px"
+
+                });
+
+
+            popup.setHTML(
+
+                creerFiche(
+
+                    lieu,
+                    voyage,
+                    visite,
+                    photosLieu,
+                    visites
+
+                )
+
+            );
+
+
+            const marqueur =
+                new maplibregl.Marker()
+
+                    .setLngLat([
+
+                        Number(
+                            lieu.longitude
+                        ),
+
+                        Number(
+                            lieu.latitude
+                        )
+
+                    ])
+
+                    .setPopup(popup)
+
+                    .addTo(map);
+
+
+            marqueurs.push(
+                marqueur
+            );
+
+        }
+    );
+
+
+    map.fitBounds(
+
+        bounds,
+
+        {
+
+            padding: 70,
+
+            maxZoom: 6,
+
+            duration: 700
+
+        }
+
+    );
+}
+
+
+// ==========================================================
+// LECTURE SUPABASE
+// ==========================================================
+
+async function recupererTable(
+    table,
+    select = "*",
+    order = null
+) {
+
+    let url =
+        SUPABASE_URL +
+        "/rest/v1/" +
+        table +
+        "?select=" +
+        encodeURIComponent(select);
+
+
+    if (order) {
+
+        url +=
+            "&order=" +
+            encodeURIComponent(order);
+    }
+
+
+    const response =
+        await fetch(
+
+            url,
+
+            {
+
+                method: "GET",
+
+                headers: {
+
+                    "apikey":
+                        SUPABASE_KEY,
+
+                    "Authorization":
+                        "Bearer " +
+                        SUPABASE_KEY,
+
+                    "Accept":
+                        "application/json"
+
+                }
+
+            }
+
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            table +
+            " : HTTP " +
+            response.status +
+            " — " +
+            await response.text()
+        );
+    }
+
+
+    return await response.json();
+}
+
+
+// ==========================================================
+// CHARGEMENT INITIAL
+// ==========================================================
+
+async function chargerDonnees() {
+
+    compteur.textContent =
+        "Connexion à Supabase...";
+
+    try {
+
+        const [
+
+            lieux,
+            voyages,
+            visites,
+            typesContexte,
+            photos
+
+        ] = await Promise.all([
+
+            recupererTable(
+                "lieux",
+                "*",
+                "lieu_id.asc"
+            ),
+
+            recupererTable(
+                "voyages",
+                "*",
+                "voyage_id.asc"
+            ),
+
+            recupererTable(
+                "visites",
+                "*",
+                "lieu_id.asc"
+            ),
+
+            recupererTable(
+                "types_contexte",
+                "code,nom",
+                "nom.asc"
+            ),
+
+            recupererTable(
+                "photos",
+                "*",
+                "ordre.asc"
+            )
+
+        ]);
+
+
+        tousLesLieux =
+            lieux;
+
+        tousLesVoyages =
+            voyages;
+
+        toutesLesVisites =
+            visites;
+
+        tousLesTypesContexte =
+            typesContexte;
+
+        toutesLesPhotos =
+            photos;
+
+
+        reconstruireTousLesIndex();
+
+        remplirFiltres();
+
+        afficherLieuxFiltres();
+
+
+    } catch (erreur) {
+
+        console.error(erreur);
+
+        afficherErreur(
+            "Impossible de charger les données : " +
+            erreur.message
+        );
+    }
+}
+
+
+// ==========================================================
+// RECONSTRUIRE TOUS LES INDEX
+// ==========================================================
+
+function reconstruireTousLesIndex() {
+
+    voyagesParId = {};
+
+    tousLesVoyages.forEach(
+        voyage => {
+
+            if (voyage.voyage_id) {
+
+                voyagesParId[
+                    voyage.voyage_id
+                ] = voyage;
+
+            }
+
+        }
+    );
+
+
+    reconstruireIndexVisites();
+
+
+    typesContexteParCode = {};
+
+    tousLesTypesContexte.forEach(
+        contexte => {
+
+            if (contexte.code) {
+
+                typesContexteParCode[
+                    contexte.code
+                ] = contexte;
+
+            }
+
+        }
+    );
+
+
+    photosParLieu = {};
+
+    toutesLesPhotos.forEach(
+        photo => {
+
+            if (!photo.lieu_id) {
+                return;
+            }
+
+            if (
+                !photosParLieu[
+                    photo.lieu_id
+                ]
+            ) {
+
+                photosParLieu[
+                    photo.lieu_id
+                ] = [];
+
+            }
+
+            photosParLieu[
+                photo.lieu_id
+            ].push(photo);
+
+        }
+    );
+}
+
+
+// ==========================================================
+// RECONSTRUIRE INDEX VISITES
+// ==========================================================
+
+function reconstruireIndexVisites() {
+
+    visitesParLieu = {};
+
+    toutesLesVisites.forEach(
+        visite => {
+
+            if (!visite.lieu_id) {
+                return;
+            }
+
+            if (
+                !visitesParLieu[
+                    visite.lieu_id
+                ]
+            ) {
+
+                visitesParLieu[
+                    visite.lieu_id
+                ] = [];
+
+            }
+
+            visitesParLieu[
+                visite.lieu_id
+            ].push(visite);
+
+        }
+    );
+}
+
+
+// ==========================================================
+// AUTHENTIFICATION
+// ==========================================================
+
+function mettreAJourInterfaceAvecSession(
+    session
+) {
+
+    utilisateurConnecte =
+        session?.user || null;
+
+    afficherInterfaceAuthentification();
+}
+
+
+function afficherInterfaceAuthentification() {
+
+    if (utilisateurConnecte) {
+
+        statutAuth.textContent =
+            "Connecté";
+
+        boutonConnexion.style.display =
+            "none";
+
+        boutonDeconnexion.style.display =
+            "inline-block";
+
+        boutonAjouter.style.display =
+            "inline-block";
+
+        boutonVoyages.style.display =
+            "inline-block";
+
+        boutonPhotos.style.display =
+            "inline-block";
+
+    } else {
+
+        statutAuth.textContent =
+            "Non connecté";
+
+        boutonConnexion.style.display =
+            "inline-block";
+
+        boutonDeconnexion.style.display =
+            "none";
+
+        boutonAjouter.style.display =
+            "none";
+
+        boutonVoyages.style.display =
+            "none";
+
+        boutonPhotos.style.display =
+            "none";
+    }
+
+
+    afficherLieuxFiltres();
+}
+
+
+// ==========================================================
+// CONNEXION
+// ==========================================================
+
+boutonConnexion.addEventListener(
+    "click",
+    async function() {
+
+        const email =
+            prompt(
+                "Adresse e-mail :"
+            );
+
+        if (!email) {
+            return;
+        }
+
+
+        const motDePasse =
+            prompt(
+                "Mot de passe :"
+            );
+
+        if (!motDePasse) {
+            return;
+        }
+
+
+        message.style.display =
+            "none";
+
+
+        const {
+            error
+        } =
+        await supabaseClient.auth.signInWithPassword({
+
+            email:
+                email,
+
+            password:
+                motDePasse
+
+        });
+
+
+        if (error) {
+
+            afficherErreur(
+                "Connexion impossible : " +
+                error.message
+            );
+
+            return;
+        }
+
+    }
+);
+
+
+// ==========================================================
+// DECONNEXION
+// ==========================================================
+
+boutonDeconnexion.addEventListener(
+    "click",
+    async function() {
+
+        const {
+            error
+        } =
+        await supabaseClient.auth.signOut();
+
+
+        if (error) {
+
+            afficherErreur(
+                "Erreur de déconnexion : " +
+                error.message
+            );
+
+            return;
+        }
+
+    }
+);
+
+
+// ==========================================================
+// GENERATION ID LIEU
+// ==========================================================
+
+function genererNouvelIdLieu() {
+
+    let maximum = 0;
+
+
+    tousLesLieux.forEach(
+        lieu => {
+
+            const match =
+                String(
+                    lieu.lieu_id || ""
+                ).match(
+                    /^L(\d+)$/
+                );
+
+            if (match) {
+
+                maximum =
+                    Math.max(
+                        maximum,
+                        Number(match[1])
+                    );
+
+            }
+
+        }
+    );
+
+
+    return (
+        "L" +
+        String(
+            maximum + 1
+        ).padStart(4, "0")
+    );
+}
+
+
+// ==========================================================
+// GENERATION ID VISITE
+// ==========================================================
+
+function genererNouvelIdVisite() {
+
+    return (
+        "VIS-" +
+        crypto.randomUUID()
+    );
+}
+
+
+// ==========================================================
+// OUVRIR AJOUT
+// ==========================================================
+
+function ouvrirFormulaireAjout() {
+
+    formulaireLieu.reset();
+
+    document.getElementById(
+        "champ-lieu-id"
+    ).value = "";
+
+
+    titreModal.textContent =
+        "Ajouter un lieu";
+
+    boutonGererVisites.style.display =
+        "none";
+
+
+    messageFormulaire.textContent =
+        "";
+
+
+    fondModal.style.display =
+        "flex";
+}
+
+
+// ==========================================================
+// OUVRIR MODIFICATION
+// ==========================================================
+
+function ouvrirFormulaireModification(
+    lieuId
+) {
+
+    const lieu =
+        tousLesLieux.find(
+            item =>
+                item.lieu_id === lieuId
+        );
+
+
+    if (!lieu) {
+
+        afficherErreur(
+            "Lieu introuvable."
+        );
+
+        return;
+    }
+
+
+    const visite =
+        obtenirVisite(lieu);
+
+
+    titreModal.textContent =
+        "Modifier : " +
+        lieu.nom;
+
+    boutonGererVisites.style.display =
+        "inline-block";
+
+
+    document.getElementById(
+        "champ-lieu-id"
+    ).value =
+        lieu.lieu_id || "";
+
+
+    document.getElementById(
+        "champ-nom"
+    ).value =
+        lieu.nom || "";
+
+
+    document.getElementById(
+        "champ-ville"
+    ).value =
+        lieu.ville || "";
+
+
+    document.getElementById(
+        "champ-pays"
+    ).value =
+        lieu.pays || "";
+
+
+    document.getElementById(
+        "champ-latitude"
+    ).value =
+        lieu.latitude ?? "";
+
+
+    document.getElementById(
+        "champ-longitude"
+    ).value =
+        lieu.longitude ?? "";
+
+
+    document.getElementById(
+        "champ-type-lieu"
+    ).value =
+        lieu.type_lieu || "";
+
+
+    document.getElementById(
+        "champ-voyage"
+    ).value =
+        visite?.voyage_id ||
+        lieu.voyage_id ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-debut"
+    ).value =
+        visite?.date_debut ||
+        lieu.date_debut ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-fin"
+    ).value =
+        visite?.date_fin ||
+        lieu.date_fin ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-texte"
+    ).value =
+        visite?.date_texte ||
+        lieu.date_texte ||
+        "";
+
+
+    document.getElementById(
+        "champ-contexte"
+    ).value =
+        visite?.type_contexte ||
+        "";
+
+
+    document.getElementById(
+        "champ-experience"
+    ).value =
+        visite?.type_experience ||
+        lieu.type_experience ||
+        "";
+
+
+    document.getElementById(
+        "champ-note"
+    ).value =
+        visite?.note ??
+        lieu.note ??
+        "";
+
+
+    document.getElementById(
+        "champ-adresse"
+    ).value =
+        lieu.adresse || "";
+
+
+    document.getElementById(
+        "champ-description"
+    ).value =
+        visite?.description ||
+        lieu.description ||
+        "";
+
+
+    document.getElementById(
+        "champ-notes"
+    ).value =
+        visite?.notes ||
+        lieu.notes ||
+        "";
+
+
+    messageFormulaire.textContent =
+        "";
+
+
+    fondModal.style.display =
+        "flex";
+}
+
+
+// ==========================================================
+// FERMER FORMULAIRE
+// ==========================================================
+
+function fermerFormulaire() {
+
+    fondModal.style.display =
+        "none";
+}
+
+
+boutonAjouter.addEventListener(
+    "click",
+    ouvrirFormulaireAjout
+);
+
+
+boutonAnnuler.addEventListener(
+    "click",
+    fermerFormulaire
+);
+
+
+fondModal.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            fondModal
+        ) {
+
+            fermerFormulaire();
+
+        }
+
+    }
+);
+
+
+// ==========================================================
+// ENREGISTREMENT
+// ==========================================================
+
+formulaireLieu.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        if (!utilisateurConnecte) {
+
+            messageFormulaire.textContent =
+                "Vous devez être connecté.";
+
+            return;
+        }
+
+
+        const lieuId =
+            document.getElementById(
+                "champ-lieu-id"
+            ).value.trim();
+
+
+        const modification =
+            Boolean(lieuId);
+
+
+        const nom =
+            document.getElementById(
+                "champ-nom"
+            ).value.trim();
+
+
+        if (!nom) {
+
+            messageFormulaire.textContent =
+                "Le nom du lieu est obligatoire.";
+
+            return;
+        }
+
+
+        const voyageId =
+            document.getElementById(
+                "champ-voyage"
+            ).value || null;
+
+
+        const dateDebut =
+            document.getElementById(
+                "champ-date-debut"
+            ).value || null;
+
+
+        const dateFin =
+            document.getElementById(
+                "champ-date-fin"
+            ).value || null;
+
+
+        const dateTexte =
+            document.getElementById(
+                "champ-date-texte"
+            ).value.trim() || null;
+
+
+        const contexte =
+            document.getElementById(
+                "champ-contexte"
+            ).value || null;
+
+
+        const experience =
+            document.getElementById(
+                "champ-experience"
+            ).value.trim() || null;
+
+
+        const noteValeur =
+            document.getElementById(
+                "champ-note"
+            ).value;
+
+
+        const note =
+            noteValeur === ""
+                ? null
+                : Number(noteValeur);
+
+
+        const description =
+            document.getElementById(
+                "champ-description"
+            ).value.trim() || null;
+
+
+        const notes =
+            document.getElementById(
+                "champ-notes"
+            ).value.trim() || null;
+
+
+        const latitudeTexte =
+            document.getElementById(
+                "champ-latitude"
+            ).value;
+
+
+        const longitudeTexte =
+            document.getElementById(
+                "champ-longitude"
+            ).value;
+
+
+        const latitude =
+            latitudeTexte === ""
+                ? null
+                : Number(latitudeTexte);
+
+
+        const longitude =
+            longitudeTexte === ""
+                ? null
+                : Number(longitudeTexte);
+
+
+        const lieuData = {
+
+            nom:
+                nom,
+
+            ville:
+                document.getElementById(
+                    "champ-ville"
+                ).value.trim() || null,
+
+            pays:
+                document.getElementById(
+                    "champ-pays"
+                ).value.trim() || null,
+
+            latitude:
+                latitude,
+
+            longitude:
+                longitude,
+
+            type_lieu:
+                document.getElementById(
+                    "champ-type-lieu"
+                ).value.trim() || null,
+
+            voyage_id:
+                voyageId,
+
+            date_debut:
+                dateDebut,
+
+            date_fin:
+                dateFin,
+
+            date_texte:
+                dateTexte,
+
+            adresse:
+                document.getElementById(
+                    "champ-adresse"
+                ).value.trim() || null
+
+        };
+
+
+        messageFormulaire.textContent =
+            "Enregistrement...";
+
+        boutonEnregistrer.disabled =
+            true;
+
+
+        try {
+
+
+            // ==================================================
+            // AJOUT
+            // ==================================================
+
+            if (!modification) {
+
+                const nouvelId =
+                    genererNouvelIdLieu();
+
+
+                lieuData.lieu_id =
+                    nouvelId;
+
+
+                /*
+                 * INSERT sans .select()
+                 *
+                 * Cela évite également d'avoir besoin
+                 * d'une politique SELECT authenticated.
+                 */
+
+                const {
+                    error: erreurLieu,
+                    count: nombreLieux
+                } =
+                    await supabaseClient
+
+                        .from("lieux")
+
+                        .insert(
+                            lieuData,
+                            {
+                                count: "exact"
+                            }
+                        );
+
+
+                if (erreurLieu) {
+                    throw erreurLieu;
+                }
+
+
+                /*
+                 * On considère l'insertion réussie si Supabase
+                 * ne renvoie pas d'erreur.
+                 *
+                 * On possède déjà toutes les données du nouveau lieu
+                 * grâce au formulaire.
+                 */
+
+                tousLesLieux.push({
+                    ...lieuData
+                });
+
+
+                // ----------------------------------------------
+                // CREATION DE LA VISITE
+                // ----------------------------------------------
+
+                if (contexte) {
+
+                    const nouvelleVisiteData = {
+
+                        visite_id:
+                            genererNouvelIdVisite(),
+
+                        lieu_id:
+                            nouvelId,
+
+                        voyage_id:
+                            voyageId,
+
+                        type_contexte:
+                            contexte,
+
+                        date_debut:
+                            dateDebut,
+
+                        date_fin:
+                            dateFin,
+
+                        date_texte:
+                            dateTexte,
+
+                        type_experience:
+                            experience,
+
+                        description:
+                            description,
+
+                        note:
+                            note,
+
+                        notes:
+                            notes
+
+                    };
+
+
+                    const {
+                        error: erreurVisite
+                    } =
+                        await supabaseClient
+
+                            .from("visites")
+
+                            .insert(
+                                nouvelleVisiteData
+                            );
+
+
+                    if (erreurVisite) {
+
+                        /*
+                         * Si la visite échoue, on supprime
+                         * le lieu que nous venons de créer.
+                         */
+
+                        await supabaseClient
+                            .from("lieux")
+                            .delete()
+                            .eq(
+                                "lieu_id",
+                                nouvelId
+                            );
+
+
+                        /*
+                         * Et on retire également le lieu
+                         * des données locales.
+                         */
+
+                        tousLesLieux =
+                            tousLesLieux.filter(
+                                item =>
+                                    item.lieu_id !==
+                                    nouvelId
+                            );
+
+
+                        throw erreurVisite;
+                    }
+
+
+                    toutesLesVisites.push(
+                        nouvelleVisiteData
+                    );
+
+                }
+
+
+                reconstruireTousLesIndex();
+
+                remplirFiltres();
+
+                afficherLieuxFiltres();
+
+                fermerFormulaire();
+
+                message.style.display =
+                    "none";
+
+
+            } else {
+
+
+                // ==================================================
+                // MODIFICATION
+                // ==================================================
+
+                const lieuExistant =
+                    tousLesLieux.find(
+                        lieu =>
+                            lieu.lieu_id ===
+                            lieuId
+                    );
+
+
+                if (!lieuExistant) {
+
+                    throw new Error(
+                        "Lieu introuvable dans les données locales."
+                    );
+                }
+
+
+                const visiteExistante =
+                    obtenirVisite(
+                        lieuExistant
+                    );
+
+
+                // ----------------------------------------------
+                // MODIFICATION DE lieux
+                // ----------------------------------------------
+
+                /*
+                 * IMPORTANT :
+                 *
+                 * Pas de .select()
+                 * Pas de .single()
+                 *
+                 * On demande uniquement à Supabase
+                 * d'effectuer l'UPDATE.
+                 */
+
+                const {
+                    data: lieuMisAJour,
+                    error: erreurLieu
+                } =
+                    await supabaseClient
+
+                        .from("lieux")
+
+                        .update(
+                            lieuData
+                        )
+
+                        .eq(
+                            "lieu_id",
+                            lieuId
+                        )
+
+                        /*
+                         * On demande à Supabase de renvoyer la ligne
+                         * réellement modifiée.
+                         *
+                         * C'est important : un UPDATE bloqué par une
+                         * politique RLS peut sinon ne renvoyer aucune
+                         * erreur tout en ne modifiant aucune ligne.
+                         * .single() permet alors de détecter immédiatement
+                         * ce cas au lieu de mettre à jour uniquement
+                         * l'affichage local.
+                         */
+                        .select()
+                        .single();
+
+
+                if (erreurLieu) {
+                    throw erreurLieu;
+                }
+
+
+                if (!lieuMisAJour) {
+                    throw new Error(
+                        "Supabase n'a renvoyé aucun lieu après la modification. Vérifiez les politiques RLS UPDATE/SELECT."
+                    );
+                }
+
+
+                // ----------------------------------------------
+                // MISE A JOUR LOCALE DU LIEU
+                // ----------------------------------------------
+
+                const indexLieu =
+                    tousLesLieux.findIndex(
+                        item =>
+                            item.lieu_id ===
+                            lieuId
+                    );
+
+
+                if (indexLieu !== -1) {
+
+                    /*
+                     * On utilise la ligne renvoyée par Supabase,
+                     * et non seulement les données du formulaire.
+                     */
+                    tousLesLieux[
+                        indexLieu
+                    ] = {
+
+                        ...tousLesLieux[
+                            indexLieu
+                        ],
+
+                        ...lieuMisAJour
+
+                    };
+
+                }
+
+
+                /*
+                 * IMPORTANT :
+                 *
+                 * Les visites sont désormais gérées exclusivement
+                 * dans "🗓️ Gérer les visites".
+                 *
+                 * Modifier un lieu ne doit donc PLUS écraser la
+                 * visite existante (et encore moins la première
+                 * d'une liste de plusieurs visites).
+                 *
+                 * Les anciennes visites restent intactes.
+                 */
+                // ----------------------------------------------
+                // RAFRAICHISSEMENT LOCAL
+                // ----------------------------------------------
+
+                reconstruireTousLesIndex();
+
+                remplirFiltres();
+
+                afficherLieuxFiltres();
+
+                fermerFormulaire();
+
+                message.style.display =
+                    "none";
+
+
+            }
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur enregistrement :",
+                erreur
+            );
+
+
+            messageFormulaire.textContent =
+                "Erreur : " +
+                (
+                    erreur.message ||
+                    String(erreur)
+                );
+
+        } finally {
+
+            boutonEnregistrer.disabled =
+                false;
+
+        }
+
+    }
+);
+
+
+// ==========================================================
+// GESTION DES VOYAGES
+// ==========================================================
+
+const fondModalVoyages =
+    document.getElementById("fond-modal-voyages");
+const formulaireVoyage =
+    document.getElementById("formulaire-voyage");
+const listeVoyagesGestion =
+    document.getElementById("liste-voyages-gestion");
+const messageVoyageFormulaire =
+    document.getElementById("message-voyage-formulaire");
+const boutonEnregistrerVoyage =
+    document.getElementById("boutonEnregistrerVoyage");
+
+function genererNouvelIdVoyage() {
+    let maximum = 0;
+    tousLesVoyages.forEach(voyage => {
+        const match = String(voyage.voyage_id || "").match(/^V(\d+)$/i);
+        if (match) maximum = Math.max(maximum, Number(match[1]));
+    });
+    return "V" + String(maximum + 1).padStart(4, "0");
+}
+
+function reinitialiserFormulaireVoyage() {
+    formulaireVoyage.reset();
+    document.getElementById("champ-voyage-id-gestion").value = "";
+    document.getElementById("champ-voyage-photo").value = "";
+    messageVoyageFormulaire.textContent = "";
+}
+
+function ouvrirGestionVoyages() {
+    if (!utilisateurConnecte) return;
+    reinitialiserFormulaireVoyage();
+    afficherListeVoyagesGestion();
+    fondModalVoyages.style.display = "flex";
+}
+
+function fermerGestionVoyages() {
+    fondModalVoyages.style.display = "none";
+}
+
+function chargerVoyageDansFormulaire(voyageId) {
+    const voyage = tousLesVoyages.find(v => v.voyage_id === voyageId);
+    if (!voyage) return;
+    document.getElementById("champ-voyage-id-gestion").value = voyage.voyage_id || "";
+    document.getElementById("champ-voyage-nom").value = voyage.nom || "";
+    document.getElementById("champ-voyage-date-debut").value = voyage.date_debut || "";
+    document.getElementById("champ-voyage-date-fin").value = voyage.date_fin || "";
+    document.getElementById("champ-voyage-pays").value = voyage.pays_principal || "";
+    document.getElementById("champ-voyage-photo").value = voyage.photo_couverture || "";
+    document.getElementById("champ-voyage-date-texte").value = voyage.date_precision === "texte" ? (voyage.date_texte || "") : (voyage.date_texte || "");
+    document.getElementById("champ-voyage-description").value = voyage.description || "";
+    document.getElementById("champ-voyage-notes").value = voyage.notes || "";
+    messageVoyageFormulaire.textContent = "Modification du voyage « " + (voyage.nom || voyage.voyage_id) + " ».";
+}
+
+function afficherListeVoyagesGestion() {
+    listeVoyagesGestion.innerHTML = "";
+    [...tousLesVoyages]
+        .sort((a, b) => String(a.nom || "").localeCompare(String(b.nom || ""), "fr"))
+        .forEach(voyage => {
+            const nombreLieux = tousLesLieux.filter(l => l.voyage_id === voyage.voyage_id).length;
+            const div = document.createElement("div");
+            div.className = "ligne-gestion";
+            div.innerHTML = `
+                <div class="ligne-gestion-principale">
+                    <div class="ligne-gestion-titre">${echapperHTML(voyage.nom || voyage.voyage_id)}</div>
+                    <div class="ligne-gestion-meta">
+                        ${echapperHTML(afficherPeriode(voyage.date_debut, voyage.date_fin, voyage.date_precision, voyage.date_texte))}
+                        ${voyage.pays_principal ? " · " + echapperHTML(voyage.pays_principal) : ""}
+                        · ${nombreLieux} lieu${nombreLieux > 1 ? "x" : ""}
+                    </div>
+                </div>
+                <div class="actions-gestion">
+                    <button class="bouton bouton-editer-voyage" data-voyage-id="${echapperHTML(voyage.voyage_id)}">Modifier</button>
+                    <button class="bouton bouton-supprimer-voyage" data-voyage-id="${echapperHTML(voyage.voyage_id)}">Supprimer</button>
+                </div>`;
+            listeVoyagesGestion.appendChild(div);
+        });
+
+    if (!tousLesVoyages.length) {
+        listeVoyagesGestion.innerHTML = "<div>Aucun voyage enregistré.</div>";
+    }
+}
+
+formulaireVoyage.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!utilisateurConnecte) return;
+
+    const voyageId = document.getElementById("champ-voyage-id-gestion").value.trim();
+    const nom = document.getElementById("champ-voyage-nom").value.trim();
+    if (!nom) {
+        messageVoyageFormulaire.textContent = "Le nom du voyage est obligatoire.";
+        return;
+    }
+
+    const voyageData = {
+        nom,
+        date_debut: document.getElementById("champ-voyage-date-debut").value || null,
+        date_fin: document.getElementById("champ-voyage-date-fin").value || null,
+        date_texte: document.getElementById("champ-voyage-date-texte").value.trim() || null,
+        pays_principal: document.getElementById("champ-voyage-pays").value.trim() || null,
+        photo_couverture: document.getElementById("champ-voyage-photo").value.trim() || null,
+        description: document.getElementById("champ-voyage-description").value.trim() || null,
+        notes: document.getElementById("champ-voyage-notes").value.trim() || null
+    };
+
+    boutonEnregistrerVoyage.disabled = true;
+    messageVoyageFormulaire.textContent = "Enregistrement...";
+
+    try {
+        if (voyageId) {
+            const { data, error } = await supabaseClient
+                .from("voyages")
+                .update(voyageData)
+                .eq("voyage_id", voyageId)
+                .select()
+                .single();
+            if (error) throw error;
+            const index = tousLesVoyages.findIndex(v => v.voyage_id === voyageId);
+            if (index !== -1) tousLesVoyages[index] = data;
+        } else {
+            const nouvelId = genererNouvelIdVoyage();
+            const { data, error } = await supabaseClient
+                .from("voyages")
+                .insert({ ...voyageData, voyage_id: nouvelId })
+                .select()
+                .single();
+            if (error) throw error;
+            tousLesVoyages.push(data);
+        }
+
+        reconstruireTousLesIndex();
+        remplirFiltres();
+        afficherLieuxFiltres();
+        reinitialiserFormulaireVoyage();
+        afficherListeVoyagesGestion();
+    } catch (erreur) {
+        console.error("Erreur voyage :", erreur);
+        messageVoyageFormulaire.textContent = "Erreur : " + (erreur.message || String(erreur));
+    } finally {
+        boutonEnregistrerVoyage.disabled = false;
+    }
+});
+
+async function supprimerVoyage(voyageId) {
+    const voyage = tousLesVoyages.find(v => v.voyage_id === voyageId);
+    if (!voyage) return;
+
+    const nombreVisites = toutesLesVisites.filter(v => v.voyage_id === voyageId).length;
+    if (nombreVisites > 0) {
+        alert("Ce voyage ne peut pas être supprimé tant que " + nombreVisites + " visite(s) lui sont rattachée(s). Modifiez ou supprimez d'abord ces visites.");
+        return;
+    }
+
+    const nombreLieux = tousLesLieux.filter(l => l.voyage_id === voyageId).length;
+    const confirmation = confirm(
+        "Supprimer définitivement le voyage « " + voyage.nom + " » ?\n\n" +
+        (nombreLieux ? nombreLieux + " lieu(x) seront conservés mais ne seront plus rattachés au voyage.\n" : "") +
+        "Les photos explicitement rattachées à ce voyage peuvent également être supprimées par la base."
+    );
+    if (!confirmation) return;
+
+    try {
+        const { error } = await supabaseClient.from("voyages").delete().eq("voyage_id", voyageId);
+        if (error) throw error;
+        tousLesVoyages = tousLesVoyages.filter(v => v.voyage_id !== voyageId);
+        tousLesLieux = tousLesLieux.map(l => l.voyage_id === voyageId ? { ...l, voyage_id: null } : l);
+        toutesLesPhotos = toutesLesPhotos.filter(p => p.voyage_id !== voyageId);
+        reconstruireTousLesIndex();
+        remplirFiltres();
+        afficherLieuxFiltres();
+        afficherListeVoyagesGestion();
+    } catch (erreur) {
+        console.error("Erreur suppression voyage :", erreur);
+        messageVoyageFormulaire.textContent = "Erreur : " + (erreur.message || String(erreur));
+    }
+}
+
+boutonVoyages.addEventListener("click", ouvrirGestionVoyages);
+document.getElementById("boutonFermerVoyages").addEventListener("click", fermerGestionVoyages);
+document.getElementById("boutonNouveauVoyage").addEventListener("click", reinitialiserFormulaireVoyage);
+fondModalVoyages.addEventListener("click", event => {
+    if (event.target === fondModalVoyages) fermerGestionVoyages();
+});
+listeVoyagesGestion.addEventListener("click", event => {
+    const edit = event.target.closest(".bouton-editer-voyage");
+    if (edit) chargerVoyageDansFormulaire(edit.dataset.voyageId);
+    const del = event.target.closest(".bouton-supprimer-voyage");
+    if (del) supprimerVoyage(del.dataset.voyageId);
+});
+
+
+// ==========================================================
+// GESTION DES PHOTOS
+// ==========================================================
+
+const fondModalPhotos = document.getElementById("fond-modal-photos");
+const formulairePhoto = document.getElementById("formulaire-photo");
+const listePhotosGestion = document.getElementById("liste-photos-gestion");
+const messagePhotoFormulaire = document.getElementById("message-photo-formulaire");
+const boutonEnregistrerPhoto = document.getElementById("boutonEnregistrerPhoto");
+
+function genererNouvelIdPhoto() {
+    let maximum = 0;
+    toutesLesPhotos.forEach(photo => {
+        const match = String(photo.photo_id || "").match(/^P(\d+)$/i);
+        if (match) maximum = Math.max(maximum, Number(match[1]));
+    });
+    return "P" + String(maximum + 1).padStart(4, "0");
+}
+
+function reinitialiserFormulairePhoto() {
+    formulairePhoto.reset();
+    document.getElementById("champ-photo-id-gestion").value = "";
+    document.getElementById("champ-photo-ordre").value = "1";
+    document.getElementById("champ-photo-principale").value = "false";
+    messagePhotoFormulaire.textContent = "";
+    remplirSelectPhotosLieux();
+}
+
+function remplirSelectPhotosLieux() {
+    const select = document.getElementById("champ-photo-lieu");
+    const valeur = select.value;
+    select.innerHTML = '<option value="">Choisir un lieu</option>';
+    [...tousLesLieux]
+        .sort((a,b) => String(a.nom || "").localeCompare(String(b.nom || ""), "fr"))
+        .forEach(lieu => {
+            const option = document.createElement("option");
+            option.value = lieu.lieu_id;
+            option.textContent = (lieu.nom || lieu.lieu_id) + (lieu.ville ? " — " + lieu.ville : "");
+            select.appendChild(option);
+        });
+    if (valeur) select.value = valeur;
+}
+
+function ouvrirGestionPhotos() {
+    if (!utilisateurConnecte) return;
+    reinitialiserFormulairePhoto();
+    afficherListePhotosGestion();
+    fondModalPhotos.style.display = "flex";
+}
+
+function fermerGestionPhotos() {
+    fondModalPhotos.style.display = "none";
+}
+
+function afficherListePhotosGestion() {
+    listePhotosGestion.innerHTML = "";
+    [...toutesLesPhotos]
+        .sort((a,b) => String(a.lieu_id || "").localeCompare(String(b.lieu_id || "")) || Number(a.ordre || 1) - Number(b.ordre || 1))
+        .forEach(photo => {
+            const lieu = tousLesLieux.find(l => l.lieu_id === photo.lieu_id);
+            const url = construireUrlPhoto(photo.fichier);
+            const div = document.createElement("div");
+            div.className = "ligne-gestion";
+            div.innerHTML = `
+                ${url ? `<img class="photo-gestion-apercu" src="${echapperHTML(url)}" alt="">` : ""}
+                <div class="ligne-gestion-principale">
+                    <div class="ligne-gestion-titre">${echapperHTML(photo.titre || photo.photo_id)}</div>
+                    <div class="ligne-gestion-meta">
+                        ${echapperHTML(lieu?.nom || photo.lieu_id)} · ordre ${Number(photo.ordre || 1)}${photo.photo_principale ? " · principale" : ""}
+                    </div>
+                </div>
+                <div class="actions-gestion">
+                    <button class="bouton bouton-editer-photo" data-photo-id="${echapperHTML(photo.photo_id)}">Modifier</button>
+                    <button class="bouton bouton-supprimer-photo" data-photo-id="${echapperHTML(photo.photo_id)}">Supprimer</button>
+                </div>`;
+            listePhotosGestion.appendChild(div);
+        });
+    if (!toutesLesPhotos.length) listePhotosGestion.innerHTML = "<div>Aucune photo enregistrée.</div>";
+}
+
+async function mettrePhotoPrincipale(photoId, lieuId) {
+    const autres = toutesLesPhotos.filter(p => p.lieu_id === lieuId && p.photo_id !== photoId && p.photo_principale);
+    for (const photo of autres) {
+        const { error } = await supabaseClient.from("photos").update({ photo_principale: false }).eq("photo_id", photo.photo_id);
+        if (error) throw error;
+        photo.photo_principale = false;
+    }
+}
+
+async function supprimerFichierStorage(fichier) {
+    if (!fichier) return;
+    const { error } = await supabaseClient.storage.from("photos").remove([fichier]);
+    if (error) console.warn("Suppression fichier Storage non bloquante :", error);
+}
+
+function chargerPhotoDansFormulaire(photoId) {
+    const photo = toutesLesPhotos.find(p => p.photo_id === photoId);
+    if (!photo) return;
+    document.getElementById("champ-photo-id-gestion").value = photo.photo_id || "";
+    document.getElementById("champ-photo-lieu").value = photo.lieu_id || "";
+    document.getElementById("champ-photo-titre").value = photo.titre || "";
+    document.getElementById("champ-photo-date").value = photo.date_photo || "";
+    document.getElementById("champ-photo-ordre").value = photo.ordre || 1;
+    document.getElementById("champ-photo-principale").value = photo.photo_principale ? "true" : "false";
+    document.getElementById("champ-photo-description").value = photo.description || "";
+    document.getElementById("champ-photo-fichier").value = "";
+    messagePhotoFormulaire.textContent = "Modification de « " + (photo.titre || photo.photo_id) + " ». Laisser le fichier vide pour conserver la photo actuelle.";
+}
+
+formulairePhoto.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (!utilisateurConnecte) return;
+
+    const photoId = document.getElementById("champ-photo-id-gestion").value.trim();
+    const lieuId = document.getElementById("champ-photo-lieu").value;
+    const fichierSelectionne = document.getElementById("champ-photo-fichier").files[0] || null;
+    if (!lieuId) {
+        messagePhotoFormulaire.textContent = "Le lieu est obligatoire.";
+        return;
+    }
+    if (!photoId && !fichierSelectionne) {
+        messagePhotoFormulaire.textContent = "Sélectionnez un fichier photo.";
+        return;
+    }
+
+    const lieu = tousLesLieux.find(l => l.lieu_id === lieuId);
+    const voyageId = lieu?.voyage_id || null;
+    const estPrincipale = document.getElementById("champ-photo-principale").value === "true";
+    const ordre = Math.max(1, Number(document.getElementById("champ-photo-ordre").value || 1));
+    const titre = document.getElementById("champ-photo-titre").value.trim() || null;
+    const datePhoto = document.getElementById("champ-photo-date").value || null;
+    const description = document.getElementById("champ-photo-description").value.trim() || null;
+
+    boutonEnregistrerPhoto.disabled = true;
+    messagePhotoFormulaire.textContent = "Enregistrement...";
+
+    try {
+        if (photoId) {
+            const ancienne = toutesLesPhotos.find(p => p.photo_id === photoId);
+            if (!ancienne) throw new Error("Photo introuvable.");
+            let fichier = ancienne.fichier;
+
+            if (fichierSelectionne) {
+                const extension = (fichierSelectionne.name.split(".").pop() || "jpg").toLowerCase();
+                const nouveauChemin = lieuId + "/" + photoId + "." + extension;
+                const { error: uploadError } = await supabaseClient.storage.from("photos").upload(nouveauChemin, fichierSelectionne, { upsert: true, contentType: fichierSelectionne.type || undefined });
+                if (uploadError) throw uploadError;
+                if (ancienne.fichier && ancienne.fichier !== nouveauChemin) await supprimerFichierStorage(ancienne.fichier);
+                fichier = nouveauChemin;
+            }
+
+            if (estPrincipale) await mettrePhotoPrincipale(photoId, lieuId);
+            const photoData = { lieu_id: lieuId, voyage_id: voyageId, fichier, titre, date_photo: datePhoto, description, ordre, photo_principale: estPrincipale };
+            const { data, error } = await supabaseClient.from("photos").update(photoData).eq("photo_id", photoId).select().single();
+            if (error) throw error;
+            const index = toutesLesPhotos.findIndex(p => p.photo_id === photoId);
+            if (index !== -1) toutesLesPhotos[index] = data;
+        } else {
+            const nouvelId = genererNouvelIdPhoto();
+            const extension = (fichierSelectionne.name.split(".").pop() || "jpg").toLowerCase();
+            const chemin = lieuId + "/" + nouvelId + "." + extension;
+            const { error: uploadError } = await supabaseClient.storage.from("photos").upload(chemin, fichierSelectionne, { upsert: false, contentType: fichierSelectionne.type || undefined });
+            if (uploadError) throw uploadError;
+            try {
+                if (estPrincipale) await mettrePhotoPrincipale(nouvelId, lieuId);
+                const photoData = { photo_id: nouvelId, lieu_id: lieuId, voyage_id: voyageId, fichier: chemin, titre, date_photo: datePhoto, description, photo_principale: estPrincipale, ordre };
+                const { data, error } = await supabaseClient.from("photos").insert(photoData).select().single();
+                if (error) throw error;
+                toutesLesPhotos.push(data);
+            } catch (erreur) {
+                await supprimerFichierStorage(chemin);
+                throw erreur;
+            }
+        }
+
+        reconstruireTousLesIndex();
+        afficherLieuxFiltres();
+        reinitialiserFormulairePhoto();
+        afficherListePhotosGestion();
+    } catch (erreur) {
+        console.error("Erreur photo :", erreur);
+        messagePhotoFormulaire.textContent = "Erreur : " + (erreur.message || String(erreur));
+    } finally {
+        boutonEnregistrerPhoto.disabled = false;
+    }
+});
+
+async function supprimerPhoto(photoId) {
+    const photo = toutesLesPhotos.find(p => p.photo_id === photoId);
+    if (!photo) return;
+    if (!confirm("Supprimer définitivement cette photo ?")) return;
+
+    try {
+        const { error } = await supabaseClient.from("photos").delete().eq("photo_id", photoId);
+        if (error) throw error;
+        await supprimerFichierStorage(photo.fichier);
+        toutesLesPhotos = toutesLesPhotos.filter(p => p.photo_id !== photoId);
+        reconstruireTousLesIndex();
+        afficherLieuxFiltres();
+        afficherListePhotosGestion();
+    } catch (erreur) {
+        console.error("Erreur suppression photo :", erreur);
+        messagePhotoFormulaire.textContent = "Erreur : " + (erreur.message || String(erreur));
+    }
+}
+
+boutonPhotos.addEventListener("click", ouvrirGestionPhotos);
+document.getElementById("boutonFermerPhotos").addEventListener("click", fermerGestionPhotos);
+document.getElementById("boutonNouveauPhoto").addEventListener("click", reinitialiserFormulairePhoto);
+fondModalPhotos.addEventListener("click", event => {
+    if (event.target === fondModalPhotos) fermerGestionPhotos();
+});
+listePhotosGestion.addEventListener("click", event => {
+    const edit = event.target.closest(".bouton-editer-photo");
+    if (edit) chargerPhotoDansFormulaire(edit.dataset.photoId);
+    const del = event.target.closest(".bouton-supprimer-photo");
+    if (del) supprimerPhoto(del.dataset.photoId);
+});
+
+
+// ==========================================================
+// GESTION DES VISITES MULTIPLES
+// ==========================================================
+
+const fondModalVisites =
+    document.getElementById("fond-modal-visites");
+
+const listeVisitesGestion =
+    document.getElementById("liste-visites-gestion");
+
+const boutonGererVisites =
+    document.getElementById("boutonGererVisites");
+
+const boutonFermerVisites =
+    document.getElementById("boutonFermerVisites");
+
+const boutonNouveauVisite =
+    document.getElementById("boutonAnnulerVisite");
+
+const boutonEnregistrerVisite =
+    document.getElementById("boutonEnregistrerVisite");
+
+
+function reinitialiserFormulaireVisiteGestion() {
+
+    document.getElementById("champ-visite-id-gestion").value = "";
+    document.getElementById("champ-visite-voyage").value = "";
+    document.getElementById("champ-visite-contexte").value = "";
+    document.getElementById("champ-visite-date-debut").value = "";
+    document.getElementById("champ-visite-date-fin").value = "";
+    document.getElementById("champ-visite-date-texte").value = "";
+    document.getElementById("champ-visite-experience").value = "";
+    document.getElementById("champ-visite-note").value = "";
+    document.getElementById("champ-visite-description").value = "";
+    document.getElementById("champ-visite-notes").value = "";
+    document.getElementById("titre-form-visite").textContent = "Ajouter une visite";
+    document.getElementById("message-visite-formulaire").textContent = "";
+
+    remplirSelectVoyagesVisite();
+    remplirSelectContextesVisite();
+}
+
+
+function remplirSelectVoyagesVisite() {
+
+    const select = document.getElementById("champ-visite-voyage");
+    const valeur = select.value;
+
+    select.innerHTML = '<option value="">Aucun voyage</option>';
+
+    [...tousLesVoyages]
+        .sort((a, b) => String(a.nom || "").localeCompare(String(b.nom || ""), "fr"))
+        .forEach(voyage => {
+            const option = document.createElement("option");
+            option.value = voyage.voyage_id;
+            option.textContent = voyage.nom || voyage.voyage_id;
+            select.appendChild(option);
+        });
+
+    if (valeur) select.value = valeur;
+}
+
+
+function remplirSelectContextesVisite() {
+
+    const select = document.getElementById("champ-visite-contexte");
+    const valeur = select.value;
+
+    select.innerHTML = '<option value="">Choisir un contexte</option>';
+
+    [...tousLesTypesContexte]
+        .sort((a, b) => String(a.nom || a.code || "").localeCompare(String(b.nom || b.code || ""), "fr"))
+        .forEach(contexte => {
+            const option = document.createElement("option");
+            option.value = contexte.code;
+            option.textContent = contexte.nom || contexte.code;
+            select.appendChild(option);
+        });
+
+    if (valeur) select.value = valeur;
+}
+
+
+function formaterPeriodeVisite(visite) {
+
+    if (visite.date_texte) return visite.date_texte;
+
+    if (visite.date_debut && visite.date_fin) {
+        return visite.date_debut + " → " + visite.date_fin;
+    }
+
+    if (visite.date_debut) return visite.date_debut;
+    if (visite.date_fin) return visite.date_fin;
+
+    return "Date non renseignée";
+}
+
+
+function obtenirNomVoyage(voyageId) {
+
+    if (!voyageId) return "";
+
+    return voyagesParId[voyageId]?.nom || voyageId;
+}
+
+
+function afficherListeVisitesGestion(lieuId) {
+
+    listeVisitesGestion.innerHTML = "";
+
+    const visites =
+        (visitesParLieu[lieuId] || [])
+            .slice()
+            .sort((a, b) => {
+                const da = a.date_debut || a.date_texte || "9999";
+                const db = b.date_debut || b.date_texte || "9999";
+                return String(da).localeCompare(String(db));
+            });
+
+    if (!visites.length) {
+        listeVisitesGestion.innerHTML =
+            '<div>Aucune visite enregistrée pour ce lieu.</div>';
+        return;
+    }
+
+    visites.forEach(visite => {
+
+        const contexte =
+            typesContexteParCode[visite.type_contexte];
+
+        const nomContexte =
+            contexte?.nom || visite.type_contexte || "Contexte non renseigné";
+
+        const voyage =
+            obtenirNomVoyage(visite.voyage_id);
+
+        const div = document.createElement("div");
+        div.className = "visite-gestion";
+
+        const informations = document.createElement("div");
+        informations.innerHTML =
+            '<div class="visite-gestion-titre">' +
+            echapperHTML(formaterPeriodeVisite(visite)) +
+            '</div>' +
+            '<div class="visite-gestion-meta">' +
+            echapperHTML(nomContexte) +
+            (voyage ? " · " + echapperHTML(voyage) : "") +
+            (visite.type_experience ? " · " + echapperHTML(visite.type_experience) : "") +
+            '</div>';
+
+        const actions = document.createElement("div");
+        actions.className = "visite-gestion-actions";
+
+        const boutonModifier = document.createElement("button");
+        boutonModifier.type = "button";
+        boutonModifier.className = "bouton";
+        boutonModifier.textContent = "Modifier";
+        boutonModifier.addEventListener("click", () => chargerVisiteDansFormulaire(visite.visite_id));
+
+        const boutonSupprimer = document.createElement("button");
+        boutonSupprimer.type = "button";
+        boutonSupprimer.className = "bouton";
+        boutonSupprimer.textContent = "Supprimer";
+        boutonSupprimer.addEventListener("click", () => supprimerVisiteGestion(visite.visite_id));
+
+        actions.appendChild(boutonModifier);
+        actions.appendChild(boutonSupprimer);
+        div.appendChild(informations);
+        div.appendChild(actions);
+        listeVisitesGestion.appendChild(div);
+    });
+}
+
+
+function ouvrirGestionVisites(lieuId) {
+
+    if (!utilisateurConnecte) return;
+
+    const lieu =
+        tousLesLieux.find(item => item.lieu_id === lieuId);
+
+    if (!lieu) return;
+
+    document.getElementById("champ-visite-lieu-id-gestion").value = lieuId;
+    document.getElementById("titre-modal-visites").textContent =
+        "Visites — " + (lieu.nom || lieuId);
+
+    reinitialiserFormulaireVisiteGestion();
+    afficherListeVisitesGestion(lieuId);
+    fondModalVisites.style.display = "flex";
+}
+
+
+function fermerGestionVisites() {
+    fondModalVisites.style.display = "none";
+}
+
+
+function chargerVisiteDansFormulaire(visiteId) {
+
+    const visite =
+        toutesLesVisites.find(item => item.visite_id === visiteId);
+
+    if (!visite) return;
+
+    document.getElementById("champ-visite-id-gestion").value = visite.visite_id || "";
+    document.getElementById("champ-visite-voyage").value = visite.voyage_id || "";
+    document.getElementById("champ-visite-contexte").value = visite.type_contexte || "";
+    document.getElementById("champ-visite-date-debut").value = visite.date_debut || "";
+    document.getElementById("champ-visite-date-fin").value = visite.date_fin || "";
+    document.getElementById("champ-visite-date-texte").value = visite.date_texte || "";
+    document.getElementById("champ-visite-experience").value = visite.type_experience || "";
+    document.getElementById("champ-visite-note").value = visite.note ?? "";
+    document.getElementById("champ-visite-description").value = visite.description || "";
+    document.getElementById("champ-visite-notes").value = visite.notes || "";
+    document.getElementById("titre-form-visite").textContent = "Modifier la visite";
+    document.getElementById("message-visite-formulaire").textContent = "";
+}
+
+
+async function enregistrerVisiteGestion() {
+
+    if (!utilisateurConnecte) return;
+
+    const lieuId =
+        document.getElementById("champ-visite-lieu-id-gestion").value;
+
+    const visiteId =
+        document.getElementById("champ-visite-id-gestion").value.trim();
+
+    const contexte =
+        document.getElementById("champ-visite-contexte").value;
+
+    if (!lieuId) {
+        document.getElementById("message-visite-formulaire").textContent =
+            "Lieu introuvable.";
+        return;
+    }
+
+    if (!contexte) {
+        document.getElementById("message-visite-formulaire").textContent =
+            "Le contexte est obligatoire pour une visite.";
+        return;
+    }
+
+    const noteValeur = document.getElementById("champ-visite-note").value;
+    const note = noteValeur === "" ? null : Number(noteValeur);
+
+    const visiteData = {
+        lieu_id: lieuId,
+        voyage_id: document.getElementById("champ-visite-voyage").value || null,
+        type_contexte: contexte,
+        date_debut: document.getElementById("champ-visite-date-debut").value || null,
+        date_fin: document.getElementById("champ-visite-date-fin").value || null,
+        date_texte: document.getElementById("champ-visite-date-texte").value.trim() || null,
+        type_experience: document.getElementById("champ-visite-experience").value.trim() || null,
+        description: document.getElementById("champ-visite-description").value.trim() || null,
+        note,
+        notes: document.getElementById("champ-visite-notes").value.trim() || null
+    };
+
+    boutonEnregistrerVisite.disabled = true;
+    document.getElementById("message-visite-formulaire").textContent = "Enregistrement...";
+
+    try {
+
+        if (visiteId) {
+
+            const { data, error } =
+                await supabaseClient
+                    .from("visites")
+                    .update(visiteData)
+                    .eq("visite_id", visiteId)
+                    .select()
+                    .single();
+
+            if (error) throw error;
+            if (!data) throw new Error("Aucune visite n'a été renvoyée après modification.");
+
+            const index =
+                toutesLesVisites.findIndex(item => item.visite_id === visiteId);
+
+            if (index !== -1) {
+                toutesLesVisites[index] = data;
+            }
+
+        } else {
+
+            const nouvelleVisite = {
+                visite_id: genererNouvelIdVisite(),
+                ...visiteData
+            };
+
+            const { data, error } =
+                await supabaseClient
+                    .from("visites")
+                    .insert(nouvelleVisite)
+                    .select()
+                    .single();
+
+            if (error) throw error;
+            if (!data) throw new Error("Aucune visite n'a été renvoyée après création.");
+
+            toutesLesVisites.push(data);
+        }
+
+        reconstruireTousLesIndex();
+        remplirFiltres();
+        afficherLieuxFiltres();
+
+        document.getElementById("message-visite-formulaire").textContent =
+            "Visite enregistrée.";
+
+        reinitialiserFormulaireVisiteGestion();
+        document.getElementById("champ-visite-lieu-id-gestion").value = lieuId;
+        afficherListeVisitesGestion(lieuId);
+
+    } catch (erreur) {
+
+        console.error("Erreur visite :", erreur);
+        document.getElementById("message-visite-formulaire").textContent =
+            "Erreur : " + (erreur.message || String(erreur));
+
+    } finally {
+        boutonEnregistrerVisite.disabled = false;
+    }
+}
+
+
+async function supprimerVisiteGestion(visiteId) {
+
+    const visite =
+        toutesLesVisites.find(item => item.visite_id === visiteId);
+
+    if (!visite) return;
+
+    if (!confirm("Supprimer définitivement cette visite ?")) return;
+
+    try {
+
+        const { error } =
+            await supabaseClient
+                .from("visites")
+                .delete()
+                .eq("visite_id", visiteId);
+
+        if (error) throw error;
+
+        toutesLesVisites =
+            toutesLesVisites.filter(item => item.visite_id !== visiteId);
+
+        reconstruireTousLesIndex();
+        remplirFiltres();
+        afficherLieuxFiltres();
+        afficherListeVisitesGestion(visite.lieu_id);
+        reinitialiserFormulaireVisiteGestion();
+        document.getElementById("champ-visite-lieu-id-gestion").value = visite.lieu_id;
+        afficherListeVisitesGestion(visite.lieu_id);
+
+    } catch (erreur) {
+        console.error("Erreur suppression visite :", erreur);
+        document.getElementById("message-visite-formulaire").textContent =
+            "Erreur : " + (erreur.message || String(erreur));
+    }
+}
+
+
+boutonGererVisites.addEventListener("click", function() {
+    const lieuId = document.getElementById("champ-lieu-id").value;
+    if (lieuId) ouvrirGestionVisites(lieuId);
+});
+
+boutonFermerVisites.addEventListener("click", fermerGestionVisites);
+
+boutonNouveauVisite.addEventListener("click", function() {
+    const lieuId = document.getElementById("champ-visite-lieu-id-gestion").value;
+    reinitialiserFormulaireVisiteGestion();
+    document.getElementById("champ-visite-lieu-id-gestion").value = lieuId;
+});
+
+boutonEnregistrerVisite.addEventListener("click", enregistrerVisiteGestion);
+
+fondModalVisites.addEventListener("click", function(event) {
+    if (event.target === fondModalVisites) fermerGestionVisites();
+});
+
+
+// ==========================================================
+// SUPPRESSION D'UN LIEU
+// ==========================================================
+
+async function supprimerLieu(lieuId) {
+
+    if (!utilisateurConnecte) {
+
+        afficherErreur(
+            "Vous devez être connecté."
+        );
+
+        return;
+    }
+
+
+    const lieu =
+        tousLesLieux.find(
+            item =>
+                item.lieu_id === lieuId
+        );
+
+
+    if (!lieu) {
+        return;
+    }
+
+
+    const confirmation =
+        confirm(
+            "Supprimer définitivement « " +
+            lieu.nom +
+            " » ?\n\n" +
+            "Le lieu, sa visite et ses photos seront supprimés."
+        );
+
+
+    if (!confirmation) {
+        return;
+    }
+
+
+    try {
+
+        const visites =
+            visitesParLieu[
+                lieuId
+            ] || [];
+
+
+        for (
+            const visite
+            of visites
+        ) {
+
+            const {
+                error
+            } =
+                await supabaseClient
+
+                    .from("visites")
+
+                    .delete()
+
+                    .eq(
+                        "visite_id",
+                        visite.visite_id
+                    );
+
+
+            if (error) {
+                throw error;
+            }
+
+        }
+
+
+        const {
+            error
+        } =
+            await supabaseClient
+
+                .from("lieux")
+
+                .delete()
+
+                .eq(
+                    "lieu_id",
+                    lieuId
+                );
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        // ----------------------------------------------
+        // MISE A JOUR LOCALE
+        // ----------------------------------------------
+
+        tousLesLieux =
+            tousLesLieux.filter(
+                item =>
+                    item.lieu_id !== lieuId
+            );
+
+
+        toutesLesVisites =
+            toutesLesVisites.filter(
+                visite =>
+                    visite.lieu_id !== lieuId
+            );
+
+
+        toutesLesPhotos =
+            toutesLesPhotos.filter(
+                photo =>
+                    photo.lieu_id !== lieuId
+            );
+
+
+        reconstruireTousLesIndex();
+
+        remplirFiltres();
+
+        afficherLieuxFiltres();
+
+        message.style.display =
+            "none";
+
+
+    } catch (erreur) {
+
+        console.error(
+            "Erreur suppression :",
+            erreur
+        );
+
+
+        afficherErreur(
+            "Impossible de supprimer le lieu : " +
+            (
+                erreur.message ||
+                String(erreur)
+            )
+        );
+
+    }
+}
+
+
+// ==========================================================
+// CLICS DANS LES POPUPS
+// ==========================================================
+
+document.addEventListener(
+    "click",
+    function(event) {
+
+
+        const boutonModifier =
+            event.target.closest(
+                ".bouton-modifier"
+            );
+
+
+        if (boutonModifier) {
+
+            ouvrirFormulaireModification(
+                boutonModifier.dataset.lieuId
+            );
+
+            return;
+        }
+
+
+        const boutonSupprimer =
+            event.target.closest(
+                ".bouton-supprimer"
+            );
+
+
+        if (boutonSupprimer) {
+
+            supprimerLieu(
+                boutonSupprimer.dataset.lieuId
+            );
+
+            return;
+        }
+
+
+        const miniature =
+            event.target.closest(
+                ".fiche-miniature"
+            );
+
+
+        if (!miniature) {
+            return;
+        }
+
+
+        const popup =
+            miniature.closest(
+                ".maplibregl-popup"
+            );
+
+
+        if (!popup) {
+            return;
+        }
+
+
+        const grandePhoto =
+            popup.querySelector(
+                ".fiche-photo"
+            );
+
+
+        if (!grandePhoto) {
+            return;
+        }
+
+
+        grandePhoto.src =
+            miniature.dataset.photoUrl;
+
+
+        grandePhoto.alt =
+            miniature.dataset.photoTitre ||
+            "";
+
+    }
+);
+
+
+// ==========================================================
+// EVENEMENTS FILTRES
+// ==========================================================
+
+filtreVoyage.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+filtreContexte.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+filtreTypeLieu.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+filtreExperience.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+
+modeCarte.addEventListener(
+    "change",
+    function() {
+
+        modeAffichage =
+            modeCarte.value;
+
+        afficherLieuxFiltres();
+
+    }
+);
+
+
+// ==========================================================
+// AUTH STATE
+// ==========================================================
+
+supabaseClient.auth.onAuthStateChange(
+    function(event, session) {
+
+        /*
+         * On utilise directement la session fournie
+         * par Supabase.
+         *
+         * Pas de getSession() supplémentaire.
+         */
+
+        utilisateurConnecte =
+            session?.user || null;
+
+
+        afficherInterfaceAuthentification();
+
+    }
+);
+
+
+// ==========================================================
+// LANCEMENT
+// ==========================================================
+
+async function initialiser() {
+
+    try {
+
+        /*
+         * On récupère la session initiale et les données
+         * en parallèle.
+         */
+
+        const [
+            resultatSession
+        ] =
+            await Promise.all([
+
+                supabaseClient.auth.getSession(),
+
+                chargerDonnees()
+
+            ]);
+
+
+        mettreAJourInterfaceAvecSession(
+            resultatSession.data.session
+        );
+
+
+    } catch (erreur) {
+
+        console.error(
+            "Erreur initialisation :",
+            erreur
+        );
+
+        afficherErreur(
+            "Erreur lors de l'initialisation : " +
+            (
+                erreur.message ||
+                String(erreur)
+            )
+        );
+
+    }
+
+}
+
+
+initialiser();
+
+
+</script>
+
+</body>
+
+</html>
