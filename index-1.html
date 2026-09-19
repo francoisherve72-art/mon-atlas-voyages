@@ -1,0 +1,3984 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Mon Atlas</title>
+
+<link
+    href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"
+    rel="stylesheet"
+>
+
+<style>
+
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* ==========================================================
+   EN-TÊTE
+   ========================================================== */
+
+header {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 8px 20px;
+    box-sizing: border-box;
+    background: white;
+    border-bottom: 1px solid #ddd;
+    z-index: 10;
+}
+
+h1 {
+    margin: 0;
+    font-size: 22px;
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   FILTRES
+   ========================================================== */
+
+#filtres {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.filtre {
+    padding: 7px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: white;
+    font-size: 13px;
+    max-width: 190px;
+}
+
+#compteur {
+    font-size: 13px;
+    color: #666;
+    white-space: nowrap;
+}
+
+
+/* ==========================================================
+   AUTHENTIFICATION
+   ========================================================== */
+
+#zone-auth {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.bouton {
+    padding: 7px 11px;
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.bouton:hover {
+    background: #f3f3f3;
+}
+
+.bouton-principal {
+    background: #222;
+    color: white;
+    border-color: #222;
+}
+
+.bouton-principal:hover {
+    background: #444;
+}
+
+.bouton-danger {
+    color: #b00020;
+    border-color: #d99;
+}
+
+.bouton:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+#statut-auth {
+    font-size: 12px;
+    color: #555;
+}
+
+
+/* ==========================================================
+   CARTE
+   ========================================================== */
+
+main {
+    flex: 1;
+    min-height: 0;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+}
+
+
+/* ==========================================================
+   MESSAGE
+   ========================================================== */
+
+#message {
+    position: fixed;
+    top: 70px;
+    left: 10px;
+    right: 10px;
+    z-index: 2000;
+    padding: 12px;
+    background: white;
+    border-radius: 8px;
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.2);
+    display: none;
+    color: #b00020;
+}
+
+
+/* ==========================================================
+   FICHE
+   ========================================================== */
+
+.fiche-lieu {
+    font-family: Arial, sans-serif;
+    line-height: 1.4;
+    width: 100%;
+}
+
+.fiche-titre {
+    font-size: 19px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.fiche-localisation {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.fiche-rubrique {
+    margin-top: 8px;
+}
+
+.fiche-infos {
+    margin-top: 8px;
+}
+
+.fiche-sous-titre {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.fiche-description {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.fiche-notes {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+    color: #555;
+}
+
+
+/* ==========================================================
+   PHOTOS
+   ========================================================== */
+
+.fiche-photo {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.fiche-galerie {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin-bottom: 12px;
+    padding-bottom: 3px;
+}
+
+.fiche-miniature {
+    width: 64px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+
+.fiche-miniature:hover {
+    opacity: 0.75;
+}
+
+.icone {
+    margin-right: 4px;
+}
+
+
+/* ==========================================================
+   BOUTONS DANS POPUP
+   ========================================================== */
+
+.actions-lieu {
+    display: flex;
+    gap: 6px;
+    margin-top: 14px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+
+/* ==========================================================
+   MODALE
+   ========================================================== */
+
+#fond-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#modal {
+    width: min(700px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: white;
+    border-radius: 10px;
+    box-shadow:
+        0 5px 30px rgba(0,0,0,0.3);
+    padding: 22px;
+    box-sizing: border-box;
+}
+
+#modal h2 {
+    margin-top: 0;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-groupe {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.form-groupe.large {
+    grid-column: 1 / -1;
+}
+
+.form-groupe label {
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.form-groupe input,
+.form-groupe select,
+.form-groupe textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+}
+
+.form-groupe textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+#actions-formulaire {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+#message-formulaire {
+    margin-top: 10px;
+    color: #b00020;
+    font-size: 13px;
+}
+
+
+/* ==========================================================
+   MARQUEURS
+   ========================================================== */
+
+.maplibregl-marker {
+    cursor: pointer;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media (max-width: 700px) {
+
+    header {
+        min-height: auto;
+        padding: 10px;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #filtres {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .filtre {
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+    }
+
+    #compteur {
+        width: 100%;
+    }
+
+    #zone-auth {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-groupe.large {
+        grid-column: auto;
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <h1>Mon Atlas</h1>
+
+
+    <div id="filtres">
+
+        <select id="modeCarte" class="filtre">
+
+            <option value="marqueurs">
+                📍 Lieux
+            </option>
+
+            <option value="heatmap">
+                🔥 Heatmap
+            </option>
+
+        </select>
+
+
+        <select id="filtreVoyage" class="filtre">
+
+            <option value="">
+                Tous les voyages
+            </option>
+
+        </select>
+
+
+        <select id="filtreContexte" class="filtre">
+
+            <option value="">
+                Tous les contextes
+            </option>
+
+        </select>
+
+
+        <select id="filtreTypeLieu" class="filtre">
+
+            <option value="">
+                Tous les types
+            </option>
+
+        </select>
+
+
+        <select id="filtreExperience" class="filtre">
+
+            <option value="">
+                Toutes les expériences
+            </option>
+
+        </select>
+
+
+        <span id="compteur">
+            Chargement...
+        </span>
+
+
+        <div id="zone-auth">
+
+            <span id="statut-auth">
+                Non connecté
+            </span>
+
+            <button
+                id="boutonConnexion"
+                class="bouton"
+            >
+                🔐 Connexion
+            </button>
+
+            <button
+                id="boutonDeconnexion"
+                class="bouton"
+                style="display:none"
+            >
+                Déconnexion
+            </button>
+
+            <button
+                id="boutonAjouter"
+                class="bouton bouton-principal"
+                style="display:none"
+            >
+                ＋ Ajouter
+            </button>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<div id="message"></div>
+
+
+<main>
+
+    <div id="map"></div>
+
+</main>
+
+
+<!-- ========================================================
+     MODALE FORMULAIRE
+     ======================================================== -->
+
+<div id="fond-modal">
+
+    <div id="modal">
+
+        <h2 id="titre-modal">
+            Ajouter un lieu
+        </h2>
+
+
+        <form id="formulaire-lieu">
+
+            <input
+                type="hidden"
+                id="champ-lieu-id"
+            >
+
+
+            <div class="form-grid">
+
+
+                <div class="form-groupe large">
+
+                    <label for="champ-nom">
+                        Nom du lieu *
+                    </label>
+
+                    <input
+                        id="champ-nom"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-ville">
+                        Ville
+                    </label>
+
+                    <input id="champ-ville">
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-pays">
+                        Pays
+                    </label>
+
+                    <input id="champ-pays">
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-latitude">
+                        Latitude
+                    </label>
+
+                    <input
+                        id="champ-latitude"
+                        type="number"
+                        step="any"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-longitude">
+                        Longitude
+                    </label>
+
+                    <input
+                        id="champ-longitude"
+                        type="number"
+                        step="any"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-type-lieu">
+                        Type de lieu
+                    </label>
+
+                    <input id="champ-type-lieu">
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-voyage">
+                        Voyage
+                    </label>
+
+                    <select id="champ-voyage">
+
+                        <option value="">
+                            Aucun voyage
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-debut">
+                        Date de début
+                    </label>
+
+                    <input
+                        id="champ-date-debut"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-fin">
+                        Date de fin
+                    </label>
+
+                    <input
+                        id="champ-date-fin"
+                        type="date"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-date-texte">
+                        Date en texte
+                    </label>
+
+                    <input
+                        id="champ-date-texte"
+                        placeholder="Ex. Été 2024"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-contexte">
+                        Contexte
+                    </label>
+
+                    <select id="champ-contexte">
+
+                        <option value="">
+                            Aucun contexte
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-experience">
+                        Expérience
+                    </label>
+
+                    <input id="champ-experience">
+
+                </div>
+
+
+                <div class="form-groupe">
+
+                    <label for="champ-note">
+                        Note /5
+                    </label>
+
+                    <input
+                        id="champ-note"
+                        type="number"
+                        min="0"
+                        max="5"
+                        step="1"
+                    >
+
+                </div>
+
+
+                <div class="form-groupe large">
+
+                    <label for="champ-adresse">
+                        Adresse
+                    </label>
+
+                    <input id="champ-adresse">
+
+                </div>
+
+
+                <div class="form-groupe large">
+
+                    <label for="champ-description">
+                        Description
+                    </label>
+
+                    <textarea
+                        id="champ-description"
+                    ></textarea>
+
+                </div>
+
+
+                <div class="form-groupe large">
+
+                    <label for="champ-notes">
+                        Notes personnelles
+                    </label>
+
+                    <textarea
+                        id="champ-notes"
+                    ></textarea>
+
+                </div>
+
+
+            </div>
+
+
+            <div id="message-formulaire"></div>
+
+
+            <div id="actions-formulaire">
+
+                <button
+                    type="button"
+                    id="boutonAnnuler"
+                    class="bouton"
+                >
+                    Annuler
+                </button>
+
+                <button
+                    type="submit"
+                    id="boutonEnregistrer"
+                    class="bouton bouton-principal"
+                >
+                    Enregistrer
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script
+    src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js">
+</script>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+</script>
+
+
+<script>
+
+
+// ==========================================================
+// CONFIGURATION
+// ==========================================================
+
+const SUPABASE_URL =
+    "https://xiddtmzehxwfncnyuvid.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_5Sgu_vod3bSaf1ecQeaD8A_BqZ_8HYj";
+
+const MAPTILER_KEY =
+    "knGFRadbYDcoOEytbBIZ";
+
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+// ==========================================================
+// ELEMENTS
+// ==========================================================
+
+const compteur =
+    document.getElementById("compteur");
+
+const message =
+    document.getElementById("message");
+
+const filtreVoyage =
+    document.getElementById("filtreVoyage");
+
+const filtreContexte =
+    document.getElementById("filtreContexte");
+
+const filtreTypeLieu =
+    document.getElementById("filtreTypeLieu");
+
+const filtreExperience =
+    document.getElementById("filtreExperience");
+
+const modeCarte =
+    document.getElementById("modeCarte");
+
+const boutonConnexion =
+    document.getElementById("boutonConnexion");
+
+const boutonDeconnexion =
+    document.getElementById("boutonDeconnexion");
+
+const boutonAjouter =
+    document.getElementById("boutonAjouter");
+
+const statutAuth =
+    document.getElementById("statut-auth");
+
+const fondModal =
+    document.getElementById("fond-modal");
+
+const titreModal =
+    document.getElementById("titre-modal");
+
+const formulaireLieu =
+    document.getElementById("formulaire-lieu");
+
+const boutonAnnuler =
+    document.getElementById("boutonAnnuler");
+
+const boutonEnregistrer =
+    document.getElementById("boutonEnregistrer");
+
+const messageFormulaire =
+    document.getElementById("message-formulaire");
+
+
+// ==========================================================
+// DONNEES
+// ==========================================================
+
+let tousLesLieux = [];
+
+let tousLesVoyages = [];
+
+let toutesLesVisites = [];
+
+let tousLesTypesContexte = [];
+
+let toutesLesPhotos = [];
+
+let voyagesParId = {};
+
+let visitesParLieu = {};
+
+let typesContexteParCode = {};
+
+let photosParLieu = {};
+
+let marqueurs = [];
+
+let modeAffichage = "marqueurs";
+
+let utilisateurConnecte = null;
+
+
+// ==========================================================
+// ERREURS
+// ==========================================================
+
+function afficherErreur(texte) {
+
+    console.error(texte);
+
+    message.textContent =
+        "⚠️ " + texte;
+
+    message.style.display =
+        "block";
+}
+
+
+// ==========================================================
+// ECHAPPEMENT HTML
+// ==========================================================
+
+function echapperHTML(texte) {
+
+    if (
+        texte === null ||
+        texte === undefined
+    ) {
+        return "";
+    }
+
+    return String(texte)
+
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// ==========================================================
+// DATES
+// ==========================================================
+
+function formaterDate(date) {
+
+    if (!date) {
+        return "";
+    }
+
+    const morceaux =
+        String(date).split("-");
+
+    if (morceaux.length !== 3) {
+        return String(date);
+    }
+
+    return (
+        morceaux[2] +
+        "/" +
+        morceaux[1] +
+        "/" +
+        morceaux[0]
+    );
+}
+
+
+function afficherPeriode(
+    dateDebut,
+    dateFin,
+    precision,
+    dateTexte
+) {
+
+    if (dateTexte) {
+        return echapperHTML(dateTexte);
+    }
+
+    if (!dateDebut) {
+        return "";
+    }
+
+    const debut =
+        formaterDate(dateDebut);
+
+    if (
+        !dateFin ||
+        dateFin === dateDebut
+    ) {
+        return debut;
+    }
+
+    return (
+        debut +
+        " → " +
+        formaterDate(dateFin)
+    );
+}
+
+
+// ==========================================================
+// PHOTOS
+// ==========================================================
+
+function construireUrlPhoto(fichier) {
+
+    if (!fichier) {
+        return "";
+    }
+
+    const cheminEncode =
+        String(fichier)
+            .split("/")
+            .map(
+                segment =>
+                    encodeURIComponent(segment)
+            )
+            .join("/");
+
+    return (
+        SUPABASE_URL +
+        "/storage/v1/object/public/photos/" +
+        cheminEncode
+    );
+}
+
+
+// ==========================================================
+// CARTE
+// ==========================================================
+
+let map;
+
+try {
+
+    map =
+        new maplibregl.Map({
+
+            container: "map",
+
+            style:
+                "https://api.maptiler.com/maps/streets-v4/style.json?key=" +
+                MAPTILER_KEY,
+
+            center: [
+                2.5,
+                46.5
+            ],
+
+            zoom: 4
+        });
+
+
+    map.addControl(
+        new maplibregl.NavigationControl(),
+        "top-right"
+    );
+
+
+    // Important :
+    // les données peuvent être chargées avant que
+    // le style de la carte soit prêt.
+    map.on(
+        "load",
+        function() {
+            afficherLieuxFiltres();
+        }
+    );
+
+
+} catch (erreur) {
+
+    afficherErreur(
+        "Impossible d'initialiser la carte : " +
+        erreur.message
+    );
+}
+
+
+// ==========================================================
+// VISITE
+// ==========================================================
+
+function obtenirVisite(lieu) {
+
+    if (!lieu || !lieu.lieu_id) {
+        return null;
+    }
+
+    const visites =
+        visitesParLieu[lieu.lieu_id];
+
+    if (
+        !Array.isArray(visites) ||
+        visites.length === 0
+    ) {
+        return null;
+    }
+
+    return visites[0];
+}
+
+
+function obtenirNomContexte(visite) {
+
+    if (
+        !visite ||
+        !visite.type_contexte
+    ) {
+        return "";
+    }
+
+    const contexte =
+        typesContexteParCode[
+            visite.type_contexte
+        ];
+
+    if (contexte) {
+
+        return (
+            contexte.nom ||
+            contexte.code ||
+            visite.type_contexte
+        );
+    }
+
+    return visite.type_contexte;
+}
+
+
+// ==========================================================
+// FICHE
+// ==========================================================
+
+function creerFiche(
+    lieu,
+    voyage,
+    visite,
+    photos
+) {
+
+    let html = `
+        <div class="fiche-lieu">
+    `;
+
+
+    let photoPrincipale = null;
+
+    if (Array.isArray(photos)) {
+
+        photoPrincipale =
+            photos.find(
+                photo =>
+                    photo.photo_principale === true
+            ) || photos[0];
+    }
+
+
+    if (
+        photoPrincipale &&
+        photoPrincipale.fichier
+    ) {
+
+        const urlPhoto =
+            construireUrlPhoto(
+                photoPrincipale.fichier
+            );
+
+        html += `
+            <img
+                class="fiche-photo"
+                src="${echapperHTML(urlPhoto)}"
+                alt="${echapperHTML(
+                    photoPrincipale.titre ||
+                    lieu.nom
+                )}"
+            >
+        `;
+    }
+
+
+    if (
+        Array.isArray(photos) &&
+        photos.length > 1
+    ) {
+
+        html += `
+            <div class="fiche-galerie">
+        `;
+
+        photos.forEach(
+            photo => {
+
+                if (!photo.fichier) {
+                    return;
+                }
+
+                const urlPhoto =
+                    construireUrlPhoto(
+                        photo.fichier
+                    );
+
+                html += `
+                    <img
+                        class="fiche-miniature"
+                        src="${echapperHTML(urlPhoto)}"
+                        data-photo-url="${echapperHTML(urlPhoto)}"
+                        data-photo-titre="${echapperHTML(
+                            photo.titre ||
+                            lieu.nom
+                        )}"
+                        alt="${echapperHTML(
+                            photo.titre ||
+                            lieu.nom
+                        )}"
+                    >
+                `;
+            }
+        );
+
+        html += `
+            </div>
+        `;
+    }
+
+
+    html += `
+        <div class="fiche-titre">
+            ${echapperHTML(lieu.nom)}
+        </div>
+    `;
+
+
+    const localisation = [
+
+        lieu.ville,
+        lieu.pays
+
+    ]
+        .filter(Boolean)
+        .map(echapperHTML)
+        .join(" · ");
+
+
+    if (localisation) {
+
+        html += `
+            <div class="fiche-localisation">
+                📍 ${localisation}
+            </div>
+        `;
+    }
+
+
+    html += `
+        <div class="fiche-infos">
+    `;
+
+
+    if (voyage) {
+
+        html += `
+            <div class="fiche-rubrique">
+                ✈️ <strong>Voyage :</strong>
+                ${echapperHTML(voyage.nom)}
+            </div>
+        `;
+    }
+
+
+    const dateDebut =
+        visite?.date_debut ||
+        lieu.date_debut;
+
+    const dateFin =
+        visite?.date_fin ||
+        lieu.date_fin;
+
+    const datePrecision =
+        visite?.date_precision ||
+        lieu.date_precision;
+
+    const dateTexte =
+        visite?.date_texte ||
+        lieu.date_texte;
+
+    const dateLieu =
+        afficherPeriode(
+            dateDebut,
+            dateFin,
+            datePrecision,
+            dateTexte
+        );
+
+
+    if (dateLieu) {
+
+        html += `
+            <div class="fiche-rubrique">
+                📅 <strong>Date :</strong>
+                ${dateLieu}
+            </div>
+        `;
+    }
+
+
+    const nomContexte =
+        obtenirNomContexte(visite);
+
+
+    if (nomContexte) {
+
+        html += `
+            <div class="fiche-rubrique">
+                🧭 <strong>Contexte :</strong>
+                ${echapperHTML(nomContexte)}
+            </div>
+        `;
+    }
+
+
+    if (visite?.type_experience) {
+
+        html += `
+            <div class="fiche-rubrique">
+                ✨ <strong>Expérience :</strong>
+                ${echapperHTML(
+                    visite.type_experience
+                )}
+            </div>
+        `;
+    }
+
+
+    const note =
+        visite?.note ??
+        lieu.note;
+
+
+    if (
+        note !== null &&
+        note !== undefined
+    ) {
+
+        html += `
+            <div class="fiche-rubrique">
+                ⭐ <strong>Note :</strong>
+                ${echapperHTML(note)}/5
+            </div>
+        `;
+    }
+
+
+    if (lieu.type_lieu) {
+
+        html += `
+            <div class="fiche-rubrique">
+                📍 <strong>Type :</strong>
+                ${echapperHTML(
+                    lieu.type_lieu
+                )}
+            </div>
+        `;
+    }
+
+
+    if (lieu.adresse) {
+
+        html += `
+            <div class="fiche-rubrique">
+                🏠 <strong>Adresse :</strong><br>
+                ${echapperHTML(
+                    lieu.adresse
+                )}
+            </div>
+        `;
+    }
+
+
+    html += `
+        </div>
+    `;
+
+
+    const description =
+        visite?.description ||
+        lieu.description;
+
+
+    if (description) {
+
+        html += `
+            <div class="fiche-description">
+
+                <div class="fiche-sous-titre">
+                    Description
+                </div>
+
+                <div>
+                    ${echapperHTML(
+                        description
+                    )}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    const notes =
+        visite?.notes ||
+        lieu.notes;
+
+
+    if (notes) {
+
+        html += `
+            <div class="fiche-notes">
+
+                <div class="fiche-sous-titre">
+                    Notes personnelles
+                </div>
+
+                <div>
+                    ${echapperHTML(
+                        notes
+                    )}
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    if (utilisateurConnecte) {
+
+        html += `
+            <div class="actions-lieu">
+
+                <button
+                    class="bouton bouton-modifier"
+                    data-lieu-id="${echapperHTML(
+                        lieu.lieu_id
+                    )}"
+                >
+                    ✏️ Modifier
+                </button>
+
+                <button
+                    class="bouton bouton-danger bouton-supprimer"
+                    data-lieu-id="${echapperHTML(
+                        lieu.lieu_id
+                    )}"
+                >
+                    🗑️ Supprimer
+                </button>
+
+            </div>
+        `;
+    }
+
+
+    html += `
+        </div>
+    `;
+
+    return html;
+}
+
+
+// ==========================================================
+// FILTRES
+// ==========================================================
+
+function remplirFiltres() {
+
+    filtreVoyage.innerHTML = `
+        <option value="">
+            Tous les voyages
+        </option>
+    `;
+
+
+    [...tousLesVoyages]
+
+        .sort(
+            (a, b) =>
+                String(a.nom || "")
+                    .localeCompare(
+                        String(b.nom || ""),
+                        "fr"
+                    )
+        )
+
+        .forEach(
+            voyage => {
+
+                if (!voyage.voyage_id) {
+                    return;
+                }
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    voyage.voyage_id;
+
+                option.textContent =
+                    voyage.nom ||
+                    voyage.voyage_id;
+
+                filtreVoyage.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    filtreContexte.innerHTML = `
+        <option value="">
+            Tous les contextes
+        </option>
+    `;
+
+
+    const contextesUtilises =
+        new Set(
+            toutesLesVisites
+                .map(
+                    visite =>
+                        visite.type_contexte
+                )
+                .filter(Boolean)
+        );
+
+
+    [...tousLesTypesContexte]
+
+        .filter(
+            contexte =>
+                contextesUtilises.has(
+                    contexte.code
+                )
+        )
+
+        .sort(
+            (a, b) =>
+                String(
+                    a.nom || a.code || ""
+                ).localeCompare(
+                    String(
+                        b.nom || b.code || ""
+                    ),
+                    "fr"
+                )
+        )
+
+        .forEach(
+            contexte => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    contexte.code;
+
+                option.textContent =
+                    contexte.nom ||
+                    contexte.code;
+
+                filtreContexte.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    filtreTypeLieu.innerHTML = `
+        <option value="">
+            Tous les types
+        </option>
+    `;
+
+
+    [
+        ...new Set(
+            tousLesLieux
+                .map(
+                    lieu =>
+                        lieu.type_lieu
+                )
+                .filter(Boolean)
+        )
+    ]
+
+        .sort(
+            (a, b) =>
+                String(a).localeCompare(
+                    String(b),
+                    "fr"
+                )
+        )
+
+        .forEach(
+            type => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    type;
+
+                option.textContent =
+                    type;
+
+                filtreTypeLieu.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    filtreExperience.innerHTML = `
+        <option value="">
+            Toutes les expériences
+        </option>
+    `;
+
+
+    [
+        ...new Set(
+            toutesLesVisites
+                .map(
+                    visite =>
+                        visite.type_experience
+                )
+                .filter(Boolean)
+        )
+    ]
+
+        .sort(
+            (a, b) =>
+                String(a).localeCompare(
+                    String(b),
+                    "fr"
+                )
+        )
+
+        .forEach(
+            experience => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    experience;
+
+                option.textContent =
+                    experience;
+
+                filtreExperience.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    const champVoyage =
+        document.getElementById(
+            "champ-voyage"
+        );
+
+    champVoyage.innerHTML = `
+        <option value="">
+            Aucun voyage
+        </option>
+    `;
+
+
+    [...tousLesVoyages]
+
+        .sort(
+            (a, b) =>
+                String(a.nom || "")
+                    .localeCompare(
+                        String(b.nom || ""),
+                        "fr"
+                    )
+        )
+
+        .forEach(
+            voyage => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    voyage.voyage_id;
+
+                option.textContent =
+                    voyage.nom;
+
+                champVoyage.appendChild(
+                    option
+                );
+            }
+        );
+
+
+    const champContexte =
+        document.getElementById(
+            "champ-contexte"
+        );
+
+    champContexte.innerHTML = `
+        <option value="">
+            Aucun contexte
+        </option>
+    `;
+
+
+    [...tousLesTypesContexte]
+
+        .sort(
+            (a, b) =>
+                String(
+                    a.nom || a.code || ""
+                ).localeCompare(
+                    String(
+                        b.nom || b.code || ""
+                    ),
+                    "fr"
+                )
+        )
+
+        .forEach(
+            contexte => {
+
+                const option =
+                    document.createElement(
+                        "option"
+                    );
+
+                option.value =
+                    contexte.code;
+
+                option.textContent =
+                    contexte.nom ||
+                    contexte.code;
+
+                champContexte.appendChild(
+                    option
+                );
+            }
+        );
+}
+
+
+// ==========================================================
+// AFFICHAGE
+// ==========================================================
+
+function supprimerMarqueurs() {
+
+    marqueurs.forEach(
+        marqueur =>
+            marqueur.remove()
+    );
+
+    marqueurs = [];
+}
+
+
+function supprimerHeatmap() {
+
+    if (!map || !map.isStyleLoaded()) {
+        return;
+    }
+
+    if (
+        map.getLayer(
+            "heatmap-lieux"
+        )
+    ) {
+
+        map.removeLayer(
+            "heatmap-lieux"
+        );
+    }
+
+    if (
+        map.getSource(
+            "lieux-heatmap"
+        )
+    ) {
+
+        map.removeSource(
+            "lieux-heatmap"
+        );
+    }
+}
+
+
+function afficherLieuxFiltres() {
+
+    if (
+        !map ||
+        !map.isStyleLoaded()
+    ) {
+        return;
+    }
+
+
+    supprimerMarqueurs();
+
+    supprimerHeatmap();
+
+
+    const voyageSelectionne =
+        filtreVoyage.value;
+
+    const contexteSelectionne =
+        filtreContexte.value;
+
+    const typeLieuSelectionne =
+        filtreTypeLieu.value;
+
+    const experienceSelectionnee =
+        filtreExperience.value;
+
+
+    const lieuxFiltres =
+        tousLesLieux.filter(
+            lieu => {
+
+                if (
+                    voyageSelectionne &&
+                    String(lieu.voyage_id) !==
+                        String(voyageSelectionne)
+                ) {
+                    return false;
+                }
+
+
+                const visite =
+                    obtenirVisite(lieu);
+
+
+                if (
+                    contexteSelectionne &&
+                    (
+                        !visite ||
+                        visite.type_contexte !==
+                            contexteSelectionne
+                    )
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    typeLieuSelectionne &&
+                    lieu.type_lieu !==
+                        typeLieuSelectionne
+                ) {
+                    return false;
+                }
+
+
+                if (
+                    experienceSelectionnee &&
+                    (
+                        !visite ||
+                        visite.type_experience !==
+                            experienceSelectionnee
+                    )
+                ) {
+                    return false;
+                }
+
+
+                return (
+                    lieu.latitude !== null &&
+                    lieu.longitude !== null
+                );
+
+            }
+        );
+
+
+    compteur.textContent =
+        lieuxFiltres.length +
+        (
+            lieuxFiltres.length > 1
+                ? " lieux"
+                : " lieu"
+        );
+
+
+    if (lieuxFiltres.length === 0) {
+        return;
+    }
+
+
+    const bounds =
+        new maplibregl.LngLatBounds();
+
+
+    lieuxFiltres.forEach(
+        lieu => {
+
+            bounds.extend([
+
+                Number(
+                    lieu.longitude
+                ),
+
+                Number(
+                    lieu.latitude
+                )
+
+            ]);
+
+        }
+    );
+
+
+    if (
+        modeAffichage === "heatmap"
+    ) {
+
+        const geojson = {
+
+            type: "FeatureCollection",
+
+            features:
+                lieuxFiltres.map(
+                    lieu => ({
+
+                        type: "Feature",
+
+                        geometry: {
+
+                            type: "Point",
+
+                            coordinates: [
+
+                                Number(
+                                    lieu.longitude
+                                ),
+
+                                Number(
+                                    lieu.latitude
+                                )
+
+                            ]
+
+                        },
+
+                        properties: {
+
+                            lieu_id:
+                                lieu.lieu_id
+
+                        }
+
+                    })
+                )
+        };
+
+
+        map.addSource(
+            "lieux-heatmap",
+            {
+
+                type: "geojson",
+
+                data: geojson
+
+            }
+        );
+
+
+        map.addLayer({
+
+            id: "heatmap-lieux",
+
+            type: "heatmap",
+
+            source: "lieux-heatmap",
+
+            maxzoom: 12,
+
+            paint: {
+
+                "heatmap-intensity": [
+
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+
+                    2, 0.7,
+                    4, 0.9,
+                    6, 1.15,
+                    8, 1.4,
+                    10, 1.7,
+                    12, 2.0
+
+                ],
+
+                "heatmap-radius": [
+
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+
+                    2, 14,
+                    4, 20,
+                    6, 27,
+                    8, 34,
+                    10, 40,
+                    12, 46
+
+                ],
+
+                "heatmap-opacity": [
+
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+
+                    2, 0.70,
+                    5, 0.75,
+                    8, 0.80,
+                    12, 0.84
+
+                ],
+
+                "heatmap-color": [
+
+                    "interpolate",
+                    ["linear"],
+                    ["heatmap-density"],
+
+                    0,
+                    "rgba(33,102,172,0)",
+
+                    0.08,
+                    "rgba(33,102,172,0.30)",
+
+                    0.20,
+                    "rgba(103,169,207,0.55)",
+
+                    0.35,
+                    "rgba(209,229,240,0.70)",
+
+                    0.50,
+                    "rgba(253,219,199,0.78)",
+
+                    0.65,
+                    "rgba(239,138,98,0.84)",
+
+                    0.80,
+                    "rgba(215,48,39,0.90)",
+
+                    1,
+                    "rgba(165,0,38,0.96)"
+
+                ]
+
+            }
+
+        });
+
+
+        map.fitBounds(
+            bounds,
+            {
+                padding: 70,
+                maxZoom: 6,
+                duration: 700
+            }
+        );
+
+        return;
+    }
+
+
+    lieuxFiltres.forEach(
+        lieu => {
+
+            const voyage =
+                voyagesParId[
+                    lieu.voyage_id
+                ];
+
+            const visite =
+                obtenirVisite(lieu);
+
+            const photosLieu =
+                photosParLieu[
+                    lieu.lieu_id
+                ] || [];
+
+
+            const popup =
+                new maplibregl.Popup({
+
+                    offset: 25,
+
+                    maxWidth:
+                        "420px"
+
+                });
+
+
+            popup.setHTML(
+
+                creerFiche(
+
+                    lieu,
+                    voyage,
+                    visite,
+                    photosLieu
+
+                )
+
+            );
+
+
+            const marqueur =
+                new maplibregl.Marker()
+
+                    .setLngLat([
+
+                        Number(
+                            lieu.longitude
+                        ),
+
+                        Number(
+                            lieu.latitude
+                        )
+
+                    ])
+
+                    .setPopup(popup)
+
+                    .addTo(map);
+
+
+            marqueurs.push(
+                marqueur
+            );
+
+        }
+    );
+
+
+    map.fitBounds(
+
+        bounds,
+
+        {
+
+            padding: 70,
+
+            maxZoom: 6,
+
+            duration: 700
+
+        }
+
+    );
+}
+
+
+// ==========================================================
+// LECTURE SUPABASE
+// ==========================================================
+
+async function recupererTable(
+    table,
+    select = "*",
+    order = null
+) {
+
+    let url =
+        SUPABASE_URL +
+        "/rest/v1/" +
+        table +
+        "?select=" +
+        encodeURIComponent(select);
+
+
+    if (order) {
+
+        url +=
+            "&order=" +
+            encodeURIComponent(order);
+    }
+
+
+    const response =
+        await fetch(
+
+            url,
+
+            {
+
+                method: "GET",
+
+                headers: {
+
+                    "apikey":
+                        SUPABASE_KEY,
+
+                    "Authorization":
+                        "Bearer " +
+                        SUPABASE_KEY,
+
+                    "Accept":
+                        "application/json"
+
+                }
+
+            }
+
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            table +
+            " : HTTP " +
+            response.status +
+            " — " +
+            await response.text()
+        );
+    }
+
+
+    return await response.json();
+}
+
+
+// ==========================================================
+// CHARGEMENT INITIAL
+// ==========================================================
+
+async function chargerDonnees() {
+
+    compteur.textContent =
+        "Connexion à Supabase...";
+
+    try {
+
+        const [
+
+            lieux,
+            voyages,
+            visites,
+            typesContexte,
+            photos
+
+        ] = await Promise.all([
+
+            recupererTable(
+                "lieux",
+                "*",
+                "lieu_id.asc"
+            ),
+
+            recupererTable(
+                "voyages",
+                "*",
+                "voyage_id.asc"
+            ),
+
+            recupererTable(
+                "visites",
+                "*",
+                "lieu_id.asc"
+            ),
+
+            recupererTable(
+                "types_contexte",
+                "code,nom",
+                "nom.asc"
+            ),
+
+            recupererTable(
+                "photos",
+                "*",
+                "ordre.asc"
+            )
+
+        ]);
+
+
+        tousLesLieux =
+            lieux;
+
+        tousLesVoyages =
+            voyages;
+
+        toutesLesVisites =
+            visites;
+
+        tousLesTypesContexte =
+            typesContexte;
+
+        toutesLesPhotos =
+            photos;
+
+
+        reconstruireTousLesIndex();
+
+        remplirFiltres();
+
+        afficherLieuxFiltres();
+
+
+    } catch (erreur) {
+
+        console.error(erreur);
+
+        afficherErreur(
+            "Impossible de charger les données : " +
+            erreur.message
+        );
+    }
+}
+
+
+// ==========================================================
+// RECONSTRUIRE TOUS LES INDEX
+// ==========================================================
+
+function reconstruireTousLesIndex() {
+
+    voyagesParId = {};
+
+    tousLesVoyages.forEach(
+        voyage => {
+
+            if (voyage.voyage_id) {
+
+                voyagesParId[
+                    voyage.voyage_id
+                ] = voyage;
+
+            }
+
+        }
+    );
+
+
+    reconstruireIndexVisites();
+
+
+    typesContexteParCode = {};
+
+    tousLesTypesContexte.forEach(
+        contexte => {
+
+            if (contexte.code) {
+
+                typesContexteParCode[
+                    contexte.code
+                ] = contexte;
+
+            }
+
+        }
+    );
+
+
+    photosParLieu = {};
+
+    toutesLesPhotos.forEach(
+        photo => {
+
+            if (!photo.lieu_id) {
+                return;
+            }
+
+            if (
+                !photosParLieu[
+                    photo.lieu_id
+                ]
+            ) {
+
+                photosParLieu[
+                    photo.lieu_id
+                ] = [];
+
+            }
+
+            photosParLieu[
+                photo.lieu_id
+            ].push(photo);
+
+        }
+    );
+}
+
+
+// ==========================================================
+// RECONSTRUIRE INDEX VISITES
+// ==========================================================
+
+function reconstruireIndexVisites() {
+
+    visitesParLieu = {};
+
+    toutesLesVisites.forEach(
+        visite => {
+
+            if (!visite.lieu_id) {
+                return;
+            }
+
+            if (
+                !visitesParLieu[
+                    visite.lieu_id
+                ]
+            ) {
+
+                visitesParLieu[
+                    visite.lieu_id
+                ] = [];
+
+            }
+
+            visitesParLieu[
+                visite.lieu_id
+            ].push(visite);
+
+        }
+    );
+}
+
+
+// ==========================================================
+// AUTHENTIFICATION
+// ==========================================================
+
+function mettreAJourInterfaceAvecSession(
+    session
+) {
+
+    utilisateurConnecte =
+        session?.user || null;
+
+    afficherInterfaceAuthentification();
+}
+
+
+function afficherInterfaceAuthentification() {
+
+    if (utilisateurConnecte) {
+
+        statutAuth.textContent =
+            "Connecté";
+
+        boutonConnexion.style.display =
+            "none";
+
+        boutonDeconnexion.style.display =
+            "inline-block";
+
+        boutonAjouter.style.display =
+            "inline-block";
+
+    } else {
+
+        statutAuth.textContent =
+            "Non connecté";
+
+        boutonConnexion.style.display =
+            "inline-block";
+
+        boutonDeconnexion.style.display =
+            "none";
+
+        boutonAjouter.style.display =
+            "none";
+    }
+
+
+    afficherLieuxFiltres();
+}
+
+
+// ==========================================================
+// CONNEXION
+// ==========================================================
+
+boutonConnexion.addEventListener(
+    "click",
+    async function() {
+
+        const email =
+            prompt(
+                "Adresse e-mail :"
+            );
+
+        if (!email) {
+            return;
+        }
+
+
+        const motDePasse =
+            prompt(
+                "Mot de passe :"
+            );
+
+        if (!motDePasse) {
+            return;
+        }
+
+
+        message.style.display =
+            "none";
+
+
+        const {
+            error
+        } =
+        await supabaseClient.auth.signInWithPassword({
+
+            email:
+                email,
+
+            password:
+                motDePasse
+
+        });
+
+
+        if (error) {
+
+            afficherErreur(
+                "Connexion impossible : " +
+                error.message
+            );
+
+            return;
+        }
+
+    }
+);
+
+
+// ==========================================================
+// DECONNEXION
+// ==========================================================
+
+boutonDeconnexion.addEventListener(
+    "click",
+    async function() {
+
+        const {
+            error
+        } =
+        await supabaseClient.auth.signOut();
+
+
+        if (error) {
+
+            afficherErreur(
+                "Erreur de déconnexion : " +
+                error.message
+            );
+
+            return;
+        }
+
+    }
+);
+
+
+// ==========================================================
+// GENERATION ID LIEU
+// ==========================================================
+
+function genererNouvelIdLieu() {
+
+    let maximum = 0;
+
+
+    tousLesLieux.forEach(
+        lieu => {
+
+            const match =
+                String(
+                    lieu.lieu_id || ""
+                ).match(
+                    /^L(\d+)$/
+                );
+
+            if (match) {
+
+                maximum =
+                    Math.max(
+                        maximum,
+                        Number(match[1])
+                    );
+
+            }
+
+        }
+    );
+
+
+    return (
+        "L" +
+        String(
+            maximum + 1
+        ).padStart(4, "0")
+    );
+}
+
+
+// ==========================================================
+// GENERATION ID VISITE
+// ==========================================================
+
+function genererNouvelIdVisite() {
+
+    return (
+        "VIS-" +
+        crypto.randomUUID()
+    );
+}
+
+
+// ==========================================================
+// OUVRIR AJOUT
+// ==========================================================
+
+function ouvrirFormulaireAjout() {
+
+    formulaireLieu.reset();
+
+    document.getElementById(
+        "champ-lieu-id"
+    ).value = "";
+
+
+    titreModal.textContent =
+        "Ajouter un lieu";
+
+
+    messageFormulaire.textContent =
+        "";
+
+
+    fondModal.style.display =
+        "flex";
+}
+
+
+// ==========================================================
+// OUVRIR MODIFICATION
+// ==========================================================
+
+function ouvrirFormulaireModification(
+    lieuId
+) {
+
+    const lieu =
+        tousLesLieux.find(
+            item =>
+                item.lieu_id === lieuId
+        );
+
+
+    if (!lieu) {
+
+        afficherErreur(
+            "Lieu introuvable."
+        );
+
+        return;
+    }
+
+
+    const visite =
+        obtenirVisite(lieu);
+
+
+    titreModal.textContent =
+        "Modifier : " +
+        lieu.nom;
+
+
+    document.getElementById(
+        "champ-lieu-id"
+    ).value =
+        lieu.lieu_id || "";
+
+
+    document.getElementById(
+        "champ-nom"
+    ).value =
+        lieu.nom || "";
+
+
+    document.getElementById(
+        "champ-ville"
+    ).value =
+        lieu.ville || "";
+
+
+    document.getElementById(
+        "champ-pays"
+    ).value =
+        lieu.pays || "";
+
+
+    document.getElementById(
+        "champ-latitude"
+    ).value =
+        lieu.latitude ?? "";
+
+
+    document.getElementById(
+        "champ-longitude"
+    ).value =
+        lieu.longitude ?? "";
+
+
+    document.getElementById(
+        "champ-type-lieu"
+    ).value =
+        lieu.type_lieu || "";
+
+
+    document.getElementById(
+        "champ-voyage"
+    ).value =
+        visite?.voyage_id ||
+        lieu.voyage_id ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-debut"
+    ).value =
+        visite?.date_debut ||
+        lieu.date_debut ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-fin"
+    ).value =
+        visite?.date_fin ||
+        lieu.date_fin ||
+        "";
+
+
+    document.getElementById(
+        "champ-date-texte"
+    ).value =
+        visite?.date_texte ||
+        lieu.date_texte ||
+        "";
+
+
+    document.getElementById(
+        "champ-contexte"
+    ).value =
+        visite?.type_contexte ||
+        "";
+
+
+    document.getElementById(
+        "champ-experience"
+    ).value =
+        visite?.type_experience ||
+        lieu.type_experience ||
+        "";
+
+
+    document.getElementById(
+        "champ-note"
+    ).value =
+        visite?.note ??
+        lieu.note ??
+        "";
+
+
+    document.getElementById(
+        "champ-adresse"
+    ).value =
+        lieu.adresse || "";
+
+
+    document.getElementById(
+        "champ-description"
+    ).value =
+        visite?.description ||
+        lieu.description ||
+        "";
+
+
+    document.getElementById(
+        "champ-notes"
+    ).value =
+        visite?.notes ||
+        lieu.notes ||
+        "";
+
+
+    messageFormulaire.textContent =
+        "";
+
+
+    fondModal.style.display =
+        "flex";
+}
+
+
+// ==========================================================
+// FERMER FORMULAIRE
+// ==========================================================
+
+function fermerFormulaire() {
+
+    fondModal.style.display =
+        "none";
+}
+
+
+boutonAjouter.addEventListener(
+    "click",
+    ouvrirFormulaireAjout
+);
+
+
+boutonAnnuler.addEventListener(
+    "click",
+    fermerFormulaire
+);
+
+
+fondModal.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            fondModal
+        ) {
+
+            fermerFormulaire();
+
+        }
+
+    }
+);
+
+
+// ==========================================================
+// ENREGISTREMENT
+// ==========================================================
+
+formulaireLieu.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        if (!utilisateurConnecte) {
+
+            messageFormulaire.textContent =
+                "Vous devez être connecté.";
+
+            return;
+        }
+
+
+        const lieuId =
+            document.getElementById(
+                "champ-lieu-id"
+            ).value.trim();
+
+
+        const modification =
+            Boolean(lieuId);
+
+
+        const nom =
+            document.getElementById(
+                "champ-nom"
+            ).value.trim();
+
+
+        if (!nom) {
+
+            messageFormulaire.textContent =
+                "Le nom du lieu est obligatoire.";
+
+            return;
+        }
+
+
+        const voyageId =
+            document.getElementById(
+                "champ-voyage"
+            ).value || null;
+
+
+        const dateDebut =
+            document.getElementById(
+                "champ-date-debut"
+            ).value || null;
+
+
+        const dateFin =
+            document.getElementById(
+                "champ-date-fin"
+            ).value || null;
+
+
+        const dateTexte =
+            document.getElementById(
+                "champ-date-texte"
+            ).value.trim() || null;
+
+
+        const contexte =
+            document.getElementById(
+                "champ-contexte"
+            ).value || null;
+
+
+        const experience =
+            document.getElementById(
+                "champ-experience"
+            ).value.trim() || null;
+
+
+        const noteValeur =
+            document.getElementById(
+                "champ-note"
+            ).value;
+
+
+        const note =
+            noteValeur === ""
+                ? null
+                : Number(noteValeur);
+
+
+        const description =
+            document.getElementById(
+                "champ-description"
+            ).value.trim() || null;
+
+
+        const notes =
+            document.getElementById(
+                "champ-notes"
+            ).value.trim() || null;
+
+
+        const latitudeTexte =
+            document.getElementById(
+                "champ-latitude"
+            ).value;
+
+
+        const longitudeTexte =
+            document.getElementById(
+                "champ-longitude"
+            ).value;
+
+
+        const latitude =
+            latitudeTexte === ""
+                ? null
+                : Number(latitudeTexte);
+
+
+        const longitude =
+            longitudeTexte === ""
+                ? null
+                : Number(longitudeTexte);
+
+
+        const lieuData = {
+
+            nom:
+                nom,
+
+            ville:
+                document.getElementById(
+                    "champ-ville"
+                ).value.trim() || null,
+
+            pays:
+                document.getElementById(
+                    "champ-pays"
+                ).value.trim() || null,
+
+            latitude:
+                latitude,
+
+            longitude:
+                longitude,
+
+            type_lieu:
+                document.getElementById(
+                    "champ-type-lieu"
+                ).value.trim() || null,
+
+            voyage_id:
+                voyageId,
+
+            date_debut:
+                dateDebut,
+
+            date_fin:
+                dateFin,
+
+            date_texte:
+                dateTexte,
+
+            adresse:
+                document.getElementById(
+                    "champ-adresse"
+                ).value.trim() || null
+
+        };
+
+
+        messageFormulaire.textContent =
+            "Enregistrement...";
+
+        boutonEnregistrer.disabled =
+            true;
+
+
+        try {
+
+
+            // ==================================================
+            // AJOUT
+            // ==================================================
+
+            if (!modification) {
+
+                const nouvelId =
+                    genererNouvelIdLieu();
+
+
+                lieuData.lieu_id =
+                    nouvelId;
+
+
+                /*
+                 * INSERT sans .select()
+                 *
+                 * Cela évite également d'avoir besoin
+                 * d'une politique SELECT authenticated.
+                 */
+
+                const {
+                    error: erreurLieu,
+                    count: nombreLieux
+                } =
+                    await supabaseClient
+
+                        .from("lieux")
+
+                        .insert(
+                            lieuData,
+                            {
+                                count: "exact"
+                            }
+                        );
+
+
+                if (erreurLieu) {
+                    throw erreurLieu;
+                }
+
+
+                /*
+                 * On considère l'insertion réussie si Supabase
+                 * ne renvoie pas d'erreur.
+                 *
+                 * On possède déjà toutes les données du nouveau lieu
+                 * grâce au formulaire.
+                 */
+
+                tousLesLieux.push({
+                    ...lieuData
+                });
+
+
+                // ----------------------------------------------
+                // CREATION DE LA VISITE
+                // ----------------------------------------------
+
+                if (contexte) {
+
+                    const nouvelleVisiteData = {
+
+                        visite_id:
+                            genererNouvelIdVisite(),
+
+                        lieu_id:
+                            nouvelId,
+
+                        voyage_id:
+                            voyageId,
+
+                        type_contexte:
+                            contexte,
+
+                        date_debut:
+                            dateDebut,
+
+                        date_fin:
+                            dateFin,
+
+                        date_texte:
+                            dateTexte,
+
+                        type_experience:
+                            experience,
+
+                        description:
+                            description,
+
+                        note:
+                            note,
+
+                        notes:
+                            notes
+
+                    };
+
+
+                    const {
+                        error: erreurVisite
+                    } =
+                        await supabaseClient
+
+                            .from("visites")
+
+                            .insert(
+                                nouvelleVisiteData
+                            );
+
+
+                    if (erreurVisite) {
+
+                        /*
+                         * Si la visite échoue, on supprime
+                         * le lieu que nous venons de créer.
+                         */
+
+                        await supabaseClient
+                            .from("lieux")
+                            .delete()
+                            .eq(
+                                "lieu_id",
+                                nouvelId
+                            );
+
+
+                        /*
+                         * Et on retire également le lieu
+                         * des données locales.
+                         */
+
+                        tousLesLieux =
+                            tousLesLieux.filter(
+                                item =>
+                                    item.lieu_id !==
+                                    nouvelId
+                            );
+
+
+                        throw erreurVisite;
+                    }
+
+
+                    toutesLesVisites.push(
+                        nouvelleVisiteData
+                    );
+
+                }
+
+
+                reconstruireTousLesIndex();
+
+                remplirFiltres();
+
+                afficherLieuxFiltres();
+
+                fermerFormulaire();
+
+                message.style.display =
+                    "none";
+
+
+            } else {
+
+
+                // ==================================================
+                // MODIFICATION
+                // ==================================================
+
+                const lieuExistant =
+                    tousLesLieux.find(
+                        lieu =>
+                            lieu.lieu_id ===
+                            lieuId
+                    );
+
+
+                if (!lieuExistant) {
+
+                    throw new Error(
+                        "Lieu introuvable dans les données locales."
+                    );
+                }
+
+
+                const visiteExistante =
+                    obtenirVisite(
+                        lieuExistant
+                    );
+
+
+                // ----------------------------------------------
+                // MODIFICATION DE lieux
+                // ----------------------------------------------
+
+                /*
+                 * IMPORTANT :
+                 *
+                 * Pas de .select()
+                 * Pas de .single()
+                 *
+                 * On demande uniquement à Supabase
+                 * d'effectuer l'UPDATE.
+                 */
+
+                const {
+                    data: lieuMisAJour,
+                    error: erreurLieu
+                } =
+                    await supabaseClient
+
+                        .from("lieux")
+
+                        .update(
+                            lieuData
+                        )
+
+                        .eq(
+                            "lieu_id",
+                            lieuId
+                        )
+
+                        /*
+                         * On demande à Supabase de renvoyer la ligne
+                         * réellement modifiée.
+                         *
+                         * C'est important : un UPDATE bloqué par une
+                         * politique RLS peut sinon ne renvoyer aucune
+                         * erreur tout en ne modifiant aucune ligne.
+                         * .single() permet alors de détecter immédiatement
+                         * ce cas au lieu de mettre à jour uniquement
+                         * l'affichage local.
+                         */
+                        .select()
+                        .single();
+
+
+                if (erreurLieu) {
+                    throw erreurLieu;
+                }
+
+
+                if (!lieuMisAJour) {
+                    throw new Error(
+                        "Supabase n'a renvoyé aucun lieu après la modification. Vérifiez les politiques RLS UPDATE/SELECT."
+                    );
+                }
+
+
+                // ----------------------------------------------
+                // MISE A JOUR LOCALE DU LIEU
+                // ----------------------------------------------
+
+                const indexLieu =
+                    tousLesLieux.findIndex(
+                        item =>
+                            item.lieu_id ===
+                            lieuId
+                    );
+
+
+                if (indexLieu !== -1) {
+
+                    /*
+                     * On utilise la ligne renvoyée par Supabase,
+                     * et non seulement les données du formulaire.
+                     */
+                    tousLesLieux[
+                        indexLieu
+                    ] = {
+
+                        ...tousLesLieux[
+                            indexLieu
+                        ],
+
+                        ...lieuMisAJour
+
+                    };
+
+                }
+
+
+                // ----------------------------------------------
+                // MODIFICATION DE visites
+                // ----------------------------------------------
+
+                if (visiteExistante) {
+
+                    /*
+                     * IMPORTANT :
+                     *
+                     * visites.type_contexte est NOT NULL.
+                     *
+                     * Donc si l'utilisateur choisit
+                     * "Aucun contexte", on supprime la visite
+                     * plutôt que d'essayer de mettre
+                     * type_contexte = null.
+                     */
+
+                    if (contexte) {
+
+                        const visiteData = {
+
+                            voyage_id:
+                                voyageId,
+
+                            type_contexte:
+                                contexte,
+
+                            date_debut:
+                                dateDebut,
+
+                            date_fin:
+                                dateFin,
+
+                            date_texte:
+                                dateTexte,
+
+                            type_experience:
+                                experience,
+
+                            description:
+                                description,
+
+                            note:
+                                note,
+
+                            notes:
+                                notes
+
+                        };
+
+
+                        const {
+                            data: visiteMiseAJour,
+                            error: erreurVisite
+                        } =
+                            await supabaseClient
+
+                                .from("visites")
+
+                                .update(
+                                    visiteData
+                                )
+
+                                .eq(
+                                    "visite_id",
+                                    visiteExistante.visite_id
+                                )
+
+                                /*
+                                 * Même contrôle que pour lieux :
+                                 * on vérifie qu'une ligne a réellement
+                                 * été modifiée en base.
+                                 */
+                                .select()
+                                .single();
+
+
+                        if (erreurVisite) {
+                            throw erreurVisite;
+                        }
+
+
+                        if (!visiteMiseAJour) {
+                            throw new Error(
+                                "Supabase n'a renvoyé aucune visite après la modification. Vérifiez les politiques RLS UPDATE/SELECT."
+                            );
+                        }
+
+
+                        const indexVisite =
+                            toutesLesVisites.findIndex(
+                                item =>
+                                    item.visite_id ===
+                                    visiteExistante.visite_id
+                            );
+
+
+                        if (indexVisite !== -1) {
+
+                            toutesLesVisites[
+                                indexVisite
+                            ] = {
+
+                                ...toutesLesVisites[
+                                    indexVisite
+                                ],
+
+                                ...visiteMiseAJour
+
+                            };
+
+                        }
+
+                    } else {
+
+                        /*
+                         * Suppression de la visite
+                         * si aucun contexte n'est sélectionné.
+                         */
+
+                        const {
+                            error: erreurSuppressionVisite
+                        } =
+                            await supabaseClient
+
+                                .from("visites")
+
+                                .delete()
+
+                                .eq(
+                                    "visite_id",
+                                    visiteExistante.visite_id
+                                );
+
+
+                        if (erreurSuppressionVisite) {
+                            throw erreurSuppressionVisite;
+                        }
+
+
+                        toutesLesVisites =
+                            toutesLesVisites.filter(
+                                visite =>
+                                    visite.visite_id !==
+                                    visiteExistante.visite_id
+                            );
+
+                    }
+
+                } else if (contexte) {
+
+                    /*
+                     * Le lieu n'avait pas encore de visite.
+                     * On en crée une si un contexte est choisi.
+                     */
+
+                    const nouvelleVisiteData = {
+
+                        visite_id:
+                            genererNouvelIdVisite(),
+
+                        lieu_id:
+                            lieuId,
+
+                        voyage_id:
+                            voyageId,
+
+                        type_contexte:
+                            contexte,
+
+                        date_debut:
+                            dateDebut,
+
+                        date_fin:
+                            dateFin,
+
+                        date_texte:
+                            dateTexte,
+
+                        type_experience:
+                            experience,
+
+                        description:
+                            description,
+
+                        note:
+                            note,
+
+                        notes:
+                            notes
+
+                    };
+
+
+                    const {
+                        error: erreurVisite
+                    } =
+                        await supabaseClient
+
+                            .from("visites")
+
+                            .insert(
+                                nouvelleVisiteData
+                            );
+
+
+                    if (erreurVisite) {
+                        throw erreurVisite;
+                    }
+
+
+                    toutesLesVisites.push(
+                        nouvelleVisiteData
+                    );
+
+                }
+
+
+                // ----------------------------------------------
+                // RAFRAICHISSEMENT LOCAL
+                // ----------------------------------------------
+
+                reconstruireTousLesIndex();
+
+                remplirFiltres();
+
+                afficherLieuxFiltres();
+
+                fermerFormulaire();
+
+                message.style.display =
+                    "none";
+
+
+            }
+
+
+        } catch (erreur) {
+
+            console.error(
+                "Erreur enregistrement :",
+                erreur
+            );
+
+
+            messageFormulaire.textContent =
+                "Erreur : " +
+                (
+                    erreur.message ||
+                    String(erreur)
+                );
+
+        } finally {
+
+            boutonEnregistrer.disabled =
+                false;
+
+        }
+
+    }
+);
+
+
+// ==========================================================
+// SUPPRESSION D'UN LIEU
+// ==========================================================
+
+async function supprimerLieu(lieuId) {
+
+    if (!utilisateurConnecte) {
+
+        afficherErreur(
+            "Vous devez être connecté."
+        );
+
+        return;
+    }
+
+
+    const lieu =
+        tousLesLieux.find(
+            item =>
+                item.lieu_id === lieuId
+        );
+
+
+    if (!lieu) {
+        return;
+    }
+
+
+    const confirmation =
+        confirm(
+            "Supprimer définitivement « " +
+            lieu.nom +
+            " » ?\n\n" +
+            "Le lieu, sa visite et ses photos seront supprimés."
+        );
+
+
+    if (!confirmation) {
+        return;
+    }
+
+
+    try {
+
+        const visites =
+            visitesParLieu[
+                lieuId
+            ] || [];
+
+
+        for (
+            const visite
+            of visites
+        ) {
+
+            const {
+                error
+            } =
+                await supabaseClient
+
+                    .from("visites")
+
+                    .delete()
+
+                    .eq(
+                        "visite_id",
+                        visite.visite_id
+                    );
+
+
+            if (error) {
+                throw error;
+            }
+
+        }
+
+
+        const {
+            error
+        } =
+            await supabaseClient
+
+                .from("lieux")
+
+                .delete()
+
+                .eq(
+                    "lieu_id",
+                    lieuId
+                );
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        // ----------------------------------------------
+        // MISE A JOUR LOCALE
+        // ----------------------------------------------
+
+        tousLesLieux =
+            tousLesLieux.filter(
+                item =>
+                    item.lieu_id !== lieuId
+            );
+
+
+        toutesLesVisites =
+            toutesLesVisites.filter(
+                visite =>
+                    visite.lieu_id !== lieuId
+            );
+
+
+        toutesLesPhotos =
+            toutesLesPhotos.filter(
+                photo =>
+                    photo.lieu_id !== lieuId
+            );
+
+
+        reconstruireTousLesIndex();
+
+        remplirFiltres();
+
+        afficherLieuxFiltres();
+
+        message.style.display =
+            "none";
+
+
+    } catch (erreur) {
+
+        console.error(
+            "Erreur suppression :",
+            erreur
+        );
+
+
+        afficherErreur(
+            "Impossible de supprimer le lieu : " +
+            (
+                erreur.message ||
+                String(erreur)
+            )
+        );
+
+    }
+}
+
+
+// ==========================================================
+// CLICS DANS LES POPUPS
+// ==========================================================
+
+document.addEventListener(
+    "click",
+    function(event) {
+
+
+        const boutonModifier =
+            event.target.closest(
+                ".bouton-modifier"
+            );
+
+
+        if (boutonModifier) {
+
+            ouvrirFormulaireModification(
+                boutonModifier.dataset.lieuId
+            );
+
+            return;
+        }
+
+
+        const boutonSupprimer =
+            event.target.closest(
+                ".bouton-supprimer"
+            );
+
+
+        if (boutonSupprimer) {
+
+            supprimerLieu(
+                boutonSupprimer.dataset.lieuId
+            );
+
+            return;
+        }
+
+
+        const miniature =
+            event.target.closest(
+                ".fiche-miniature"
+            );
+
+
+        if (!miniature) {
+            return;
+        }
+
+
+        const popup =
+            miniature.closest(
+                ".maplibregl-popup"
+            );
+
+
+        if (!popup) {
+            return;
+        }
+
+
+        const grandePhoto =
+            popup.querySelector(
+                ".fiche-photo"
+            );
+
+
+        if (!grandePhoto) {
+            return;
+        }
+
+
+        grandePhoto.src =
+            miniature.dataset.photoUrl;
+
+
+        grandePhoto.alt =
+            miniature.dataset.photoTitre ||
+            "";
+
+    }
+);
+
+
+// ==========================================================
+// EVENEMENTS FILTRES
+// ==========================================================
+
+filtreVoyage.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+filtreContexte.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+filtreTypeLieu.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+filtreExperience.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+
+modeCarte.addEventListener(
+    "change",
+    function() {
+
+        modeAffichage =
+            modeCarte.value;
+
+        afficherLieuxFiltres();
+
+    }
+);
+
+
+// ==========================================================
+// AUTH STATE
+// ==========================================================
+
+supabaseClient.auth.onAuthStateChange(
+    function(event, session) {
+
+        /*
+         * On utilise directement la session fournie
+         * par Supabase.
+         *
+         * Pas de getSession() supplémentaire.
+         */
+
+        utilisateurConnecte =
+            session?.user || null;
+
+
+        afficherInterfaceAuthentification();
+
+    }
+);
+
+
+// ==========================================================
+// LANCEMENT
+// ==========================================================
+
+async function initialiser() {
+
+    try {
+
+        /*
+         * On récupère la session initiale et les données
+         * en parallèle.
+         */
+
+        const [
+            resultatSession
+        ] =
+            await Promise.all([
+
+                supabaseClient.auth.getSession(),
+
+                chargerDonnees()
+
+            ]);
+
+
+        mettreAJourInterfaceAvecSession(
+            resultatSession.data.session
+        );
+
+
+    } catch (erreur) {
+
+        console.error(
+            "Erreur initialisation :",
+            erreur
+        );
+
+        afficherErreur(
+            "Erreur lors de l'initialisation : " +
+            (
+                erreur.message ||
+                String(erreur)
+            )
+        );
+
+    }
+
+}
+
+
+initialiser();
+
+
+</script>
+
+</body>
+
+</html>
