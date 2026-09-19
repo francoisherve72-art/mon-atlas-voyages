@@ -507,6 +507,67 @@ main {
 
 }
 
+
+/* ==========================================================
+   GESTION DES VISITES
+   ========================================================== */
+
+.modal-visites {
+    width: min(900px, 96vw);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.liste-visites-gestion {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 16px 0;
+}
+
+.visite-gestion {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    background: #fafafa;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.visite-gestion-titre {
+    font-weight: 700;
+}
+
+.visite-gestion-meta {
+    font-size: 0.9em;
+    color: #666;
+    margin-top: 4px;
+}
+
+.visite-gestion-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.form-visite-gestion {
+    border-top: 1px solid #ddd;
+    margin-top: 18px;
+    padding-top: 18px;
+}
+
+@media (max-width: 650px) {
+    .visite-gestion {
+        grid-template-columns: 1fr;
+    }
+    .visite-gestion-actions {
+        justify-content: flex-start;
+    }
+}
+
 </style>
 
 </head>
@@ -897,6 +958,15 @@ main {
                 </button>
 
                 <button
+                    type="button"
+                    id="boutonGererVisites"
+                    class="bouton"
+                    style="display:none"
+                >
+                    🗓️ Gérer les visites
+                </button>
+
+                <button
                     type="submit"
                     id="boutonEnregistrer"
                     class="bouton bouton-principal"
@@ -910,6 +980,87 @@ main {
 
     </div>
 
+</div>
+
+
+<!-- ========================================================
+     MODALE GESTION DES VISITES
+     ======================================================== -->
+
+<div id="fond-modal-visites" class="fond-modal-gestion">
+    <div id="modal-visites" class="modal-visites">
+
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+            <h2 id="titre-modal-visites">Visites</h2>
+            <button type="button" id="boutonFermerVisites" class="bouton">Fermer</button>
+        </div>
+
+        <div id="liste-visites-gestion" class="liste-visites-gestion"></div>
+
+        <div class="form-visite-gestion">
+            <h3 id="titre-form-visite">Ajouter une visite</h3>
+            <input type="hidden" id="champ-visite-id-gestion">
+            <input type="hidden" id="champ-visite-lieu-id-gestion">
+
+            <div class="form-grid">
+                <div class="form-groupe">
+                    <label for="champ-visite-voyage">Voyage</label>
+                    <select id="champ-visite-voyage">
+                        <option value="">Aucun voyage</option>
+                    </select>
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-contexte">Contexte *</label>
+                    <select id="champ-visite-contexte">
+                        <option value="">Choisir un contexte</option>
+                    </select>
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-date-debut">Date de début</label>
+                    <input id="champ-visite-date-debut" type="date">
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-date-fin">Date de fin</label>
+                    <input id="champ-visite-date-fin" type="date">
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-date-texte">Date en texte</label>
+                    <input id="champ-visite-date-texte" placeholder="Ex. Été 2024">
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-experience">Expérience</label>
+                    <input id="champ-visite-experience">
+                </div>
+
+                <div class="form-groupe">
+                    <label for="champ-visite-note">Note /5</label>
+                    <input id="champ-visite-note" type="number" min="0" max="5" step="1">
+                </div>
+
+                <div class="form-groupe large">
+                    <label for="champ-visite-description">Description</label>
+                    <textarea id="champ-visite-description"></textarea>
+                </div>
+
+                <div class="form-groupe large">
+                    <label for="champ-visite-notes">Notes personnelles</label>
+                    <textarea id="champ-visite-notes"></textarea>
+                </div>
+            </div>
+
+            <div id="message-visite-formulaire"></div>
+
+            <div id="actions-visite-formulaire" style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button type="button" id="boutonAnnulerVisite" class="bouton">Annuler</button>
+                <button type="button" id="boutonEnregistrerVisite" class="bouton bouton-principal">Enregistrer la visite</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -2929,6 +3080,9 @@ function ouvrirFormulaireAjout() {
     titreModal.textContent =
         "Ajouter un lieu";
 
+    boutonGererVisites.style.display =
+        "none";
+
 
     messageFormulaire.textContent =
         "";
@@ -2971,6 +3125,9 @@ function ouvrirFormulaireModification(
     titreModal.textContent =
         "Modifier : " +
         lieu.nom;
+
+    boutonGererVisites.style.display =
+        "inline-block";
 
 
     document.getElementById(
@@ -4283,6 +4440,393 @@ listePhotosGestion.addEventListener("click", event => {
     if (edit) chargerPhotoDansFormulaire(edit.dataset.photoId);
     const del = event.target.closest(".bouton-supprimer-photo");
     if (del) supprimerPhoto(del.dataset.photoId);
+});
+
+
+// ==========================================================
+// GESTION DES VISITES MULTIPLES
+// ==========================================================
+
+const fondModalVisites =
+    document.getElementById("fond-modal-visites");
+
+const listeVisitesGestion =
+    document.getElementById("liste-visites-gestion");
+
+const boutonGererVisites =
+    document.getElementById("boutonGererVisites");
+
+const boutonFermerVisites =
+    document.getElementById("boutonFermerVisites");
+
+const boutonNouveauVisite =
+    document.getElementById("boutonAnnulerVisite");
+
+const boutonEnregistrerVisite =
+    document.getElementById("boutonEnregistrerVisite");
+
+
+function reinitialiserFormulaireVisiteGestion() {
+
+    document.getElementById("champ-visite-id-gestion").value = "";
+    document.getElementById("champ-visite-voyage").value = "";
+    document.getElementById("champ-visite-contexte").value = "";
+    document.getElementById("champ-visite-date-debut").value = "";
+    document.getElementById("champ-visite-date-fin").value = "";
+    document.getElementById("champ-visite-date-texte").value = "";
+    document.getElementById("champ-visite-experience").value = "";
+    document.getElementById("champ-visite-note").value = "";
+    document.getElementById("champ-visite-description").value = "";
+    document.getElementById("champ-visite-notes").value = "";
+    document.getElementById("titre-form-visite").textContent = "Ajouter une visite";
+    document.getElementById("message-visite-formulaire").textContent = "";
+
+    remplirSelectVoyagesVisite();
+    remplirSelectContextesVisite();
+}
+
+
+function remplirSelectVoyagesVisite() {
+
+    const select = document.getElementById("champ-visite-voyage");
+    const valeur = select.value;
+
+    select.innerHTML = '<option value="">Aucun voyage</option>';
+
+    [...tousLesVoyages]
+        .sort((a, b) => String(a.nom || "").localeCompare(String(b.nom || ""), "fr"))
+        .forEach(voyage => {
+            const option = document.createElement("option");
+            option.value = voyage.voyage_id;
+            option.textContent = voyage.nom || voyage.voyage_id;
+            select.appendChild(option);
+        });
+
+    if (valeur) select.value = valeur;
+}
+
+
+function remplirSelectContextesVisite() {
+
+    const select = document.getElementById("champ-visite-contexte");
+    const valeur = select.value;
+
+    select.innerHTML = '<option value="">Choisir un contexte</option>';
+
+    [...tousLesTypesContexte]
+        .sort((a, b) => String(a.nom || a.code || "").localeCompare(String(b.nom || b.code || ""), "fr"))
+        .forEach(contexte => {
+            const option = document.createElement("option");
+            option.value = contexte.code;
+            option.textContent = contexte.nom || contexte.code;
+            select.appendChild(option);
+        });
+
+    if (valeur) select.value = valeur;
+}
+
+
+function formaterPeriodeVisite(visite) {
+
+    if (visite.date_texte) return visite.date_texte;
+
+    if (visite.date_debut && visite.date_fin) {
+        return visite.date_debut + " → " + visite.date_fin;
+    }
+
+    if (visite.date_debut) return visite.date_debut;
+    if (visite.date_fin) return visite.date_fin;
+
+    return "Date non renseignée";
+}
+
+
+function obtenirNomVoyage(voyageId) {
+
+    if (!voyageId) return "";
+
+    return voyagesParId[voyageId]?.nom || voyageId;
+}
+
+
+function afficherListeVisitesGestion(lieuId) {
+
+    listeVisitesGestion.innerHTML = "";
+
+    const visites =
+        (visitesParLieu[lieuId] || [])
+            .slice()
+            .sort((a, b) => {
+                const da = a.date_debut || a.date_texte || "9999";
+                const db = b.date_debut || b.date_texte || "9999";
+                return String(da).localeCompare(String(db));
+            });
+
+    if (!visites.length) {
+        listeVisitesGestion.innerHTML =
+            '<div>Aucune visite enregistrée pour ce lieu.</div>';
+        return;
+    }
+
+    visites.forEach(visite => {
+
+        const contexte =
+            typesContexteParCode[visite.type_contexte];
+
+        const nomContexte =
+            contexte?.nom || visite.type_contexte || "Contexte non renseigné";
+
+        const voyage =
+            obtenirNomVoyage(visite.voyage_id);
+
+        const div = document.createElement("div");
+        div.className = "visite-gestion";
+
+        const informations = document.createElement("div");
+        informations.innerHTML =
+            '<div class="visite-gestion-titre">' +
+            echapperHTML(formaterPeriodeVisite(visite)) +
+            '</div>' +
+            '<div class="visite-gestion-meta">' +
+            echapperHTML(nomContexte) +
+            (voyage ? " · " + echapperHTML(voyage) : "") +
+            (visite.type_experience ? " · " + echapperHTML(visite.type_experience) : "") +
+            '</div>';
+
+        const actions = document.createElement("div");
+        actions.className = "visite-gestion-actions";
+
+        const boutonModifier = document.createElement("button");
+        boutonModifier.type = "button";
+        boutonModifier.className = "bouton";
+        boutonModifier.textContent = "Modifier";
+        boutonModifier.addEventListener("click", () => chargerVisiteDansFormulaire(visite.visite_id));
+
+        const boutonSupprimer = document.createElement("button");
+        boutonSupprimer.type = "button";
+        boutonSupprimer.className = "bouton";
+        boutonSupprimer.textContent = "Supprimer";
+        boutonSupprimer.addEventListener("click", () => supprimerVisiteGestion(visite.visite_id));
+
+        actions.appendChild(boutonModifier);
+        actions.appendChild(boutonSupprimer);
+        div.appendChild(informations);
+        div.appendChild(actions);
+        listeVisitesGestion.appendChild(div);
+    });
+}
+
+
+function ouvrirGestionVisites(lieuId) {
+
+    if (!utilisateurConnecte) return;
+
+    const lieu =
+        tousLesLieux.find(item => item.lieu_id === lieuId);
+
+    if (!lieu) return;
+
+    document.getElementById("champ-visite-lieu-id-gestion").value = lieuId;
+    document.getElementById("titre-modal-visites").textContent =
+        "Visites — " + (lieu.nom || lieuId);
+
+    reinitialiserFormulaireVisiteGestion();
+    afficherListeVisitesGestion(lieuId);
+    fondModalVisites.style.display = "flex";
+}
+
+
+function fermerGestionVisites() {
+    fondModalVisites.style.display = "none";
+}
+
+
+function chargerVisiteDansFormulaire(visiteId) {
+
+    const visite =
+        toutesLesVisites.find(item => item.visite_id === visiteId);
+
+    if (!visite) return;
+
+    document.getElementById("champ-visite-id-gestion").value = visite.visite_id || "";
+    document.getElementById("champ-visite-voyage").value = visite.voyage_id || "";
+    document.getElementById("champ-visite-contexte").value = visite.type_contexte || "";
+    document.getElementById("champ-visite-date-debut").value = visite.date_debut || "";
+    document.getElementById("champ-visite-date-fin").value = visite.date_fin || "";
+    document.getElementById("champ-visite-date-texte").value = visite.date_texte || "";
+    document.getElementById("champ-visite-experience").value = visite.type_experience || "";
+    document.getElementById("champ-visite-note").value = visite.note ?? "";
+    document.getElementById("champ-visite-description").value = visite.description || "";
+    document.getElementById("champ-visite-notes").value = visite.notes || "";
+    document.getElementById("titre-form-visite").textContent = "Modifier la visite";
+    document.getElementById("message-visite-formulaire").textContent = "";
+}
+
+
+async function enregistrerVisiteGestion() {
+
+    if (!utilisateurConnecte) return;
+
+    const lieuId =
+        document.getElementById("champ-visite-lieu-id-gestion").value;
+
+    const visiteId =
+        document.getElementById("champ-visite-id-gestion").value.trim();
+
+    const contexte =
+        document.getElementById("champ-visite-contexte").value;
+
+    if (!lieuId) {
+        document.getElementById("message-visite-formulaire").textContent =
+            "Lieu introuvable.";
+        return;
+    }
+
+    if (!contexte) {
+        document.getElementById("message-visite-formulaire").textContent =
+            "Le contexte est obligatoire pour une visite.";
+        return;
+    }
+
+    const noteValeur = document.getElementById("champ-visite-note").value;
+    const note = noteValeur === "" ? null : Number(noteValeur);
+
+    const visiteData = {
+        lieu_id: lieuId,
+        voyage_id: document.getElementById("champ-visite-voyage").value || null,
+        type_contexte: contexte,
+        date_debut: document.getElementById("champ-visite-date-debut").value || null,
+        date_fin: document.getElementById("champ-visite-date-fin").value || null,
+        date_texte: document.getElementById("champ-visite-date-texte").value.trim() || null,
+        type_experience: document.getElementById("champ-visite-experience").value.trim() || null,
+        description: document.getElementById("champ-visite-description").value.trim() || null,
+        note,
+        notes: document.getElementById("champ-visite-notes").value.trim() || null
+    };
+
+    boutonEnregistrerVisite.disabled = true;
+    document.getElementById("message-visite-formulaire").textContent = "Enregistrement...";
+
+    try {
+
+        if (visiteId) {
+
+            const { data, error } =
+                await supabaseClient
+                    .from("visites")
+                    .update(visiteData)
+                    .eq("visite_id", visiteId)
+                    .select()
+                    .single();
+
+            if (error) throw error;
+            if (!data) throw new Error("Aucune visite n'a été renvoyée après modification.");
+
+            const index =
+                toutesLesVisites.findIndex(item => item.visite_id === visiteId);
+
+            if (index !== -1) {
+                toutesLesVisites[index] = data;
+            }
+
+        } else {
+
+            const nouvelleVisite = {
+                visite_id: genererNouvelIdVisite(),
+                ...visiteData
+            };
+
+            const { data, error } =
+                await supabaseClient
+                    .from("visites")
+                    .insert(nouvelleVisite)
+                    .select()
+                    .single();
+
+            if (error) throw error;
+            if (!data) throw new Error("Aucune visite n'a été renvoyée après création.");
+
+            toutesLesVisites.push(data);
+        }
+
+        reconstruireTousLesIndex();
+        remplirFiltres();
+        afficherLieuxFiltres();
+
+        document.getElementById("message-visite-formulaire").textContent =
+            "Visite enregistrée.";
+
+        reinitialiserFormulaireVisiteGestion();
+        document.getElementById("champ-visite-lieu-id-gestion").value = lieuId;
+        afficherListeVisitesGestion(lieuId);
+
+    } catch (erreur) {
+
+        console.error("Erreur visite :", erreur);
+        document.getElementById("message-visite-formulaire").textContent =
+            "Erreur : " + (erreur.message || String(erreur));
+
+    } finally {
+        boutonEnregistrerVisite.disabled = false;
+    }
+}
+
+
+async function supprimerVisiteGestion(visiteId) {
+
+    const visite =
+        toutesLesVisites.find(item => item.visite_id === visiteId);
+
+    if (!visite) return;
+
+    if (!confirm("Supprimer définitivement cette visite ?")) return;
+
+    try {
+
+        const { error } =
+            await supabaseClient
+                .from("visites")
+                .delete()
+                .eq("visite_id", visiteId);
+
+        if (error) throw error;
+
+        toutesLesVisites =
+            toutesLesVisites.filter(item => item.visite_id !== visiteId);
+
+        reconstruireTousLesIndex();
+        remplirFiltres();
+        afficherLieuxFiltres();
+        afficherListeVisitesGestion(visite.lieu_id);
+        reinitialiserFormulaireVisiteGestion();
+        document.getElementById("champ-visite-lieu-id-gestion").value = visite.lieu_id;
+        afficherListeVisitesGestion(visite.lieu_id);
+
+    } catch (erreur) {
+        console.error("Erreur suppression visite :", erreur);
+        document.getElementById("message-visite-formulaire").textContent =
+            "Erreur : " + (erreur.message || String(erreur));
+    }
+}
+
+
+boutonGererVisites.addEventListener("click", function() {
+    const lieuId = document.getElementById("champ-lieu-id").value;
+    if (lieuId) ouvrirGestionVisites(lieuId);
+});
+
+boutonFermerVisites.addEventListener("click", fermerGestionVisites);
+
+boutonNouveauVisite.addEventListener("click", function() {
+    const lieuId = document.getElementById("champ-visite-lieu-id-gestion").value;
+    reinitialiserFormulaireVisiteGestion();
+    document.getElementById("champ-visite-lieu-id-gestion").value = lieuId;
+});
+
+boutonEnregistrerVisite.addEventListener("click", enregistrerVisiteGestion);
+
+fondModalVisites.addEventListener("click", function(event) {
+    if (event.target === fondModalVisites) fermerGestionVisites();
 });
 
 
