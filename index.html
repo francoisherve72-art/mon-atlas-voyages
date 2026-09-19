@@ -210,6 +210,31 @@ main {
     border-top: 1px solid #ddd;
 }
 
+/* ==========================================================
+   HISTORIQUE DES VISITES DANS LA FICHE
+   ========================================================== */
+
+.fiche-visites {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.fiche-visite {
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+    line-height: 1.45;
+}
+
+.fiche-visite:last-child {
+    border-bottom: none;
+}
+
+.fiche-visite-description {
+    margin-top: 5px;
+    color: #444;
+}
+
 .fiche-notes {
     margin-top: 10px;
     padding-top: 10px;
@@ -1056,7 +1081,7 @@ main {
             <div id="message-visite-formulaire"></div>
 
             <div id="actions-visite-formulaire" style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
-                <button type="button" id="boutonAnnulerVisite" class="bouton">Annuler</button>
+                <button type="button" id="boutonAnnulerVisite" class="bouton">+ Nouvelle visite</button>
                 <button type="button" id="boutonEnregistrerVisite" class="bouton bouton-principal">Enregistrer la visite</button>
             </div>
         </div>
@@ -1487,23 +1512,28 @@ try {
 // VISITE
 // ==========================================================
 
-function obtenirVisite(lieu) {
+function obtenirVisites(lieu) {
 
     if (!lieu || !lieu.lieu_id) {
-        return null;
+        return [];
     }
 
     const visites =
         visitesParLieu[lieu.lieu_id];
 
-    if (
-        !Array.isArray(visites) ||
-        visites.length === 0
-    ) {
-        return null;
+    if (!Array.isArray(visites)) {
+        return [];
     }
 
-    return visites[0];
+    return visites;
+}
+
+
+function obtenirVisite(lieu) {
+
+    const visites = obtenirVisites(lieu);
+
+    return visites.length ? visites[0] : null;
 }
 
 
@@ -1542,7 +1572,8 @@ function creerFiche(
     lieu,
     voyage,
     visite,
-    photos
+    photos,
+    visites = []
 ) {
 
     let html = `
@@ -1833,6 +1864,131 @@ function creerFiche(
                     )}
                 </div>
 
+            </div>
+        `;
+    }
+
+
+    /*
+     * HISTORIQUE DES VISITES
+     *
+     * Un lieu peut être visité plusieurs fois. On affiche
+     * maintenant toutes les visites dans la fiche, et non
+     * uniquement visites[0].
+     */
+    if (Array.isArray(visites) && visites.length > 0) {
+
+        const visitesTriees =
+            visites
+                .slice()
+                .sort((a, b) => {
+                    const da =
+                        a.date_debut ||
+                        a.date_texte ||
+                        "9999";
+
+                    const db =
+                        b.date_debut ||
+                        b.date_texte ||
+                        "9999";
+
+                    return String(db).localeCompare(
+                        String(da)
+                    );
+                });
+
+        html += `
+            <div class="fiche-visites">
+                <div class="fiche-sous-titre">
+                    🗓️ ${visitesTriees.length > 1 ? "Visites" : "Visite"}
+                </div>
+        `;
+
+        visitesTriees.forEach(
+            visiteHistorique => {
+
+                const nomContexteHistorique =
+                    obtenirNomContexte(
+                        visiteHistorique
+                    );
+
+                const nomVoyageHistorique =
+                    obtenirNomVoyage(
+                        visiteHistorique.voyage_id
+                    );
+
+                const dateHistorique =
+                    afficherPeriode(
+                        visiteHistorique.date_debut,
+                        visiteHistorique.date_fin,
+                        visiteHistorique.date_precision,
+                        visiteHistorique.date_texte
+                    ) ||
+                    "Date non renseignée";
+
+                html += `
+                    <div class="fiche-visite">
+                        <div>
+                            📅 <strong>${echapperHTML(dateHistorique)}</strong>
+                        </div>
+                `;
+
+                if (nomContexteHistorique) {
+                    html += `
+                        <div>
+                            🧭 ${echapperHTML(nomContexteHistorique)}
+                        </div>
+                    `;
+                }
+
+                if (nomVoyageHistorique) {
+                    html += `
+                        <div>
+                            ✈️ ${echapperHTML(nomVoyageHistorique)}
+                        </div>
+                    `;
+                }
+
+                if (visiteHistorique.type_experience) {
+                    html += `
+                        <div>
+                            ✨ ${echapperHTML(
+                                visiteHistorique.type_experience
+                            )}
+                        </div>
+                    `;
+                }
+
+                if (
+                    visiteHistorique.note !== null &&
+                    visiteHistorique.note !== undefined
+                ) {
+                    html += `
+                        <div>
+                            ⭐ ${echapperHTML(
+                                visiteHistorique.note
+                            )}/5
+                        </div>
+                    `;
+                }
+
+                if (visiteHistorique.description) {
+                    html += `
+                        <div class="fiche-visite-description">
+                            ${echapperHTML(
+                                visiteHistorique.description
+                            )}
+                        </div>
+                    `;
+                }
+
+                html += `
+                    </div>
+                `;
+            }
+        );
+
+        html += `
             </div>
         `;
     }
@@ -2249,28 +2405,46 @@ function afficherLieuxFiltres() {
         tousLesLieux.filter(
             lieu => {
 
-                if (
-                    voyageSelectionne &&
-                    String(lieu.voyage_id) !==
-                        String(voyageSelectionne)
-                ) {
-                    return false;
+                const visites =
+                    obtenirVisites(lieu);
+
+
+                /*
+                 * Un lieu peut maintenant avoir plusieurs visites.
+                 * Un filtre "voyage / contexte / expérience" doit
+                 * conserver le lieu si AU MOINS UNE de ses visites
+                 * correspond.
+                 */
+
+                if (voyageSelectionne) {
+
+                    const correspond =
+                        visites.some(
+                            visite =>
+                                String(visite.voyage_id || "") ===
+                                String(voyageSelectionne)
+                        ) ||
+                        String(lieu.voyage_id || "") ===
+                            String(voyageSelectionne);
+
+                    if (!correspond) {
+                        return false;
+                    }
                 }
 
 
-                const visite =
-                    obtenirVisite(lieu);
+                if (contexteSelectionne) {
 
+                    const correspond =
+                        visites.some(
+                            visite =>
+                                visite.type_contexte ===
+                                contexteSelectionne
+                        );
 
-                if (
-                    contexteSelectionne &&
-                    (
-                        !visite ||
-                        visite.type_contexte !==
-                            contexteSelectionne
-                    )
-                ) {
-                    return false;
+                    if (!correspond) {
+                        return false;
+                    }
                 }
 
 
@@ -2283,15 +2457,18 @@ function afficherLieuxFiltres() {
                 }
 
 
-                if (
-                    experienceSelectionnee &&
-                    (
-                        !visite ||
-                        visite.type_experience !==
-                            experienceSelectionnee
-                    )
-                ) {
-                    return false;
+                if (experienceSelectionnee) {
+
+                    const correspond =
+                        visites.some(
+                            visite =>
+                                visite.type_experience ===
+                                experienceSelectionnee
+                        );
+
+                    if (!correspond) {
+                        return false;
+                    }
                 }
 
 
@@ -2510,8 +2687,11 @@ function afficherLieuxFiltres() {
                     lieu.voyage_id
                 ];
 
+            const visites =
+                obtenirVisites(lieu);
+
             const visite =
-                obtenirVisite(lieu);
+                visites[0] || null;
 
             const photosLieu =
                 photosParLieu[
@@ -2537,7 +2717,8 @@ function afficherLieuxFiltres() {
                     lieu,
                     voyage,
                     visite,
-                    photosLieu
+                    photosLieu,
+                    visites
 
                 )
 
@@ -3766,224 +3947,18 @@ formulaireLieu.addEventListener(
                 }
 
 
-                // ----------------------------------------------
-                // MODIFICATION DE visites
-                // ----------------------------------------------
-
-                if (visiteExistante) {
-
-                    /*
-                     * IMPORTANT :
-                     *
-                     * visites.type_contexte est NOT NULL.
-                     *
-                     * Donc si l'utilisateur choisit
-                     * "Aucun contexte", on supprime la visite
-                     * plutôt que d'essayer de mettre
-                     * type_contexte = null.
-                     */
-
-                    if (contexte) {
-
-                        const visiteData = {
-
-                            voyage_id:
-                                voyageId,
-
-                            type_contexte:
-                                contexte,
-
-                            date_debut:
-                                dateDebut,
-
-                            date_fin:
-                                dateFin,
-
-                            date_texte:
-                                dateTexte,
-
-                            type_experience:
-                                experience,
-
-                            description:
-                                description,
-
-                            note:
-                                note,
-
-                            notes:
-                                notes
-
-                        };
-
-
-                        const {
-                            data: visiteMiseAJour,
-                            error: erreurVisite
-                        } =
-                            await supabaseClient
-
-                                .from("visites")
-
-                                .update(
-                                    visiteData
-                                )
-
-                                .eq(
-                                    "visite_id",
-                                    visiteExistante.visite_id
-                                )
-
-                                /*
-                                 * Même contrôle que pour lieux :
-                                 * on vérifie qu'une ligne a réellement
-                                 * été modifiée en base.
-                                 */
-                                .select()
-                                .single();
-
-
-                        if (erreurVisite) {
-                            throw erreurVisite;
-                        }
-
-
-                        if (!visiteMiseAJour) {
-                            throw new Error(
-                                "Supabase n'a renvoyé aucune visite après la modification. Vérifiez les politiques RLS UPDATE/SELECT."
-                            );
-                        }
-
-
-                        const indexVisite =
-                            toutesLesVisites.findIndex(
-                                item =>
-                                    item.visite_id ===
-                                    visiteExistante.visite_id
-                            );
-
-
-                        if (indexVisite !== -1) {
-
-                            toutesLesVisites[
-                                indexVisite
-                            ] = {
-
-                                ...toutesLesVisites[
-                                    indexVisite
-                                ],
-
-                                ...visiteMiseAJour
-
-                            };
-
-                        }
-
-                    } else {
-
-                        /*
-                         * Suppression de la visite
-                         * si aucun contexte n'est sélectionné.
-                         */
-
-                        const {
-                            error: erreurSuppressionVisite
-                        } =
-                            await supabaseClient
-
-                                .from("visites")
-
-                                .delete()
-
-                                .eq(
-                                    "visite_id",
-                                    visiteExistante.visite_id
-                                );
-
-
-                        if (erreurSuppressionVisite) {
-                            throw erreurSuppressionVisite;
-                        }
-
-
-                        toutesLesVisites =
-                            toutesLesVisites.filter(
-                                visite =>
-                                    visite.visite_id !==
-                                    visiteExistante.visite_id
-                            );
-
-                    }
-
-                } else if (contexte) {
-
-                    /*
-                     * Le lieu n'avait pas encore de visite.
-                     * On en crée une si un contexte est choisi.
-                     */
-
-                    const nouvelleVisiteData = {
-
-                        visite_id:
-                            genererNouvelIdVisite(),
-
-                        lieu_id:
-                            lieuId,
-
-                        voyage_id:
-                            voyageId,
-
-                        type_contexte:
-                            contexte,
-
-                        date_debut:
-                            dateDebut,
-
-                        date_fin:
-                            dateFin,
-
-                        date_texte:
-                            dateTexte,
-
-                        type_experience:
-                            experience,
-
-                        description:
-                            description,
-
-                        note:
-                            note,
-
-                        notes:
-                            notes
-
-                    };
-
-
-                    const {
-                        error: erreurVisite
-                    } =
-                        await supabaseClient
-
-                            .from("visites")
-
-                            .insert(
-                                nouvelleVisiteData
-                            );
-
-
-                    if (erreurVisite) {
-                        throw erreurVisite;
-                    }
-
-
-                    toutesLesVisites.push(
-                        nouvelleVisiteData
-                    );
-
-                }
-
-
+                /*
+                 * IMPORTANT :
+                 *
+                 * Les visites sont désormais gérées exclusivement
+                 * dans "🗓️ Gérer les visites".
+                 *
+                 * Modifier un lieu ne doit donc PLUS écraser la
+                 * visite existante (et encore moins la première
+                 * d'une liste de plusieurs visites).
+                 *
+                 * Les anciennes visites restent intactes.
+                 */
                 // ----------------------------------------------
                 // RAFRAICHISSEMENT LOCAL
                 // ----------------------------------------------
