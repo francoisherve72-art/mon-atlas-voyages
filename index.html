@@ -770,6 +770,15 @@ main {
         </select>
 
 
+        <select id="filtreAnnee" class="filtre">
+
+            <option value="">
+                Toutes les années
+            </option>
+
+        </select>
+
+
         <span id="compteur">
             Chargement...
         </span>
@@ -1414,6 +1423,9 @@ const filtreTypeLieu =
 
 const filtreExperience =
     document.getElementById("filtreExperience");
+
+const filtreAnnee =
+    document.getElementById("filtreAnnee");
 
 const modeCarte =
     document.getElementById("modeCarte");
@@ -2295,6 +2307,34 @@ function remplirFiltres() {
         );
 
 
+    filtreAnnee.innerHTML = `
+        <option value="">
+            Toutes les années
+        </option>
+    `;
+
+    const anneesUtilisees = new Set();
+
+    toutesLesVisites.forEach(visite => {
+        [visite.date_debut, visite.date_fin].forEach(date => {
+            if (!date) return;
+            const annee = String(date).slice(0, 4);
+            if (/^\d{4}$/.test(annee)) {
+                anneesUtilisees.add(annee);
+            }
+        });
+    });
+
+    [...anneesUtilisees]
+        .sort((a, b) => Number(b) - Number(a))
+        .forEach(annee => {
+            const option = document.createElement("option");
+            option.value = annee;
+            option.textContent = annee;
+            filtreAnnee.appendChild(option);
+        });
+
+
     const champVoyage =
         document.getElementById(
             "champ-voyage"
@@ -2460,64 +2500,126 @@ function afficherLieuxFiltres() {
     const experienceSelectionnee =
         filtreExperience.value;
 
+    const anneeSelectionnee =
+        filtreAnnee.value;
+
 
     const lieuxFiltres =
-        tousLesLieux.filter(
-            lieu => {
+        tousLesLieux.filter(lieu => {
 
-                if (
-                    voyageSelectionne &&
-                    String(lieu.voyage_id) !==
-                        String(voyageSelectionne)
-                ) {
-                    return false;
-                }
-
-
-                const visite =
-                    obtenirVisite(lieu);
+            if (
+                typeLieuSelectionne &&
+                String(lieu.type_lieu || "") !==
+                    String(typeLieuSelectionne)
+            ) {
+                return false;
+            }
 
 
-                if (
-                    contexteSelectionne &&
-                    (
-                        !visite ||
-                        visite.type_contexte !==
-                            contexteSelectionne
-                    )
-                ) {
-                    return false;
-                }
+            const visitesLieu =
+                toutesLesVisites.filter(
+                    visite =>
+                        String(visite.lieu_id) ===
+                        String(lieu.lieu_id)
+                );
 
 
-                if (
-                    typeLieuSelectionne &&
-                    lieu.type_lieu !==
-                        typeLieuSelectionne
-                ) {
-                    return false;
-                }
+            // Les filtres Voyage / Contexte / Expérience / Année
+            // portent sur une même visite. Cela évite, par exemple,
+            // de combiner le voyage d'une visite avec le contexte
+            // d'une autre visite du même lieu.
+            const filtreVisiteActif =
+                Boolean(
+                    voyageSelectionne ||
+                    contexteSelectionne ||
+                    experienceSelectionnee ||
+                    anneeSelectionnee
+                );
 
 
-                if (
-                    experienceSelectionnee &&
-                    (
-                        !visite ||
-                        visite.type_experience !==
-                            experienceSelectionnee
-                    )
-                ) {
-                    return false;
-                }
-
-
+            if (!filtreVisiteActif) {
                 return (
                     lieu.latitude !== null &&
                     lieu.longitude !== null
                 );
-
             }
-        );
+
+
+            const correspond =
+                visitesLieu.some(visite => {
+
+                    if (
+                        voyageSelectionne &&
+                        String(visite.voyage_id || "") !==
+                            String(voyageSelectionne)
+                    ) {
+                        return false;
+                    }
+
+                    if (
+                        contexteSelectionne &&
+                        String(visite.type_contexte || "") !==
+                            String(contexteSelectionne)
+                    ) {
+                        return false;
+                    }
+
+                    if (
+                        experienceSelectionnee &&
+                        String(visite.type_experience || "") !==
+                            String(experienceSelectionnee)
+                    ) {
+                        return false;
+                    }
+
+                    if (anneeSelectionnee) {
+                        const anneeDebut =
+                            visite.date_debut
+                                ? String(visite.date_debut).slice(0, 4)
+                                : "";
+
+                        const anneeFin =
+                            visite.date_fin
+                                ? String(visite.date_fin).slice(0, 4)
+                                : "";
+
+                        if (
+                            anneeDebut !== anneeSelectionnee &&
+                            anneeFin !== anneeSelectionnee
+                        ) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
+
+
+            // Compatibilité avec les anciennes données :
+            // si le voyage est encore porté uniquement par le lieu,
+            // on continue à pouvoir le filtrer.
+            if (
+                voyageSelectionne &&
+                visitesLieu.length === 0 &&
+                String(lieu.voyage_id || "") ===
+                    String(voyageSelectionne) &&
+                !contexteSelectionne &&
+                !experienceSelectionnee &&
+                !anneeSelectionnee
+            ) {
+                return (
+                    lieu.latitude !== null &&
+                    lieu.longitude !== null
+                );
+            }
+
+
+            return (
+                correspond &&
+                lieu.latitude !== null &&
+                lieu.longitude !== null
+            );
+        });
 
 
     compteur.textContent =
@@ -5433,6 +5535,11 @@ filtreTypeLieu.addEventListener(
 );
 
 filtreExperience.addEventListener(
+    "change",
+    afficherLieuxFiltres
+);
+
+filtreAnnee.addEventListener(
     "change",
     afficherLieuxFiltres
 );
