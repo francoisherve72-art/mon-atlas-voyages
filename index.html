@@ -590,6 +590,33 @@ main {
     flex-shrink: 0;
 }
 
+/* ==========================================================
+   DETAIL D'UN VOYAGE
+   ========================================================== */
+
+.modal-voyage-detail { width: min(1050px, 100%); max-height: 92vh; overflow-y: auto; }
+.voyage-detail-entete { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
+.voyage-detail-couverture { width: 100%; height: 170px; object-fit: cover; border-radius: 8px; background: #eee; }
+.voyage-detail-titre { margin: 0 0 6px; font-size: 25px; }
+.voyage-detail-meta { color: #666; margin-bottom: 12px; }
+.voyage-detail-description { white-space: pre-line; line-height: 1.45; }
+.voyage-detail-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 18px 0; }
+.voyage-detail-stat { padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: #fafafa; text-align: center; }
+.voyage-detail-stat strong { display: block; font-size: 22px; }
+.voyage-detail-section { margin-top: 20px; }
+.voyage-detail-section h3 { margin: 0 0 10px; }
+.voyage-detail-visite { padding: 11px 0; border-bottom: 1px solid #e5e5e5; }
+.voyage-detail-visite:last-child { border-bottom: none; }
+.voyage-detail-visite-date { font-weight: bold; }
+.voyage-detail-lieu { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 9px 0; border-bottom: 1px solid #eee; }
+.voyage-detail-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd; }
+
+@media (max-width: 700px) {
+    .voyage-detail-entete { grid-template-columns: 1fr; }
+    .voyage-detail-couverture { height: 150px; }
+    .voyage-detail-stats { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 700px) {
     .ligne-gestion {
         align-items: flex-start;
@@ -707,6 +734,7 @@ main {
 }
 
 
+
 /* ==========================================================
    RECHERCHE
    ========================================================== */
@@ -761,6 +789,7 @@ main {
         flex: 1;
     }
 }
+
 
 </style>
 
@@ -1341,6 +1370,20 @@ main {
         </div>
 
         <div id="liste-voyages-gestion" class="liste-gestion"></div>
+    </div>
+</div>
+
+<!-- ========================================================
+     MODALE DETAIL D'UN VOYAGE
+     ======================================================== -->
+
+<div id="fond-modal-voyage-detail" class="fond-modal-gestion">
+    <div class="modal-gestion modal-voyage-detail">
+        <div id="contenu-voyage-detail"></div>
+        <div class="voyage-detail-actions">
+            <button type="button" id="boutonAfficherVoyageCarte" class="bouton bouton-principal">📍 Afficher sur la carte</button>
+            <button type="button" id="boutonFermerVoyageDetail" class="bouton">Fermer</button>
+        </div>
     </div>
 </div>
 
@@ -2281,6 +2324,7 @@ function lieuCorrespondRecherche(lieu, recherche) {
         terme => texte.includes(terme)
     );
 }
+
 
 
 // ==========================================================
@@ -4617,6 +4661,7 @@ function afficherListeVoyagesGestion() {
                     </div>
                 </div>
                 <div class="actions-gestion">
+                    <button class="bouton bouton-voir-voyage" data-voyage-id="${echapperHTML(voyage.voyage_id)}">Voir</button>
                     <button class="bouton bouton-editer-voyage" data-voyage-id="${echapperHTML(voyage.voyage_id)}">Modifier</button>
                     <button class="bouton bouton-supprimer-voyage" data-voyage-id="${echapperHTML(voyage.voyage_id)}">Supprimer</button>
                 </div>`;
@@ -4729,12 +4774,133 @@ fondModalVoyages.addEventListener("click", event => {
     if (event.target === fondModalVoyages) fermerGestionVoyages();
 });
 listeVoyagesGestion.addEventListener("click", event => {
+    const voir = event.target.closest(".bouton-voir-voyage");
+    if (voir) {
+        ouvrirDetailVoyage(voir.dataset.voyageId);
+        return;
+    }
     const edit = event.target.closest(".bouton-editer-voyage");
     if (edit) chargerVoyageDansFormulaire(edit.dataset.voyageId);
     const del = event.target.closest(".bouton-supprimer-voyage");
     if (del) supprimerVoyage(del.dataset.voyageId);
 });
 
+
+// ==========================================================
+// DETAIL D'UN VOYAGE
+// ==========================================================
+
+const fondModalVoyageDetail = document.getElementById("fond-modal-voyage-detail");
+const contenuVoyageDetail = document.getElementById("contenu-voyage-detail");
+const boutonFermerVoyageDetail = document.getElementById("boutonFermerVoyageDetail");
+const boutonAfficherVoyageCarte = document.getElementById("boutonAfficherVoyageCarte");
+let voyageDetailIdActuel = null;
+
+function obtenirUrlPhotoVoyage(voyage) {
+    if (!voyage || !voyage.photo_couverture) return "";
+    const valeur = String(voyage.photo_couverture);
+    if (/^https?:\/\//i.test(valeur)) return valeur;
+    return construireUrlPhoto(valeur);
+}
+
+function ouvrirDetailVoyage(voyageId) {
+    const voyage = tousLesVoyages.find(v => v.voyage_id === voyageId);
+    if (!voyage) return;
+    voyageDetailIdActuel = voyageId;
+
+    const visitesVoyage = toutesLesVisites
+        .filter(v => String(v.voyage_id || "") === String(voyageId))
+        .sort((a, b) => String(a.date_debut || a.date_fin || a.date_texte || "").localeCompare(String(b.date_debut || b.date_fin || b.date_texte || "")));
+
+    const lieuxDuVoyage = new Map();
+    tousLesLieux.forEach(lieu => {
+        if (String(lieu.voyage_id || "") === String(voyageId)) lieuxDuVoyage.set(lieu.lieu_id, lieu);
+    });
+    visitesVoyage.forEach(visite => {
+        const lieu = tousLesLieux.find(l => l.lieu_id === visite.lieu_id);
+        if (lieu) lieuxDuVoyage.set(lieu.lieu_id, lieu);
+    });
+
+    const photosVoyage = toutesLesPhotos.filter(photo =>
+        String(photo.voyage_id || "") === String(voyageId) || lieuxDuVoyage.has(photo.lieu_id)
+    );
+
+    const periode = afficherPeriode(voyage.date_debut, voyage.date_fin, voyage.date_precision, voyage.date_texte);
+    const urlCouverture = obtenirUrlPhotoVoyage(voyage);
+
+    let html = `
+        <div class="voyage-detail-entete">
+            <div>
+                <h2 class="voyage-detail-titre">✈️ ${echapperHTML(voyage.nom || voyage.voyage_id)}</h2>
+                <div class="voyage-detail-meta">${periode ? "📅 " + echapperHTML(periode) : ""}${voyage.pays_principal ? " · 🌍 " + echapperHTML(voyage.pays_principal) : ""}</div>
+                ${voyage.description ? `<div class="voyage-detail-description">${echapperHTML(voyage.description)}</div>` : ""}
+            </div>
+            ${urlCouverture ? `<img class="voyage-detail-couverture" src="${echapperHTML(urlCouverture)}" alt="${echapperHTML(voyage.nom || "Voyage")}">` : ""}
+        </div>
+        <div class="voyage-detail-stats">
+            <div class="voyage-detail-stat"><strong>${lieuxDuVoyage.size}</strong>lieu${lieuxDuVoyage.size > 1 ? "x" : ""}</div>
+            <div class="voyage-detail-stat"><strong>${visitesVoyage.length}</strong>visite${visitesVoyage.length > 1 ? "s" : ""}</div>
+            <div class="voyage-detail-stat"><strong>${photosVoyage.length}</strong>photo${photosVoyage.length > 1 ? "s" : ""}</div>
+        </div>
+    `;
+
+    if (visitesVoyage.length) {
+        html += `<div class="voyage-detail-section"><h3>🗓️ Chronologie des visites</h3>`;
+        visitesVoyage.forEach(visite => {
+            const lieu = tousLesLieux.find(l => l.lieu_id === visite.lieu_id);
+            const contexte = obtenirNomContexte(visite);
+            const dateVisite = afficherPeriode(visite.date_debut, visite.date_fin, visite.date_precision, visite.date_texte);
+            const meta = [];
+            if (contexte) meta.push("🧭 " + echapperHTML(contexte));
+            if (visite.type_experience) meta.push("✨ " + echapperHTML(visite.type_experience));
+            if (visite.note !== null && visite.note !== undefined) meta.push("⭐ " + echapperHTML(visite.note) + "/5");
+            html += `<div class="voyage-detail-visite"><div class="voyage-detail-visite-date">📅 ${echapperHTML(dateVisite || "Date non renseignée")}</div><div class="fiche-visite-meta">${lieu ? "📍 " + echapperHTML(lieu.nom) + (lieu.ville ? " · " + echapperHTML(lieu.ville) : "") : "Lieu inconnu"}${meta.length ? " · " + meta.join(" · ") : ""}</div>${visite.description ? `<div class="fiche-visite-detail">${echapperHTML(visite.description)}</div>` : ""}</div>`;
+        });
+        html += `</div>`;
+    }
+
+    const lieuxTries = [...lieuxDuVoyage.values()].sort((a,b) => String(a.nom || "").localeCompare(String(b.nom || ""), "fr"));
+    html += `<div class="voyage-detail-section"><h3>📍 Lieux du voyage</h3>`;
+    if (!lieuxTries.length) {
+        html += `<div>Aucun lieu n'est actuellement rattaché à ce voyage.</div>`;
+    } else {
+        lieuxTries.forEach(lieu => {
+            const nombreVisites = (visitesParLieu[lieu.lieu_id] || []).filter(v => String(v.voyage_id || "") === String(voyageId)).length;
+            html += `<div class="voyage-detail-lieu"><div><strong>${echapperHTML(lieu.nom || lieu.lieu_id)}</strong>${lieu.ville || lieu.pays ? `<div class="fiche-visite-meta">${echapperHTML([lieu.ville, lieu.pays].filter(Boolean).join(" · "))}</div>` : ""}</div><div class="fiche-visite-meta">${nombreVisites} visite${nombreVisites > 1 ? "s" : ""}</div></div>`;
+        });
+    }
+    html += `</div>`;
+
+    if (voyage.notes) html += `<div class="voyage-detail-section"><h3>📝 Notes personnelles</h3><div class="voyage-detail-description">${echapperHTML(voyage.notes)}</div></div>`;
+
+    contenuVoyageDetail.innerHTML = html;
+    fondModalVoyageDetail.style.display = "flex";
+}
+
+function fermerDetailVoyage() {
+    fondModalVoyageDetail.style.display = "none";
+    contenuVoyageDetail.innerHTML = "";
+    voyageDetailIdActuel = null;
+}
+
+function afficherVoyageActuelSurCarte() {
+    if (!voyageDetailIdActuel) return;
+    filtreVoyage.value = voyageDetailIdActuel;
+    filtreContexte.value = "";
+    filtreTypeLieu.value = "";
+    filtreExperience.value = "";
+    filtreAnnee.value = "";
+    modeCarte.value = "marqueurs";
+    modeAffichage = "marqueurs";
+    fermerDetailVoyage();
+    afficherLieuxFiltres();
+}
+
+boutonFermerVoyageDetail.addEventListener("click", fermerDetailVoyage);
+boutonAfficherVoyageCarte.addEventListener("click", afficherVoyageActuelSurCarte);
+fondModalVoyageDetail.addEventListener("click", event => {
+    if (event.target === fondModalVoyageDetail) fermerDetailVoyage();
+});
 
 // ==========================================================
 // GESTION DES PHOTOS
