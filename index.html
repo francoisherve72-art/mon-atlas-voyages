@@ -296,6 +296,101 @@ main {
     opacity: 0.75;
 }
 
+/* ==========================================================
+   VISIONNEUSE PHOTO
+   ========================================================== */
+
+#fond-visionneuse-photo {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.88);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.visionneuse-photo-contenu {
+    position: relative;
+    width: min(1100px, 100%);
+    height: min(92vh, 900px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+#visionneuse-photo-image {
+    max-width: 100%;
+    max-height: calc(100% - 90px);
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.45);
+}
+
+#visionneuse-photo-legende {
+    width: min(850px, 100%);
+    margin-top: 12px;
+    color: white;
+    text-align: center;
+    line-height: 1.4;
+    font-size: 14px;
+}
+
+#visionneuse-photo-titre {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+#visionneuse-photo-description {
+    margin-top: 4px;
+    opacity: 0.9;
+}
+
+.visionneuse-photo-bouton {
+    position: absolute;
+    border: 0;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.9);
+    color: #222;
+    font-size: 26px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+.visionneuse-photo-bouton:hover {
+    background: white;
+}
+
+#bouton-fermer-visionneuse {
+    top: 0;
+    right: 0;
+}
+
+#bouton-photo-precedente {
+    left: 0;
+    top: 45%;
+}
+
+#bouton-photo-suivante {
+    right: 0;
+    top: 45%;
+}
+
+#visionneuse-photo-compteur {
+    margin-top: 5px;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
 .icone {
     margin-right: 4px;
 }
@@ -1223,6 +1318,47 @@ main {
 </div>
 
 
+<!-- ========================================================
+     VISIONNEUSE DES PHOTOS
+     ======================================================== -->
+
+<div id="fond-visionneuse-photo" aria-hidden="true">
+    <div class="visionneuse-photo-contenu">
+        <button
+            type="button"
+            id="bouton-fermer-visionneuse"
+            class="visionneuse-photo-bouton"
+            aria-label="Fermer"
+        >×</button>
+
+        <button
+            type="button"
+            id="bouton-photo-precedente"
+            class="visionneuse-photo-bouton"
+            aria-label="Photo précédente"
+        >‹</button>
+
+        <img
+            id="visionneuse-photo-image"
+            src=""
+            alt=""
+        >
+
+        <button
+            type="button"
+            id="bouton-photo-suivante"
+            class="visionneuse-photo-bouton"
+            aria-label="Photo suivante"
+        >›</button>
+
+        <div id="visionneuse-photo-legende">
+            <div id="visionneuse-photo-titre"></div>
+            <div id="visionneuse-photo-description"></div>
+            <div id="visionneuse-photo-compteur"></div>
+        </div>
+    </div>
+</div>
+
 <script
     src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js">
 </script>
@@ -1624,23 +1760,24 @@ function creerFiche(
 
 
     // ------------------------------------------------------
-    // PHOTO PRINCIPALE
+    // PHOTOS : ordre principal puis ordre numérique
     // ------------------------------------------------------
 
-    let photoPrincipale = null;
+    const photosAffichees = Array.isArray(photos)
+        ? [...photos]
+            .filter(photo => photo && photo.fichier)
+            .sort((a, b) => {
+                if (Boolean(b.photo_principale) !== Boolean(a.photo_principale)) {
+                    return Boolean(b.photo_principale) ? 1 : -1;
+                }
+                return Number(a.ordre || 1) - Number(b.ordre || 1);
+            })
+        : [];
 
-    if (Array.isArray(photos)) {
-        photoPrincipale =
-            photos.find(
-                photo => photo.photo_principale === true
-            ) || photos[0];
-    }
+    const photoPrincipale = photosAffichees[0] || null;
 
 
-    if (
-        photoPrincipale &&
-        photoPrincipale.fichier
-    ) {
+    if (photoPrincipale) {
 
         const urlPhoto =
             construireUrlPhoto(
@@ -1651,9 +1788,13 @@ function creerFiche(
             <img
                 class="fiche-photo"
                 src="${echapperHTML(urlPhoto)}"
-                alt="${echapperHTML(
-                    photoPrincipale.titre || lieu.nom
-                )}"
+                data-photo-index="0"
+                data-photo-url="${echapperHTML(urlPhoto)}"
+                data-photo-titre="${echapperHTML(photoPrincipale.titre || lieu.nom)}"
+                data-photo-description="${echapperHTML(photoPrincipale.description || "")}"
+                data-photo-date="${echapperHTML(photoPrincipale.date_photo || "")}"
+                alt="${echapperHTML(photoPrincipale.titre || lieu.nom)}"
+                title="Cliquer pour agrandir"
             >
         `;
     }
@@ -1672,10 +1813,8 @@ function creerFiche(
             <div class="fiche-galerie">
         `;
 
-        photos.forEach(
-            photo => {
-
-                if (!photo.fichier) return;
+        photosAffichees.forEach(
+            (photo, index) => {
 
                 const urlPhoto =
                     construireUrlPhoto(photo.fichier);
@@ -1684,16 +1823,13 @@ function creerFiche(
                     <img
                         class="fiche-miniature"
                         src="${echapperHTML(urlPhoto)}"
+                        data-photo-index="${index}"
                         data-photo-url="${echapperHTML(urlPhoto)}"
-                        data-photo-titre="${echapperHTML(
-                            photo.titre || lieu.nom
-                        )}"
-                        alt="${echapperHTML(
-                            photo.titre || lieu.nom
-                        )}"
-                        title="${echapperHTML(
-                            photo.titre || lieu.nom
-                        )}"
+                        data-photo-titre="${echapperHTML(photo.titre || lieu.nom)}"
+                        data-photo-description="${echapperHTML(photo.description || "")}"
+                        data-photo-date="${echapperHTML(photo.date_photo || "")}"
+                        alt="${echapperHTML(photo.titre || lieu.nom)}"
+                        title="Cliquer pour agrandir"
                     >
                 `;
             }
@@ -1705,10 +1841,10 @@ function creerFiche(
     }
 
 
-    if (Array.isArray(photos) && photos.length > 0) {
+    if (photosAffichees.length > 0) {
         html += `
             <div class="fiche-visite-meta">
-                📷 ${photos.length} photo${photos.length > 1 ? "s" : ""}
+                📷 ${photosAffichees.length} photo${photosAffichees.length > 1 ? "s" : ""} · cliquer pour agrandir
             </div>
         `;
     }
@@ -5064,87 +5200,215 @@ async function supprimerLieu(lieuId) {
 
 
 // ==========================================================
-// CLICS DANS LES POPUPS
+// VISIONNEUSE PHOTO + CLICS DANS LES POPUPS
 // ==========================================================
+
+const fondVisionneusePhoto =
+    document.getElementById("fond-visionneuse-photo");
+
+const imageVisionneusePhoto =
+    document.getElementById("visionneuse-photo-image");
+
+const titreVisionneusePhoto =
+    document.getElementById("visionneuse-photo-titre");
+
+const descriptionVisionneusePhoto =
+    document.getElementById("visionneuse-photo-description");
+
+const compteurVisionneusePhoto =
+    document.getElementById("visionneuse-photo-compteur");
+
+const boutonFermerVisionneuse =
+    document.getElementById("bouton-fermer-visionneuse");
+
+const boutonPhotoPrecedente =
+    document.getElementById("bouton-photo-precedente");
+
+const boutonPhotoSuivante =
+    document.getElementById("bouton-photo-suivante");
+
+let photosVisionneuse = [];
+let indexPhotoVisionneuse = 0;
+
+function ouvrirVisionneusePhoto(images, index) {
+
+    if (!Array.isArray(images) || images.length === 0) {
+        return;
+    }
+
+    photosVisionneuse = images;
+    indexPhotoVisionneuse = Math.max(
+        0,
+        Math.min(Number(index) || 0, photosVisionneuse.length - 1)
+    );
+
+    afficherPhotoVisionneuse();
+    fondVisionneusePhoto.style.display = "flex";
+    fondVisionneusePhoto.setAttribute("aria-hidden", "false");
+}
+
+function afficherPhotoVisionneuse() {
+
+    const photo = photosVisionneuse[indexPhotoVisionneuse];
+
+    if (!photo) return;
+
+    imageVisionneusePhoto.src = photo.url;
+    imageVisionneusePhoto.alt = photo.titre || "Photo";
+
+    titreVisionneusePhoto.textContent = photo.titre || "";
+
+    const informations = [];
+
+    if (photo.date) {
+        informations.push("📅 " + photo.date);
+    }
+
+    if (photo.description) {
+        informations.push(photo.description);
+    }
+
+    descriptionVisionneusePhoto.textContent =
+        informations.join(" · ");
+
+    compteurVisionneusePhoto.textContent =
+        (indexPhotoVisionneuse + 1) +
+        " / " +
+        photosVisionneuse.length;
+
+    const plusieurs = photosVisionneuse.length > 1;
+
+    boutonPhotoPrecedente.style.display = plusieurs ? "flex" : "none";
+    boutonPhotoSuivante.style.display = plusieurs ? "flex" : "none";
+}
+
+function fermerVisionneusePhoto() {
+    fondVisionneusePhoto.style.display = "none";
+    fondVisionneusePhoto.setAttribute("aria-hidden", "true");
+    imageVisionneusePhoto.src = "";
+    photosVisionneuse = [];
+}
+
+function photoVisionneuseSuivante() {
+    if (!photosVisionneuse.length) return;
+    indexPhotoVisionneuse =
+        (indexPhotoVisionneuse + 1) % photosVisionneuse.length;
+    afficherPhotoVisionneuse();
+}
+
+function photoVisionneusePrecedente() {
+    if (!photosVisionneuse.length) return;
+    indexPhotoVisionneuse =
+        (indexPhotoVisionneuse - 1 + photosVisionneuse.length) % photosVisionneuse.length;
+    afficherPhotoVisionneuse();
+}
+
+boutonFermerVisionneuse.addEventListener(
+    "click",
+    fermerVisionneusePhoto
+);
+
+boutonPhotoSuivante.addEventListener(
+    "click",
+    photoVisionneuseSuivante
+);
+
+boutonPhotoPrecedente.addEventListener(
+    "click",
+    photoVisionneusePrecedente
+);
+
+fondeVisionneusePhoto.addEventListener(
+    "click",
+    event => {
+        if (event.target === fondVisionneusePhoto) {
+            fermerVisionneusePhoto();
+        }
+    }
+);
+
+document.addEventListener(
+    "keydown",
+    event => {
+        if (fondVisionneusePhoto.style.display !== "flex") return;
+
+        if (event.key === "Escape") {
+            fermerVisionneusePhoto();
+        } else if (event.key === "ArrowRight") {
+            photoVisionneuseSuivante();
+        } else if (event.key === "ArrowLeft") {
+            photoVisionneusePrecedente();
+        }
+    }
+);
 
 document.addEventListener(
     "click",
     function(event) {
 
-
         const boutonModifier =
-            event.target.closest(
-                ".bouton-modifier"
-            );
-
+            event.target.closest(".bouton-modifier");
 
         if (boutonModifier) {
-
             ouvrirFormulaireModification(
                 boutonModifier.dataset.lieuId
             );
-
             return;
         }
 
-
         const boutonSupprimer =
-            event.target.closest(
-                ".bouton-supprimer"
-            );
-
+            event.target.closest(".bouton-supprimer");
 
         if (boutonSupprimer) {
-
             supprimerLieu(
                 boutonSupprimer.dataset.lieuId
             );
-
             return;
         }
 
+        const elementPhoto =
+            event.target.closest(".fiche-photo, .fiche-miniature");
 
-        const miniature =
-            event.target.closest(
-                ".fiche-miniature"
-            );
-
-
-        if (!miniature) {
+        if (!elementPhoto) {
             return;
         }
-
 
         const popup =
-            miniature.closest(
-                ".maplibregl-popup"
-            );
-
+            elementPhoto.closest(".maplibregl-popup");
 
         if (!popup) {
             return;
         }
 
+        // Les miniatures représentent déjà l'ensemble de la galerie.
+        // La grande photo n'est utilisée comme source que lorsqu'il n'y a
+        // qu'une seule photo (donc pas de miniatures).
+        const elementsPhotos =
+            [...popup.querySelectorAll(".fiche-miniature")];
 
-        const grandePhoto =
-            popup.querySelector(
-                ".fiche-photo"
-            );
+        const sources =
+            elementsPhotos.length > 0
+                ? elementsPhotos
+                : [popup.querySelector(".fiche-photo")].filter(Boolean);
 
+        const images = sources
+            .map(element => ({
+                url: element.dataset.photoUrl || element.src,
+                titre: element.dataset.photoTitre || element.alt || "",
+                description: element.dataset.photoDescription || "",
+                date: element.dataset.photoDate || ""
+            }))
+            .filter(photo => photo.url);
 
-        if (!grandePhoto) {
+        if (!images.length) {
             return;
         }
 
+        const index = elementsPhotos.length > 0
+            ? Math.max(0, Number(elementPhoto.dataset.photoIndex || 0))
+            : 0;
 
-        grandePhoto.src =
-            miniature.dataset.photoUrl;
-
-
-        grandePhoto.alt =
-            miniature.dataset.photoTitre ||
-            "";
-
+        ouvrirVisionneusePhoto(images, index);
     }
 );
 
