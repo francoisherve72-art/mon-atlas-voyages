@@ -706,6 +706,62 @@ main {
     }
 }
 
+
+/* ==========================================================
+   RECHERCHE
+   ========================================================== */
+
+.zone-recherche {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 240px;
+}
+
+#rechercheLieu {
+    width: 230px;
+    box-sizing: border-box;
+    padding: 8px 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font: inherit;
+    background: #fff;
+}
+
+#boutonEffacerRecherche {
+    border: 1px solid #ccc;
+    background: #fff;
+    border-radius: 8px;
+    padding: 7px 9px;
+    cursor: pointer;
+    display: none;
+}
+
+#boutonEffacerRecherche:hover {
+    background: #f3f3f3;
+}
+
+@media (max-width: 900px) {
+    .zone-recherche {
+        min-width: 180px;
+        flex: 1 1 220px;
+    }
+
+    #rechercheLieu {
+        width: 100%;
+    }
+}
+
+@media (max-width: 650px) {
+    .zone-recherche {
+        width: 100%;
+    }
+
+    #rechercheLieu {
+        flex: 1;
+    }
+}
+
 </style>
 
 </head>
@@ -720,6 +776,25 @@ main {
 
 
     <div id="filtres">
+
+        <div class="zone-recherche">
+            <input
+                type="search"
+                id="rechercheLieu"
+                placeholder="🔎 Rechercher un lieu, ville, pays..."
+                autocomplete="off"
+                aria-label="Rechercher un lieu, une ville ou un pays"
+            >
+            <button
+                type="button"
+                id="boutonEffacerRecherche"
+                title="Effacer la recherche"
+                aria-label="Effacer la recherche"
+            >
+                ✕
+            </button>
+        </div>
+
 
         <select id="modeCarte" class="filtre">
 
@@ -1427,6 +1502,12 @@ const filtreExperience =
 const filtreAnnee =
     document.getElementById("filtreAnnee");
 
+const rechercheLieu =
+    document.getElementById("rechercheLieu");
+
+const boutonEffacerRecherche =
+    document.getElementById("boutonEffacerRecherche");
+
 const modeCarte =
     document.getElementById("modeCarte");
 
@@ -2103,6 +2184,106 @@ function creerFiche(
 }
 
 // ==========================================================
+// RECHERCHE
+// ==========================================================
+
+function normaliserTexteRecherche(texte) {
+    return String(texte ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+}
+
+
+function construireTexteRechercheLieu(lieu) {
+
+    const morceaux = [
+        lieu.nom,
+        lieu.ville,
+        lieu.pays,
+        lieu.type_lieu,
+        lieu.adresse,
+        lieu.description,
+        lieu.notes,
+        lieu.statut,
+        lieu.type_experience
+    ];
+
+    const visitesLieu =
+        visitesParLieu[lieu.lieu_id] || [];
+
+    visitesLieu.forEach(visite => {
+
+        morceaux.push(
+            visite.date_texte,
+            visite.description,
+            visite.notes,
+            visite.type_experience,
+            visite.type_contexte,
+            visite.statut
+        );
+
+        if (visite.voyage_id) {
+            morceaux.push(
+                voyagesParId[visite.voyage_id]?.nom
+            );
+        }
+
+        if (visite.type_contexte) {
+            morceaux.push(
+                typesContexteParCode[
+                    visite.type_contexte
+                ]?.nom
+            );
+        }
+    });
+
+    const photosLieu =
+        photosParLieu[lieu.lieu_id] || [];
+
+    photosLieu.forEach(photo => {
+        morceaux.push(
+            photo.titre,
+            photo.description
+        );
+    });
+
+    if (lieu.voyage_id) {
+        morceaux.push(
+            voyagesParId[lieu.voyage_id]?.nom
+        );
+    }
+
+    return normaliserTexteRecherche(
+        morceaux
+            .filter(Boolean)
+            .join(" ")
+    );
+}
+
+
+function lieuCorrespondRecherche(lieu, recherche) {
+
+    if (!recherche) {
+        return true;
+    }
+
+    const termes =
+        normaliserTexteRecherche(recherche)
+            .split(/\s+/)
+            .filter(Boolean);
+
+    const texte =
+        construireTexteRechercheLieu(lieu);
+
+    return termes.every(
+        terme => texte.includes(terme)
+    );
+}
+
+
+// ==========================================================
 // FILTRES
 // ==========================================================
 
@@ -2503,9 +2684,22 @@ function afficherLieuxFiltres() {
     const anneeSelectionnee =
         filtreAnnee.value;
 
+    const recherche =
+        rechercheLieu.value.trim();
+
 
     const lieuxFiltres =
         tousLesLieux.filter(lieu => {
+
+            if (
+                !lieuCorrespondRecherche(
+                    lieu,
+                    recherche
+                )
+            ) {
+                return false;
+            }
+
 
             if (
                 typeLieuSelectionne &&
@@ -5516,8 +5710,38 @@ document.addEventListener(
 
 
 // ==========================================================
-// EVENEMENTS FILTRES
+// EVENEMENTS RECHERCHE + FILTRES
 // ==========================================================
+
+rechercheLieu.addEventListener(
+    "input",
+    function() {
+
+        boutonEffacerRecherche.style.display =
+            rechercheLieu.value.trim()
+                ? "inline-block"
+                : "none";
+
+        afficherLieuxFiltres();
+    }
+);
+
+
+boutonEffacerRecherche.addEventListener(
+    "click",
+    function() {
+
+        rechercheLieu.value = "";
+
+        boutonEffacerRecherche.style.display =
+            "none";
+
+        afficherLieuxFiltres();
+
+        rechercheLieu.focus();
+    }
+);
+
 
 filtreVoyage.addEventListener(
     "change",
