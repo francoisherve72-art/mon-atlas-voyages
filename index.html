@@ -495,6 +495,155 @@ main {
 }
 
 
+
+
+/* ==========================================================
+   STATISTIQUES DE L'ATLAS
+   ========================================================== */
+
+.modal-statistiques {
+    width: min(1100px, 100%);
+    max-height: 92vh;
+    overflow-y: auto;
+}
+
+.stats-intro {
+    color: #666;
+    margin: -6px 0 18px;
+    line-height: 1.45;
+}
+
+.stats-section {
+    margin-top: 22px;
+}
+
+.stats-section h3 {
+    margin: 0 0 10px;
+}
+
+.stats-cartes {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.stats-carte {
+    border: 1px solid #ddd;
+    border-radius: 9px;
+    padding: 13px;
+    background: #fafafa;
+}
+
+.stats-carte-valeur {
+    display: block;
+    font-size: 25px;
+    font-weight: bold;
+    line-height: 1.1;
+}
+
+.stats-carte-libelle {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 13px;
+}
+
+.stats-grille {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.stats-tableau {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.stats-tableau td {
+    padding: 6px 0;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.stats-tableau td:last-child {
+    text-align: right;
+    font-weight: bold;
+    padding-left: 10px;
+    white-space: nowrap;
+}
+
+.stats-barre-ligne {
+    display: grid;
+    grid-template-columns: minmax(100px, 150px) 1fr 36px;
+    gap: 8px;
+    align-items: center;
+    margin: 7px 0;
+    font-size: 13px;
+}
+
+.stats-barre-libelle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.stats-barre-fond {
+    height: 10px;
+    border-radius: 999px;
+    background: #e9e9e9;
+    overflow: hidden;
+}
+
+.stats-barre {
+    height: 100%;
+    border-radius: 999px;
+    background: #555;
+    min-width: 2px;
+}
+
+.stats-vide {
+    color: #777;
+    font-size: 13px;
+    padding: 8px 0;
+}
+
+.stats-periode {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+    line-height: 1.5;
+}
+
+.stats-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #ddd;
+}
+
+@media (max-width: 800px) {
+    .stats-cartes {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .stats-grille {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 500px) {
+    .stats-cartes {
+        grid-template-columns: 1fr 1fr;
+    }
+    .stats-barre-ligne {
+        grid-template-columns: minmax(80px, 110px) 1fr 30px;
+    }
+}
+
+
 /* ==========================================================
    MARQUEURS
    ========================================================== */
@@ -931,6 +1080,14 @@ main {
                 style="display:none"
             >
                 🖼️ Photos
+            </button>
+
+
+            <button
+                id="boutonStatistiques"
+                class="bouton"
+            >
+                📊 Statistiques
             </button>
 
         </div>
@@ -1387,6 +1544,25 @@ main {
     </div>
 </div>
 
+
+
+<!-- ========================================================
+     MODALE STATISTIQUES DE L'ATLAS
+     ======================================================== -->
+
+<div id="fond-modal-statistiques" class="fond-modal-gestion">
+    <div class="modal-gestion modal-statistiques">
+        <h2>📊 Statistiques de l'Atlas</h2>
+        <p class="stats-intro" id="stats-intro">
+            Vue d'ensemble de vos lieux, visites, voyages et photos.
+        </p>
+        <div id="contenu-statistiques"></div>
+        <div class="stats-actions">
+            <button type="button" id="boutonFermerStatistiques" class="bouton">Fermer</button>
+        </div>
+    </div>
+</div>
+
 <!-- ========================================================
      MODALE GESTION DES PHOTOS
      ======================================================== -->
@@ -1571,6 +1747,18 @@ const boutonPhotos =
 
 const statutAuth =
     document.getElementById("statut-auth");
+
+const boutonStatistiques =
+    document.getElementById("boutonStatistiques");
+
+const fondModalStatistiques =
+    document.getElementById("fond-modal-statistiques");
+
+const contenuStatistiques =
+    document.getElementById("contenu-statistiques");
+
+const statsIntro =
+    document.getElementById("stats-intro");
 
 const fondModal =
     document.getElementById("fond-modal");
@@ -4901,6 +5089,350 @@ boutonAfficherVoyageCarte.addEventListener("click", afficherVoyageActuelSurCarte
 fondModalVoyageDetail.addEventListener("click", event => {
     if (event.target === fondModalVoyageDetail) fermerDetailVoyage();
 });
+
+
+
+// ==========================================================
+// STATISTIQUES DE L'ATLAS
+// ==========================================================
+
+function obtenirLieuxFiltresPourStatistiques() {
+
+    const voyageSelectionne = filtreVoyage.value;
+    const contexteSelectionne = filtreContexte.value;
+    const typeLieuSelectionne = filtreTypeLieu.value;
+    const experienceSelectionnee = filtreExperience.value;
+    const anneeSelectionnee = filtreAnnee.value;
+    const recherche = rechercheLieu.value.trim();
+
+    return tousLesLieux.filter(lieu => {
+
+        if (!lieuCorrespondRecherche(lieu, recherche)) {
+            return false;
+        }
+
+        if (
+            typeLieuSelectionne &&
+            String(lieu.type_lieu || "") !== String(typeLieuSelectionne)
+        ) {
+            return false;
+        }
+
+        const visitesLieu = toutesLesVisites.filter(
+            visite => String(visite.lieu_id) === String(lieu.lieu_id)
+        );
+
+        const filtreVisiteActif = Boolean(
+            voyageSelectionne ||
+            contexteSelectionne ||
+            experienceSelectionnee ||
+            anneeSelectionnee
+        );
+
+        if (!filtreVisiteActif) {
+            return true;
+        }
+
+        const correspond = visitesLieu.some(visite => {
+
+            if (
+                voyageSelectionne &&
+                String(visite.voyage_id || "") !== String(voyageSelectionne)
+            ) {
+                return false;
+            }
+
+            if (
+                contexteSelectionne &&
+                String(visite.type_contexte || "") !== String(contexteSelectionne)
+            ) {
+                return false;
+            }
+
+            if (
+                experienceSelectionnee &&
+                String(visite.type_experience || "") !== String(experienceSelectionnee)
+            ) {
+                return false;
+            }
+
+            if (anneeSelectionnee) {
+                const anneeDebut = visite.date_debut
+                    ? String(visite.date_debut).slice(0, 4)
+                    : "";
+                const anneeFin = visite.date_fin
+                    ? String(visite.date_fin).slice(0, 4)
+                    : "";
+
+                if (
+                    anneeDebut !== anneeSelectionnee &&
+                    anneeFin !== anneeSelectionnee
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        if (
+            voyageSelectionne &&
+            visitesLieu.length === 0 &&
+            String(lieu.voyage_id || "") === String(voyageSelectionne) &&
+            !contexteSelectionne &&
+            !experienceSelectionnee &&
+            !anneeSelectionnee
+        ) {
+            return true;
+        }
+
+        return correspond;
+    });
+}
+
+
+function statistiquesCompter(valeurs) {
+    const compteur = {};
+
+    valeurs.forEach(valeur => {
+        const cle = String(valeur || "").trim();
+        if (!cle) return;
+        compteur[cle] = (compteur[cle] || 0) + 1;
+    });
+
+    return Object.entries(compteur)
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "fr"));
+}
+
+
+function statistiquesNomContexte(code) {
+    if (!code) return "Sans contexte";
+    return typesContexteParCode[code]?.nom || code;
+}
+
+
+function statistiquesNomVoyage(id) {
+    if (!id) return "Sans voyage";
+    return voyagesParId[id]?.nom || id;
+}
+
+
+function statistiquesBarres(titre, donnees, limite = 10) {
+
+    let html = `<div class="stats-section"><h3>${echapperHTML(titre)}</h3>`;
+
+    if (!donnees.length) {
+        html += `<div class="stats-vide">Aucune donnée.</div></div>`;
+        return html;
+    }
+
+    const visibles = donnees.slice(0, limite);
+    const maximum = visibles[0][1] || 1;
+
+    visibles.forEach(([libelle, valeur]) => {
+        const largeur = Math.max(2, Math.round((valeur / maximum) * 100));
+        html += `
+            <div class="stats-barre-ligne">
+                <div class="stats-barre-libelle" title="${echapperHTML(libelle)}">${echapperHTML(libelle)}</div>
+                <div class="stats-barre-fond"><div class="stats-barre" style="width:${largeur}%"></div></div>
+                <div>${valeur}</div>
+            </div>
+        `;
+    });
+
+    if (donnees.length > limite) {
+        html += `<div class="stats-vide">${donnees.length - limite} autre(s) catégorie(s) non affichée(s).</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+}
+
+
+function statistiquesDateLaPlusAncienne(dates) {
+    const valides = dates
+        .filter(Boolean)
+        .map(date => String(date).slice(0, 10))
+        .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date))
+        .sort();
+
+    return valides[0] || null;
+}
+
+
+function statistiquesDateLaPlusRecente(dates) {
+    const valides = dates
+        .filter(Boolean)
+        .map(date => String(date).slice(0, 10))
+        .filter(date => /^\d{4}-\d{2}-\d{2}$/.test(date))
+        .sort();
+
+    return valides[valides.length - 1] || null;
+}
+
+
+function statistiquesFormaterDate(date) {
+    if (!date) return "Date non renseignée";
+    const morceaux = String(date).slice(0, 10).split("-");
+    if (morceaux.length !== 3) return String(date);
+    return `${morceaux[2]}/${morceaux[1]}/${morceaux[0]}`;
+}
+
+
+function construireBlocStatistiques(donnees) {
+
+    const lieux = donnees.lieux;
+    const lieuIds = new Set(lieux.map(lieu => String(lieu.lieu_id)));
+    const visites = toutesLesVisites.filter(
+        visite => lieuIds.has(String(visite.lieu_id))
+    );
+    const photos = toutesLesPhotos.filter(photo =>
+        lieuIds.has(String(photo.lieu_id)) ||
+        (photo.voyage_id && lieux.some(lieu => String(lieu.voyage_id || "") === String(photo.voyage_id)))
+    );
+
+    const voyageIds = new Set();
+    lieux.forEach(lieu => {
+        if (lieu.voyage_id) voyageIds.add(String(lieu.voyage_id));
+    });
+    visites.forEach(visite => {
+        if (visite.voyage_id) voyageIds.add(String(visite.voyage_id));
+    });
+
+    const pays = statistiquesCompter(lieux.map(lieu => lieu.pays));
+    const villes = statistiquesCompter(lieux.map(lieu => lieu.ville));
+    const types = statistiquesCompter(lieux.map(lieu => lieu.type_lieu));
+    const contextes = statistiquesCompter(
+        visites.map(visite => statistiquesNomContexte(visite.type_contexte))
+    );
+    const experiences = statistiquesCompter(
+        visites.map(visite => visite.type_experience)
+    );
+    const voyages = statistiquesCompter(
+        visites.map(visite => statistiquesNomVoyage(visite.voyage_id))
+    );
+
+    const annees = statistiquesCompter(
+        visites.flatMap(visite => {
+            const valeurs = [];
+            [visite.date_debut, visite.date_fin].forEach(date => {
+                if (date && /^\d{4}/.test(String(date))) {
+                    valeurs.push(String(date).slice(0, 4));
+                }
+            });
+            return valeurs.length ? [valeurs[0]] : [];
+        })
+    ).sort((a, b) => Number(b[0]) - Number(a[0]));
+
+    const datesVisites = visites.flatMap(visite => [visite.date_debut, visite.date_fin]);
+    const dateMin = statistiquesDateLaPlusAncienne(datesVisites);
+    const dateMax = statistiquesDateLaPlusRecente(datesVisites);
+
+    const lieuxAvecCoordonnees = lieux.filter(
+        lieu => lieu.latitude !== null && lieu.longitude !== null
+    ).length;
+
+    const notesLieux = lieux
+        .map(lieu => Number(lieu.note))
+        .filter(note => Number.isFinite(note));
+
+    const moyenneNote = notesLieux.length
+        ? (notesLieux.reduce((total, note) => total + note, 0) / notesLieux.length).toFixed(1)
+        : null;
+
+    const cartes = [
+        [lieux.length, "lieux"],
+        [visites.length, "visites"],
+        [voyageIds.size, "voyages concernés"],
+        [photos.length, "photos"],
+        [new Set(lieux.map(lieu => String(lieu.pays || "").trim()).filter(Boolean)).size, "pays"],
+        [new Set(lieux.map(lieu => String(lieu.ville || "").trim()).filter(Boolean)).size, "villes"],
+        [lieuxAvecCoordonnees, "lieux géolocalisés"],
+        [moyenneNote ? moyenneNote + " / 5" : "—", "note moyenne des lieux"]
+    ];
+
+    let html = `<div class="stats-cartes">`;
+    cartes.forEach(([valeur, libelle]) => {
+        html += `
+            <div class="stats-carte">
+                <span class="stats-carte-valeur">${echapperHTML(String(valeur))}</span>
+                <span class="stats-carte-libelle">${echapperHTML(libelle)}</span>
+            </div>
+        `;
+    });
+    html += `</div>`;
+
+    html += `<div class="stats-section"><h3>📅 Période couverte</h3>`;
+    if (dateMin || dateMax) {
+        html += `<div class="stats-periode">${dateMin ? statistiquesFormaterDate(dateMin) : "Date de début inconnue"} → ${dateMax ? statistiquesFormaterDate(dateMax) : "date de fin inconnue"}</div>`;
+    } else {
+        html += `<div class="stats-periode">Aucune date de visite exploitable.</div>`;
+    }
+    html += `</div>`;
+
+    html += `<div class="stats-grille">`;
+    html += statistiquesBarres("🌍 Lieux par pays", pays, 10);
+    html += statistiquesBarres("🏙️ Lieux par ville", villes, 10);
+    html += statistiquesBarres("📍 Types de lieux", types, 10);
+    html += statistiquesBarres("🧭 Contextes de visite", contextes, 10);
+    html += statistiquesBarres("✨ Types d'expérience", experiences, 10);
+    html += statistiquesBarres("✈️ Voyages associés aux visites", voyages, 10);
+    html += statistiquesBarres("📆 Visites par année", annees, 12);
+    html += `</div>`;
+
+    return html;
+}
+
+
+function afficherStatistiques() {
+
+    const lieuxSelectionnes = obtenirLieuxFiltresPourStatistiques();
+
+    contenuStatistiques.innerHTML = `
+        <div class="stats-section">
+            <h3>Atlas complet</h3>
+            ${construireBlocStatistiques({ lieux: tousLesLieux })}
+        </div>
+        <div class="stats-section">
+            <h3>🎯 Sélection actuelle</h3>
+            <p class="stats-intro">Statistiques limitées aux lieux correspondant à la recherche et aux filtres actuellement actifs sur la carte.</p>
+            ${construireBlocStatistiques({ lieux: lieuxSelectionnes })}
+        </div>
+    `;
+
+    const filtresActifs = [];
+    if (rechercheLieu.value.trim()) filtresActifs.push(`recherche « ${rechercheLieu.value.trim()} »`);
+    if (filtreVoyage.value) filtresActifs.push(`voyage : ${statistiquesNomVoyage(filtreVoyage.value)}`);
+    if (filtreContexte.value) filtresActifs.push(`contexte : ${statistiquesNomContexte(filtreContexte.value)}`);
+    if (filtreTypeLieu.value) filtresActifs.push(`type : ${filtreTypeLieu.value}`);
+    if (filtreExperience.value) filtresActifs.push(`expérience : ${filtreExperience.value}`);
+    if (filtreAnnee.value) filtresActifs.push(`année : ${filtreAnnee.value}`);
+
+    statsIntro.textContent = filtresActifs.length
+        ? `Vue d'ensemble de l'Atlas. La sélection actuelle tient compte de ${filtresActifs.join(" · ")}.`
+        : "Vue d'ensemble de l'Atlas et de la sélection actuelle affichée sur la carte.";
+
+    fondModalStatistiques.style.display = "flex";
+}
+
+
+function fermerStatistiques() {
+    fondModalStatistiques.style.display = "none";
+}
+
+
+boutonStatistiques.addEventListener("click", afficherStatistiques);
+
+document
+    .getElementById("boutonFermerStatistiques")
+    .addEventListener("click", fermerStatistiques);
+
+fondModalStatistiques.addEventListener("click", event => {
+    if (event.target === fondModalStatistiques) {
+        fermerStatistiques();
+    }
+});
+
 
 // ==========================================================
 // GESTION DES PHOTOS
