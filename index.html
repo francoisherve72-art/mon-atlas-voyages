@@ -6770,14 +6770,14 @@ function reinitialiserImportExcel() {
     if (fichierImportExcel) fichierImportExcel.value = "";
 }
 
-function donneesPourExcel(table) {
-    const source = {
+function donneesPourExcel(table, sources = null) {
+    const source = (sources || {
         voyages: tousLesVoyages,
         lieux: tousLesLieux,
         visites: toutesLesVisites,
         photos: toutesLesPhotos,
         types_contexte: tousLesTypesContexte
-    }[table] || [];
+    })[table] || [];
 
     return source.map(ligne => {
         const resultat = { ACTION: "" };
@@ -6788,35 +6788,62 @@ function donneesPourExcel(table) {
     });
 }
 
-function exporterAtlasExcel(modele = false) {
-    const workbook = XLSX.utils.book_new();
+async function exporterAtlasExcel(modele = false) {
+    if (typeof XLSX === "undefined") {
+        alert("La bibliothèque Excel n'est pas disponible. Vérifiez votre connexion internet.");
+        return;
+    }
 
-    TABLES_EXPORT.forEach(table => {
-        const lignes = modele ? [
-            Object.fromEntries([
-                ["ACTION", ""],
-                ...COLONNES_EXCEL[table].map(c => [c, null])
-            ])
-        ] : donneesPourExcel(table);
+    try {
+        let sources = null;
 
-        const feuille = XLSX.utils.json_to_sheet(lignes, {
-            header: ["ACTION", ...COLONNES_EXCEL[table]]
+        if (!modele) {
+            // Pour un export complet, on relit directement Supabase afin de ne pas
+            // dépendre de l'état local éventuellement incomplet de la page.
+            const [voyages, lieux, visites, typesContexte, photos] = await Promise.all([
+                recupererTable("voyages", "*", "voyage_id.asc"),
+                recupererTable("lieux", "*", "lieu_id.asc"),
+                recupererTable("visites", "*", "visite_id.asc"),
+                recupererTable("types_contexte", "code,nom", "code.asc"),
+                recupererTable("photos", "*", "photo_id.asc")
+            ]);
+
+            sources = { voyages, lieux, visites, types_contexte: typesContexte, photos };
+        }
+
+        const workbook = XLSX.utils.book_new();
+
+        TABLES_EXPORT.forEach(table => {
+            const lignes = modele ? [
+                Object.fromEntries([
+                    ["ACTION", ""],
+                    ...COLONNES_EXCEL[table].map(c => [c, null])
+                ])
+            ] : donneesPourExcel(table, sources);
+
+            const feuille = XLSX.utils.json_to_sheet(lignes, {
+                header: ["ACTION", ...COLONNES_EXCEL[table]]
+            });
+
+            XLSX.utils.book_append_sheet(
+                workbook,
+                feuille,
+                table.substring(0, 31)
+            );
         });
 
-        XLSX.utils.book_append_sheet(
+        const suffixe = modele ? "modele" : "atlas";
+        const date = new Date().toISOString().slice(0, 10);
+
+        XLSX.writeFile(
             workbook,
-            feuille,
-            table.substring(0, 31)
+            `atlas_voyages_${suffixe}_${date}.xlsx`
         );
-    });
 
-    const suffixe = modele ? "modele" : "atlas";
-    const date = new Date().toISOString().slice(0, 10);
-
-    XLSX.writeFile(
-        workbook,
-        `atlas_voyages_${suffixe}_${date}.xlsx`
-    );
+    } catch (erreur) {
+        console.error("Erreur export Excel :", erreur);
+        alert("Impossible d'exporter l'Atlas :\n" + (erreur.message || erreur));
+    }
 }
 
 function echapperHTMLAttributExcel(valeur) {
@@ -6845,7 +6872,7 @@ function analyserFeuilleExcel(table, lignesBrutes) {
         });
 
         const actionBrute = obtenirValeurColonneExcel(ligneBrute, "ACTION");
-        const action = normaliserActionExcel(actionBrute);
+        let action = normaliserActionExcel(actionBrute);
         const erreurs = [];
         const warnings = [];
 
@@ -6855,6 +6882,37 @@ function analyserFeuilleExcel(table, lignesBrutes) {
 
         if (!ligne[cle]) {
             erreurs.push(`Identifiant obligatoire : ${cle}`);
+        }
+
+        // Une action vide/AUTO est résolue dès l'analyse. Ainsi, un export
+        // réimporté tel quel affiche bien UPDATE pour les enregistrements déjà
+        // présents, au lieu de laisser un AUTO ambigu dans l'aperçu.
+        if (action === "AUTO" && ligne[cle]) {
+            const identifiant = String(ligne[cle]);
+            const ensemblesExistants = {
+                voyages: new Set(tousLesVoyages.map(x => String(x.voyage_id))),
+                lieux: new Set(tousLesLieux.map(x => String(x.lieu_id))),
+                visites: new Set(toutesLesVisites.map(x => String(x.visite_id))),
+                photos: new Set(toutesLesPhotos.map(x => String(x.photo_id))),
+                types_contexte: new Set(tousLesTypesContexte.map(x => String(x.code)))
+            };
+            action = ensemblesExistants[table]?.has(identifiant) ? "UPDATE" : "INSERT";
+        }
+
+        // Une ligne explicitement INSERT ne doit pas écraser silencieusement
+        // une ligne existante. L'utilisateur doit choisir UPDATE.
+        if (action === "INSERT" && ligne[cle]) {
+            const identifiant = String(ligne[cle]);
+            const ensemblesExistants = {
+                voyages: new Set(tousLesVoyages.map(x => String(x.voyage_id))),
+                lieux: new Set(tousLesLieux.map(x => String(x.lieu_id))),
+                visites: new Set(toutesLesVisites.map(x => String(x.visite_id))),
+                photos: new Set(toutesLesPhotos.map(x => String(x.photo_id))),
+                types_contexte: new Set(tousLesTypesContexte.map(x => String(x.code)))
+            };
+            if (ensemblesExistants[table]?.has(identifiant)) {
+                erreurs.push(`${cle} existe déjà : utilisez UPDATE ou AUTO`);
+            }
         }
 
         if (table === "voyages" && action !== "DELETE" && !ligne.nom) {
