@@ -940,6 +940,83 @@ main {
 }
 
 
+
+
+/* ==========================================================
+   ETAPE 12 — IMPORT / EXPORT EXCEL
+   ========================================================== */
+
+.modal-import-export {
+    width: min(1100px, 100%);
+    max-height: 92vh;
+    overflow-y: auto;
+}
+
+.import-export-section {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 12px;
+}
+
+.import-export-section h3 {
+    margin: 0 0 8px 0;
+}
+
+.import-export-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.import-export-help {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #555;
+}
+
+.import-export-table-wrap {
+    overflow-x: auto;
+    max-height: 42vh;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-top: 12px;
+}
+
+.import-export-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.import-export-table th,
+.import-export-table td {
+    border-bottom: 1px solid #eee;
+    padding: 6px 8px;
+    text-align: left;
+}
+
+.import-export-table th {
+    position: sticky;
+    top: 0;
+    background: #f5f5f5;
+    z-index: 1;
+}
+
+.import-ok { color: #087f23; }
+.import-warning { color: #8a5a00; }
+.import-error { color: #b00020; }
+
+.import-resume {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    background: #f6f6f6;
+    font-size: 13px;
+}
+
 </style>
 
 </head>
@@ -1082,6 +1159,16 @@ main {
                 🖼️ Photos
             </button>
 
+
+
+
+            <button
+                id="boutonImportExport"
+                class="bouton"
+                style="display:none"
+            >
+                📥📤 Import / Export
+            </button>
 
             <button
                 id="boutonStatistiques"
@@ -1563,6 +1650,57 @@ main {
     </div>
 </div>
 
+
+
+<!-- ========================================================
+     MODALE IMPORT / EXPORT EXCEL — ETAPE 12
+     ======================================================== -->
+
+<div id="fond-modal-import-export" class="fond-modal-gestion">
+    <div class="modal-gestion modal-import-export">
+        <h2>📥📤 Import / Export Excel</h2>
+        <p class="import-export-help">
+            Cette fonction permet de sauvegarder ou modifier en masse les données de l’Atlas.
+            L’import Excel concerne les données et métadonnées des photos, pas les fichiers image eux-mêmes.
+        </p>
+
+        <div class="import-export-section">
+            <h3>📤 Exporter l’Atlas</h3>
+            <p class="import-export-help">
+                Le fichier contient une feuille par table : <strong>voyages</strong>,
+                <strong>lieux</strong>, <strong>visites</strong>, <strong>photos</strong> et
+                <strong>types_contexte</strong>. Une colonne <strong>ACTION</strong> est ajoutée
+                pour permettre ensuite un import avec INSERT, UPDATE ou DELETE.
+            </p>
+            <div class="import-export-actions">
+                <button type="button" id="boutonExporterAtlas" class="bouton bouton-principal">📊 Exporter tout l’Atlas</button>
+                <button type="button" id="boutonExporterModele" class="bouton">📄 Télécharger le modèle</button>
+            </div>
+        </div>
+
+        <div class="import-export-section">
+            <h3>📥 Importer un fichier Excel</h3>
+            <p class="import-export-help">
+                Format attendu : une feuille par table. La colonne <strong>ACTION</strong> peut contenir
+                <strong>INSERT</strong>, <strong>UPDATE</strong>, <strong>DELETE</strong> ou rester vide
+                (<strong>AUTO</strong> : mise à jour si l’identifiant existe, sinon ajout).
+                L’import est d’abord analysé et prévisualisé : aucune donnée n’est écrite avant validation.
+            </p>
+            <div class="form-groupe">
+                <label for="fichierImportExcel">Fichier Excel (.xlsx)</label>
+                <input id="fichierImportExcel" type="file" accept=".xlsx,.xls">
+            </div>
+            <div id="import-excel-resume" class="import-resume" style="display:none"></div>
+            <div id="import-excel-apercu"></div>
+            <div class="import-export-actions">
+                <button type="button" id="boutonAnalyserImport" class="bouton">🔎 Analyser le fichier</button>
+                <button type="button" id="boutonExecuterImport" class="bouton bouton-principal" disabled>✅ Appliquer l’import</button>
+                <button type="button" id="boutonFermerImportExport" class="bouton">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ========================================================
      MODALE GESTION DES PHOTOS
      ======================================================== -->
@@ -1671,6 +1809,10 @@ main {
     src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 </script>
 
+<script
+    src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js">
+</script>
+
 
 <script>
 
@@ -1759,6 +1901,38 @@ const contenuStatistiques =
 
 const statsIntro =
     document.getElementById("stats-intro");
+
+const boutonImportExport =
+    document.getElementById("boutonImportExport");
+
+const fondModalImportExport =
+    document.getElementById("fond-modal-import-export");
+
+const fichierImportExcel =
+    document.getElementById("fichierImportExcel");
+
+const boutonAnalyserImport =
+    document.getElementById("boutonAnalyserImport");
+
+const boutonExecuterImport =
+    document.getElementById("boutonExecuterImport");
+
+const boutonExporterAtlas =
+    document.getElementById("boutonExporterAtlas");
+
+const boutonExporterModele =
+    document.getElementById("boutonExporterModele");
+
+const boutonFermerImportExport =
+    document.getElementById("boutonFermerImportExport");
+
+const importExcelResume =
+    document.getElementById("import-excel-resume");
+
+const importExcelApercu =
+    document.getElementById("import-excel-apercu");
+
+let importExcelPrepare = null;
 
 const fondModal =
     document.getElementById("fond-modal");
@@ -3640,6 +3814,9 @@ function afficherInterfaceAuthentification() {
         boutonPhotos.style.display =
             "inline-block";
 
+        boutonImportExport.style.display =
+            "inline-block";
+
     } else {
 
         statutAuth.textContent =
@@ -3658,6 +3835,9 @@ function afficherInterfaceAuthentification() {
             "none";
 
         boutonPhotos.style.display =
+            "none";
+
+        boutonImportExport.style.display =
             "none";
     }
 
@@ -6502,6 +6682,614 @@ supabaseClient.auth.onAuthStateChange(
 
     }
 );
+
+
+
+// ==========================================================
+// ETAPE 12 — IMPORT / EXPORT EXCEL
+// ==========================================================
+
+const COLONNES_EXCEL = {
+    voyages: [
+        "voyage_id", "nom", "date_debut", "date_fin", "date_precision",
+        "date_texte", "description", "pays_principal", "photo_couverture", "notes"
+    ],
+    lieux: [
+        "lieu_id", "nom", "ville", "pays", "latitude", "longitude", "type_lieu",
+        "voyage_id", "date_debut", "date_fin", "date_precision", "date_texte",
+        "description", "note", "adresse", "statut", "type_experience", "notes",
+        "source_coordonnees", "precision_coordonnees"
+    ],
+    visites: [
+        "visite_id", "lieu_id", "voyage_id", "type_contexte", "date_debut", "date_fin",
+        "date_precision", "date_texte", "type_experience", "description", "note",
+        "notes", "statut"
+    ],
+    photos: [
+        "photo_id", "lieu_id", "voyage_id", "fichier", "titre", "description",
+        "date_photo", "photo_principale", "ordre"
+    ],
+    types_contexte: ["code", "nom"]
+};
+
+const CLES_EXCEL = {
+    voyages: "voyage_id",
+    lieux: "lieu_id",
+    visites: "visite_id",
+    photos: "photo_id",
+    types_contexte: "code"
+};
+
+const ORDRE_IMPORT = ["voyages", "lieux", "visites", "photos", "types_contexte"];
+
+const TABLES_EXPORT = ["voyages", "lieux", "visites", "photos", "types_contexte"];
+
+function normaliserEnteteExcel(valeur) {
+    return String(valeur ?? "")
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[\s.-]+/g, "_")
+        .toUpperCase();
+}
+
+function valeurExcelVersJS(valeur) {
+    if (valeur === undefined || valeur === null) return null;
+    if (typeof valeur === "string") {
+        const v = valeur.trim();
+        return v === "" ? null : v;
+    }
+    if (typeof valeur === "number") return valeur;
+    if (typeof valeur === "boolean") return valeur;
+    return String(valeur);
+}
+
+function normaliserActionExcel(valeur) {
+    const v = String(valeur ?? "").trim().toUpperCase();
+    if (!v || v === "AUTO") return "AUTO";
+    if (["INSERT", "UPDATE", "DELETE"].includes(v)) return v;
+    return "INVALIDE";
+}
+
+function afficherModalImportExport() {
+    fondModalImportExport.style.display = "flex";
+    reinitialiserImportExcel();
+}
+
+function fermerModalImportExport() {
+    fondModalImportExport.style.display = "none";
+    reinitialiserImportExcel();
+}
+
+function reinitialiserImportExcel() {
+    importExcelPrepare = null;
+    boutonExecuterImport.disabled = true;
+    importExcelResume.style.display = "none";
+    importExcelResume.innerHTML = "";
+    importExcelApercu.innerHTML = "";
+    if (fichierImportExcel) fichierImportExcel.value = "";
+}
+
+function donneesPourExcel(table) {
+    const source = {
+        voyages: tousLesVoyages,
+        lieux: tousLesLieux,
+        visites: toutesLesVisites,
+        photos: toutesLesPhotos,
+        types_contexte: tousLesTypesContexte
+    }[table] || [];
+
+    return source.map(ligne => {
+        const resultat = { ACTION: "" };
+        COLONNES_EXCEL[table].forEach(colonne => {
+            resultat[colonne] = ligne[colonne] ?? null;
+        });
+        return resultat;
+    });
+}
+
+function exporterAtlasExcel(modele = false) {
+    const workbook = XLSX.utils.book_new();
+
+    TABLES_EXPORT.forEach(table => {
+        const lignes = modele ? [
+            Object.fromEntries([
+                ["ACTION", ""],
+                ...COLONNES_EXCEL[table].map(c => [c, null])
+            ])
+        ] : donneesPourExcel(table);
+
+        const feuille = XLSX.utils.json_to_sheet(lignes, {
+            header: ["ACTION", ...COLONNES_EXCEL[table]]
+        });
+
+        XLSX.utils.book_append_sheet(
+            workbook,
+            feuille,
+            table.substring(0, 31)
+        );
+    });
+
+    const suffixe = modele ? "modele" : "atlas";
+    const date = new Date().toISOString().slice(0, 10);
+
+    XLSX.writeFile(
+        workbook,
+        `atlas_voyages_${suffixe}_${date}.xlsx`
+    );
+}
+
+function echapperHTMLAttributExcel(valeur) {
+    return echapperHTML(valeur);
+}
+
+function obtenirValeurColonneExcel(objet, colonne) {
+    const cible = normaliserEnteteExcel(colonne);
+    const cle = Object.keys(objet).find(
+        k => normaliserEnteteExcel(k) === cible
+    );
+    return cle === undefined ? undefined : objet[cle];
+}
+
+function analyserFeuilleExcel(table, lignesBrutes) {
+    const colonnes = COLONNES_EXCEL[table];
+    const cle = CLES_EXCEL[table];
+    const resultats = [];
+
+    lignesBrutes.forEach((ligneBrute, index) => {
+        const ligne = {};
+        colonnes.forEach(colonne => {
+            ligne[colonne] = valeurExcelVersJS(
+                obtenirValeurColonneExcel(ligneBrute, colonne)
+            );
+        });
+
+        const actionBrute = obtenirValeurColonneExcel(ligneBrute, "ACTION");
+        const action = normaliserActionExcel(actionBrute);
+        const erreurs = [];
+        const warnings = [];
+
+        if (action === "INVALIDE") {
+            erreurs.push("ACTION doit être vide/AUTO, INSERT, UPDATE ou DELETE");
+        }
+
+        if (!ligne[cle]) {
+            erreurs.push(`Identifiant obligatoire : ${cle}`);
+        }
+
+        if (table === "voyages" && action !== "DELETE" && !ligne.nom) {
+            erreurs.push("nom obligatoire");
+        }
+        if (table === "lieux" && action !== "DELETE" && !ligne.nom) {
+            erreurs.push("nom obligatoire");
+        }
+        if (table === "visites" && action !== "DELETE") {
+            if (!ligne.lieu_id) erreurs.push("lieu_id obligatoire");
+            if (!ligne.type_contexte) erreurs.push("type_contexte obligatoire");
+        }
+        if (table === "photos" && action !== "DELETE") {
+            if (!ligne.lieu_id) erreurs.push("lieu_id obligatoire");
+            if (!ligne.fichier) erreurs.push("fichier obligatoire");
+        }
+        if (table === "types_contexte" && action !== "DELETE" && !ligne.nom) {
+            erreurs.push("nom obligatoire");
+        }
+
+        if (ligne.note !== null && ligne.note !== undefined && ligne.note !== "") {
+            const n = Number(ligne.note);
+            if (!Number.isFinite(n)) erreurs.push("note doit être numérique");
+            else if (n < 0 || n > 5) erreurs.push("note doit être comprise entre 0 et 5");
+            else ligne.note = Math.round(n);
+        }
+
+        if (table === "photos" && ligne.ordre !== null) {
+            const n = Number(ligne.ordre);
+            if (!Number.isFinite(n) || n < 1) erreurs.push("ordre doit être un entier >= 1");
+            else ligne.ordre = Math.round(n);
+        }
+
+        if (table === "lieux" || table === "photos") {
+            if (ligne.latitude !== null && ligne.latitude !== undefined) {
+                const n = Number(ligne.latitude);
+                if (!Number.isFinite(n)) erreurs.push("latitude invalide");
+                else ligne.latitude = n;
+            }
+            if (ligne.longitude !== null && ligne.longitude !== undefined) {
+                const n = Number(ligne.longitude);
+                if (!Number.isFinite(n)) erreurs.push("longitude invalide");
+                else ligne.longitude = n;
+            }
+        }
+
+        if (table === "photos" && ligne.photo_principale !== null) {
+            const v = String(ligne.photo_principale).trim().toLowerCase();
+            if (["true", "vrai", "1", "oui", "yes"].includes(v)) ligne.photo_principale = true;
+            else if (["false", "faux", "0", "non", "no"].includes(v)) ligne.photo_principale = false;
+            else erreurs.push("photo_principale doit être Oui/Non ou True/False");
+        }
+
+        resultats.push({
+            ligneExcel: index + 2,
+            action,
+            data: ligne,
+            erreurs,
+            warnings
+        });
+    });
+
+    return resultats;
+}
+
+function ajouterErreurFK(resultat, message) {
+    if (!resultat.erreurs.includes(message)) resultat.erreurs.push(message);
+}
+
+function validerRelationsImport(resultatsParTable) {
+    const voyagesExistants = new Set(tousLesVoyages.map(x => String(x.voyage_id)));
+    const lieuxExistants = new Set(tousLesLieux.map(x => String(x.lieu_id)));
+    const contextesExistants = new Set(tousLesTypesContexte.map(x => String(x.code)));
+
+    ["voyages", "lieux", "visites", "photos", "types_contexte"].forEach(table => {
+        (resultatsParTable[table] || []).forEach(r => {
+            const cle = CLES_EXCEL[table];
+            const id = String(r.data[cle] ?? "");
+            if (r.action === "DELETE") return;
+            if (r.action === "UPDATE" && table !== "types_contexte") {
+                const existe = {
+                    voyages: voyagesExistants,
+                    lieux: lieuxExistants,
+                    visites: new Set(toutesLesVisites.map(x => String(x.visite_id))),
+                    photos: new Set(toutesLesPhotos.map(x => String(x.photo_id)))
+                }[table]?.has(id);
+                if (!existe) ajouterErreurFK(r, `${cle} introuvable pour UPDATE`);
+            }
+        });
+    });
+
+    // Les lignes importées en INSERT/AUTO peuvent créer les références nécessaires.
+    (resultatsParTable.voyages || []).forEach(r => {
+        if (r.action !== "DELETE" && r.data.voyage_id) voyagesExistants.add(String(r.data.voyage_id));
+    });
+    (resultatsParTable.lieux || []).forEach(r => {
+        if (r.action !== "DELETE" && r.data.lieu_id) lieuxExistants.add(String(r.data.lieu_id));
+    });
+    (resultatsParTable.types_contexte || []).forEach(r => {
+        if (r.action !== "DELETE" && r.data.code) contextesExistants.add(String(r.data.code));
+    });
+
+    (resultatsParTable.lieux || []).forEach(r => {
+        if (r.action === "DELETE") return;
+        if (r.data.voyage_id && !voyagesExistants.has(String(r.data.voyage_id))) {
+            ajouterErreurFK(r, `voyage_id introuvable : ${r.data.voyage_id}`);
+        }
+    });
+
+    (resultatsParTable.visites || []).forEach(r => {
+        if (r.action === "DELETE") return;
+        if (r.data.lieu_id && !lieuxExistants.has(String(r.data.lieu_id))) {
+            ajouterErreurFK(r, `lieu_id introuvable : ${r.data.lieu_id}`);
+        }
+        if (r.data.voyage_id && !voyagesExistants.has(String(r.data.voyage_id))) {
+            ajouterErreurFK(r, `voyage_id introuvable : ${r.data.voyage_id}`);
+        }
+        if (r.data.type_contexte && !contextesExistants.has(String(r.data.type_contexte))) {
+            ajouterErreurFK(r, `type_contexte introuvable : ${r.data.type_contexte}`);
+        }
+    });
+
+    (resultatsParTable.photos || []).forEach(r => {
+        if (r.action === "DELETE") return;
+        if (r.data.lieu_id && !lieuxExistants.has(String(r.data.lieu_id))) {
+            ajouterErreurFK(r, `lieu_id introuvable : ${r.data.lieu_id}`);
+        }
+        if (r.data.voyage_id && !voyagesExistants.has(String(r.data.voyage_id))) {
+            ajouterErreurFK(r, `voyage_id introuvable : ${r.data.voyage_id}`);
+        }
+    });
+}
+
+function detecterDoublonsImport(resultatsParTable) {
+    Object.entries(resultatsParTable).forEach(([table, resultats]) => {
+        const cle = CLES_EXCEL[table];
+        const vus = new Map();
+        resultats.forEach(r => {
+            const id = String(r.data[cle] ?? "");
+            if (!id) return;
+            if (vus.has(id)) {
+                r.erreurs.push(`identifiant dupliqué dans le fichier (ligne ${vus.get(id)})`);
+            } else {
+                vus.set(id, r.ligneExcel);
+            }
+        });
+    });
+}
+
+function compterImport(resultatsParTable) {
+    const compte = { total: 0, erreurs: 0, insert: 0, update: 0, delete: 0, auto: 0 };
+    Object.values(resultatsParTable).forEach(resultats => {
+        resultats.forEach(r => {
+            compte.total++;
+            if (r.erreurs.length) compte.erreurs++;
+            if (r.action === "INSERT") compte.insert++;
+            else if (r.action === "UPDATE") compte.update++;
+            else if (r.action === "DELETE") compte.delete++;
+            else if (r.action === "AUTO") compte.auto++;
+        });
+    });
+    return compte;
+}
+
+function afficherApercuImport(resultatsParTable) {
+    const compte = compterImport(resultatsParTable);
+    const sansErreur = compte.erreurs === 0;
+
+    importExcelResume.style.display = "block";
+    importExcelResume.innerHTML =
+        `<strong>${compte.total}</strong> lignes analysées · ` +
+        `<span class="import-ok">${compte.insert} INSERT</span> · ` +
+        `<span class="import-ok">${compte.update} UPDATE</span> · ` +
+        `<span class="import-warning">${compte.auto} AUTO</span> · ` +
+        `<span class="import-warning">${compte.delete} DELETE</span> · ` +
+        `<span class="${sansErreur ? "import-ok" : "import-error"}">${compte.erreurs} erreur(s)</span>`;
+
+    importExcelApercu.innerHTML = "";
+
+    ORDRE_IMPORT.forEach(table => {
+        const resultats = resultatsParTable[table] || [];
+        if (!resultats.length) return;
+
+        const section = document.createElement("div");
+        section.className = "import-export-table-wrap";
+
+        const titre = document.createElement("div");
+        titre.style.padding = "8px";
+        titre.style.fontWeight = "bold";
+        titre.textContent = `${table} — ${resultats.length} ligne(s)`;
+        section.appendChild(titre);
+
+        const tableHtml = document.createElement("table");
+        tableHtml.className = "import-export-table";
+        const thead = document.createElement("thead");
+        const trHead = document.createElement("tr");
+        ["Ligne", "Action", "Identifiant", "Statut", "Message"].forEach(t => {
+            const th = document.createElement("th");
+            th.textContent = t;
+            trHead.appendChild(th);
+        });
+        thead.appendChild(trHead);
+        tableHtml.appendChild(thead);
+
+        const tbody = document.createElement("tbody");
+        resultats.forEach(r => {
+            const tr = document.createElement("tr");
+            const statut = r.erreurs.length ? "ERREUR" : "OK";
+            const message = r.erreurs.length ? r.erreurs.join(" ; ") : "Prêt à importer";
+            [
+                r.ligneExcel,
+                r.action,
+                r.data[CLES_EXCEL[table]],
+                statut,
+                message
+            ].forEach((v, i) => {
+                const td = document.createElement("td");
+                td.textContent = String(v ?? "");
+                if (i === 3) td.className = r.erreurs.length ? "import-error" : "import-ok";
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        tableHtml.appendChild(tbody);
+        section.appendChild(tableHtml);
+        importExcelApercu.appendChild(section);
+    });
+
+    boutonExecuterImport.disabled = !sansErreur || compte.total === 0;
+}
+
+async function analyserImportExcel() {
+    if (!fichierImportExcel.files?.length) {
+        alert("Sélectionnez un fichier Excel.");
+        return;
+    }
+
+    if (typeof XLSX === "undefined") {
+        alert("La bibliothèque Excel n'est pas disponible. Vérifiez votre connexion internet.");
+        return;
+    }
+
+    const fichier = fichierImportExcel.files[0];
+    const buffer = await fichier.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: "array", cellDates: false });
+    const resultatsParTable = {};
+
+    ORDRE_IMPORT.forEach(table => {
+        const nomFeuille = workbook.SheetNames.find(
+            nom => normaliserEnteteExcel(nom) === normaliserEnteteExcel(table)
+        );
+        if (!nomFeuille) {
+            resultatsParTable[table] = [];
+            return;
+        }
+        const feuille = workbook.Sheets[nomFeuille];
+        const lignes = XLSX.utils.sheet_to_json(feuille, {
+            defval: null,
+            raw: true
+        });
+        resultatsParTable[table] = analyserFeuilleExcel(table, lignes);
+    });
+
+    detecterDoublonsImport(resultatsParTable);
+    validerRelationsImport(resultatsParTable);
+
+    importExcelPrepare = {
+        nomFichier: fichier.name,
+        resultatsParTable,
+        dateAnalyse: new Date().toISOString()
+    };
+
+    afficherApercuImport(resultatsParTable);
+}
+
+function regrouperActionsImport(resultats) {
+    const groupes = { insert: [], update: [], delete: [] };
+    resultats.forEach(r => {
+        if (r.erreurs.length) return;
+        if (r.action === "DELETE") groupes.delete.push(r);
+        else groupes[r.action === "INSERT" ? "insert" : "update"].push(r);
+    });
+    return groupes;
+}
+
+async function appliquerImportTable(table, resultats) {
+    if (!resultats.length) return { insert: 0, update: 0, delete: 0 };
+
+    const cle = CLES_EXCEL[table];
+    const groupes = regrouperActionsImport(resultats);
+    let stats = { insert: 0, update: 0, delete: 0 };
+
+    const ensembleExistant = new Set(({
+        voyages: tousLesVoyages,
+        lieux: tousLesLieux,
+        visites: toutesLesVisites,
+        photos: toutesLesPhotos,
+        types_contexte: tousLesTypesContexte
+    }[table] || []).map(x => String(x[cle])));
+
+    // AUTO est transformé en INSERT/UPDATE selon l'état actuel.
+    resultats.forEach(r => {
+        if (r.action !== "AUTO") return;
+        if (ensembleExistant.has(String(r.data[cle]))) groupes.update.push(r);
+        else groupes.insert.push(r);
+    });
+
+    if (groupes.insert.length) {
+        const lignes = groupes.insert.map(r => r.data);
+        const { error } = await supabaseClient
+            .from(table)
+            .insert(lignes);
+        if (error) throw new Error(`${table} INSERT : ${error.message}`);
+        stats.insert += lignes.length;
+    }
+
+    if (groupes.update.length) {
+        // Upsert après contrôle préalable : permet une mise à jour en masse tout en
+        // conservant les identifiants métier stables.
+        const lignes = groupes.update.map(r => r.data);
+        const { error } = await supabaseClient
+            .from(table)
+            .upsert(lignes, { onConflict: cle });
+        if (error) throw new Error(`${table} UPDATE : ${error.message}`);
+        stats.update += lignes.length;
+    }
+
+    if (groupes.delete.length) {
+        const ids = groupes.delete.map(r => r.data[cle]);
+        let fichiersPhotos = [];
+
+        if (table === "photos") {
+            fichiersPhotos = groupes.delete
+                .map(r => toutesLesPhotos.find(p => String(p.photo_id) === String(r.data[cle]))?.fichier)
+                .filter(Boolean);
+        }
+
+        const { error } = await supabaseClient
+            .from(table)
+            .delete()
+            .in(cle, ids);
+        if (error) throw new Error(`${table} DELETE : ${error.message}`);
+        stats.delete += ids.length;
+
+        if (table === "photos" && fichiersPhotos.length) {
+            // Nettoyage des fichiers Storage lorsque possible. Une éventuelle erreur
+            // Storage n'annule pas la suppression de la ligne SQL déjà effectuée.
+            try {
+                await supabaseClient.storage.from("photos").remove(fichiersPhotos);
+            } catch (erreurStorage) {
+                console.warn("Nettoyage Storage non terminé :", erreurStorage);
+            }
+        }
+    }
+
+    return stats;
+}
+
+async function executerImportExcel() {
+    if (!importExcelPrepare) {
+        alert("Analysez d'abord un fichier Excel.");
+        return;
+    }
+
+    if (!utilisateurConnecte) {
+        alert("Vous devez être connecté pour importer des données.");
+        return;
+    }
+
+    const compte = compterImport(importExcelPrepare.resultatsParTable);
+    if (compte.erreurs > 0) {
+        alert("L'import contient des erreurs. Corrigez-les avant de l'appliquer.");
+        return;
+    }
+
+    const confirmation = confirm(
+        `Appliquer ${compte.total} ligne(s) à l'Atlas ?\n\n` +
+        "Cette opération peut ajouter, modifier et supprimer des données."
+    );
+    if (!confirmation) return;
+
+    boutonExecuterImport.disabled = true;
+    boutonAnalyserImport.disabled = true;
+
+    try {
+        const resultats = {};
+
+        // Ordre choisi pour respecter les relations : références avant dépendants.
+        for (const table of ["voyages", "types_contexte", "lieux", "visites", "photos"]) {
+            resultats[table] = await appliquerImportTable(
+                table,
+                importExcelPrepare.resultatsParTable[table] || []
+            );
+        }
+
+        await chargerDonnees();
+
+        const total = Object.values(resultats).reduce(
+            (acc, x) => ({
+                insert: acc.insert + x.insert,
+                update: acc.update + x.update,
+                delete: acc.delete + x.delete
+            }),
+            { insert: 0, update: 0, delete: 0 }
+        );
+
+        alert(
+            `Import terminé.\n\n` +
+            `${total.insert} ajout(s)\n` +
+            `${total.update} modification(s)\n` +
+            `${total.delete} suppression(s)`
+        );
+
+        fermerModalImportExport();
+
+    } catch (erreur) {
+        console.error("Erreur import Excel :", erreur);
+        alert("L'import a rencontré une erreur :\n" + (erreur.message || erreur));
+        boutonExecuterImport.disabled = false;
+        boutonAnalyserImport.disabled = false;
+    }
+}
+
+boutonImportExport.addEventListener("click", afficherModalImportExport);
+boutonFermerImportExport.addEventListener("click", fermerModalImportExport);
+boutonAnalyserImport.addEventListener("click", analyserImportExcel);
+boutonExecuterImport.addEventListener("click", executerImportExcel);
+boutonExporterAtlas.addEventListener("click", () => exporterAtlasExcel(false));
+boutonExporterModele.addEventListener("click", () => exporterAtlasExcel(true));
+
+fondModalImportExport.addEventListener("click", evenement => {
+    if (evenement.target === fondModalImportExport) {
+        fermerModalImportExport();
+    }
+});
 
 
 // ==========================================================
