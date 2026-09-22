@@ -1107,6 +1107,195 @@ main {
         padding-bottom: calc(12px + env(safe-area-inset-bottom));
     }
 }
+
+
+/* ==========================================================
+   ETAPE 13.1 — OPTIMISATION MOBILE
+   ========================================================== */
+
+@media (max-width: 700px) {
+    /* L'en-tête reste utilisable sans occuper tout l'écran. */
+    header {
+        max-height: 42vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+    }
+
+    header h1 {
+        font-size: 20px;
+        width: 100%;
+    }
+
+    #filtres {
+        width: 100%;
+        gap: 7px;
+    }
+
+    .zone-recherche {
+        flex: 1 1 100%;
+        min-width: 0;
+    }
+
+    #rechercheLieu {
+        min-height: 42px;
+        font-size: 16px;
+    }
+
+    #boutonEffacerRecherche {
+        min-width: 42px;
+        min-height: 42px;
+    }
+
+    .filtre {
+        min-height: 42px;
+        font-size: 14px;
+        flex: 1 1 calc(50% - 7px);
+        min-width: 0;
+    }
+
+    #compteur {
+        padding: 3px 0;
+    }
+
+    #zone-auth {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        gap: 7px;
+        justify-content: stretch;
+    }
+
+    #statut-auth {
+        grid-column: 1 / -1;
+        text-align: center;
+        padding: 2px 0;
+    }
+
+    #zone-auth .bouton {
+        min-height: 42px;
+        padding: 8px 9px;
+        font-size: 14px;
+    }
+
+    /* Les modales deviennent quasi plein écran pour éviter les petits champs
+       difficiles à manipuler et les claviers qui masquent les boutons. */
+    #fond-modal,
+    .fond-modal-gestion {
+        padding: 0;
+        align-items: stretch;
+    }
+
+    #modal,
+    .modal-gestion,
+    .modal-visites,
+    .modal-statistiques,
+    .modal-voyage-detail,
+    .modal-import-export {
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        height: 100%;
+        border-radius: 0;
+        padding: 16px;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #modal h2,
+    .modal-gestion h2 {
+        font-size: 20px;
+    }
+
+    .form-groupe input,
+    .form-groupe select,
+    .form-groupe textarea {
+        min-height: 44px;
+        font-size: 16px;
+    }
+
+    .form-groupe textarea {
+        min-height: 110px;
+    }
+
+    #actions-formulaire,
+    .stats-actions,
+    .voyage-detail-actions,
+    #localisation-selection-actions {
+        flex-wrap: wrap;
+        justify-content: stretch;
+    }
+
+    #actions-formulaire .bouton,
+    .stats-actions .bouton,
+    .voyage-detail-actions .bouton,
+    #localisation-selection-actions .bouton {
+        flex: 1 1 140px;
+        min-height: 44px;
+    }
+
+    .actions-gestion {
+        flex-wrap: wrap;
+    }
+
+    .actions-gestion .bouton {
+        min-height: 42px;
+    }
+
+    .fiche-photo {
+        height: min(52vw, 280px);
+    }
+
+    .visionneuse-photo-contenu {
+        width: 100%;
+        height: 100%;
+    }
+
+    .visionneuse-photo-bouton {
+        width: 46px;
+        height: 46px;
+    }
+
+    #bouton-photo-precedente {
+        left: 2px;
+    }
+
+    #bouton-photo-suivante {
+        right: 2px;
+    }
+
+    /* Les tableaux d'import/export peuvent défiler horizontalement plutôt
+       que de réduire les colonnes jusqu'à les rendre illisibles. */
+    .modal-import-export table {
+        min-width: 720px;
+    }
+
+    .modal-import-export .table-responsive,
+    .modal-import-export .import-resultats,
+    .modal-import-export .export-resultats {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 420px) {
+    .filtre {
+        flex-basis: 100%;
+    }
+
+    #zone-auth {
+        grid-template-columns: 1fr;
+    }
+
+    #statut-auth {
+        grid-column: auto;
+    }
+
+    .stats-cartes {
+        grid-template-columns: 1fr;
+    }
+}
+
 </style>
 
 </head>
