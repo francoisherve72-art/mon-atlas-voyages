@@ -1017,6 +1017,96 @@ main {
     font-size: 13px;
 }
 
+
+
+/* ==========================================================
+   SELECTION D'UN EMPLACEMENT SUR LA CARTE
+   ========================================================== */
+#fond-modal-localisation {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+
+#modal-localisation {
+    width: min(1000px, 100%);
+    height: min(760px, 94vh);
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.35);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+#modal-localisation-entete {
+    padding: 14px 18px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+#modal-localisation-entete h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+#carte-selection-localisation {
+    flex: 1;
+    min-height: 300px;
+}
+
+#localisation-selection-info {
+    padding: 10px 14px;
+    background: #f7f7f7;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+#localisation-selection-info strong {
+    font-weight: 700;
+}
+
+#localisation-selection-message {
+    margin-top: 4px;
+    color: #666;
+}
+
+#localisation-selection-actions {
+    padding: 12px 14px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px solid #ddd;
+}
+
+@media (max-width: 650px) {
+    #fond-modal-localisation {
+        padding: 0;
+    }
+    #modal-localisation {
+        width: 100%;
+        height: 100%;
+        max-height: none;
+        border-radius: 0;
+    }
+    #modal-localisation-entete h2 {
+        font-size: 17px;
+    }
+    #localisation-selection-actions {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+}
 </style>
 
 </head>
@@ -1405,7 +1495,10 @@ main {
                         Adresse
                     </label>
 
-                    <input id="champ-adresse">
+                    <div style="display:flex;gap:8px;align-items:stretch;">
+                        <input id="champ-adresse" style="flex:1;">
+                        <button type="button" id="boutonChoisirEmplacement" class="bouton">📍 Choisir sur la carte</button>
+                    </div>
 
                 </div>
 
@@ -1475,6 +1568,32 @@ main {
 
     </div>
 
+</div>
+
+
+<!-- ========================================================
+     MODALE SELECTION D'EMPLACEMENT
+     ======================================================== -->
+
+<div id="fond-modal-localisation">
+    <div id="modal-localisation">
+        <div id="modal-localisation-entete">
+            <h2>📍 Choisir l'emplacement du lieu</h2>
+            <button type="button" id="boutonFermerLocalisation" class="bouton">✕ Fermer</button>
+        </div>
+
+        <div id="carte-selection-localisation"></div>
+
+        <div id="localisation-selection-info">
+            <div><strong>Point sélectionné :</strong> <span id="localisation-coordonnees">Cliquez sur la carte</span></div>
+            <div id="localisation-selection-message">Cliquez sur la carte pour choisir précisément le lieu. L'adresse, la ville et le pays seront recherchés automatiquement.</div>
+        </div>
+
+        <div id="localisation-selection-actions">
+            <button type="button" id="boutonAnnulerLocalisation" class="bouton">Annuler</button>
+            <button type="button" id="boutonUtiliserLocalisation" class="bouton bouton-principal" disabled>📍 Utiliser ce point</button>
+        </div>
+    </div>
 </div>
 
 
@@ -1952,6 +2071,27 @@ const boutonEnregistrer =
 const messageFormulaire =
     document.getElementById("message-formulaire");
 
+const boutonChoisirEmplacement =
+    document.getElementById("boutonChoisirEmplacement");
+
+const fondModalLocalisation =
+    document.getElementById("fond-modal-localisation");
+
+const boutonFermerLocalisation =
+    document.getElementById("boutonFermerLocalisation");
+
+const boutonAnnulerLocalisation =
+    document.getElementById("boutonAnnulerLocalisation");
+
+const boutonUtiliserLocalisation =
+    document.getElementById("boutonUtiliserLocalisation");
+
+const localisationCoordonnees =
+    document.getElementById("localisation-coordonnees");
+
+const localisationSelectionMessage =
+    document.getElementById("localisation-selection-message");
+
 
 // ==========================================================
 // DONNEES
@@ -1980,6 +2120,11 @@ let marqueurs = [];
 let modeAffichage = "marqueurs";
 
 let utilisateurConnecte = null;
+
+let carteSelectionLocalisation = null;
+let marqueurSelectionLocalisation = null;
+let localisationSelectionnee = null;
+let contexteOuvertureLocalisation = null;
 
 
 // ==========================================================
@@ -4181,6 +4326,330 @@ function ouvrirFormulaireModification(
     fondModal.style.display =
         "flex";
 }
+
+
+// ==========================================================
+// SELECTION D'UN EMPLACEMENT SUR LA CARTE
+// ==========================================================
+
+function extraireInfosGeocodageInverse(feature) {
+
+    const contexte = Array.isArray(feature?.context)
+        ? feature.context
+        : [];
+
+    const trouverContexte = (...ids) => {
+        const element = contexte.find(item =>
+            ids.some(prefix => String(item.id || "").startsWith(prefix))
+        );
+        return element?.text || "";
+    };
+
+    const properties = feature?.properties || {};
+
+    const adresse =
+        properties.address ||
+        feature?.place_name ||
+        feature?.text ||
+        "";
+
+    const villeContexte =
+        trouverContexte("place", "municipality", "locality");
+
+    const ville =
+        villeContexte ||
+        ((feature?.place_type || []).includes("place")
+            ? (feature?.text || "")
+            : "");
+
+    const paysContexte =
+        trouverContexte("country");
+
+    const pays =
+        paysContexte ||
+        ((feature?.place_type || []).includes("country")
+            ? (feature?.text || "")
+            : "");
+
+    return {
+        adresse: adresse || "",
+        ville: ville || "",
+        pays: pays || ""
+    };
+}
+
+
+async function geocoderInverseLocalisation(latitude, longitude) {
+
+    const url =
+        "https://api.maptiler.com/geocoding/" +
+        encodeURIComponent(longitude) +
+        "," +
+        encodeURIComponent(latitude) +
+        ".json?key=" +
+        encodeURIComponent(MAPTILER_KEY) +
+        "&language=fr";
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(
+            "Géocodage inverse impossible (HTTP " +
+            response.status + ")"
+        );
+    }
+
+    const donnees = await response.json();
+    const feature = donnees?.features?.[0];
+
+    if (!feature) {
+        return {
+            adresse: "",
+            ville: "",
+            pays: ""
+        };
+    }
+
+    return extraireInfosGeocodageInverse(feature);
+}
+
+
+function initialiserCarteSelectionLocalisation() {
+
+    if (carteSelectionLocalisation) {
+        return;
+    }
+
+    carteSelectionLocalisation = new maplibregl.Map({
+        container: "carte-selection-localisation",
+        style:
+            "https://api.maptiler.com/maps/streets-v4/style.json?key=" +
+            MAPTILER_KEY,
+        center: [2.5, 46.5],
+        zoom: 5
+    });
+
+    carteSelectionLocalisation.addControl(
+        new maplibregl.NavigationControl(),
+        "top-right"
+    );
+
+    carteSelectionLocalisation.on("click", async function(event) {
+
+        const longitude = Number(event.lngLat.lng.toFixed(7));
+        const latitude = Number(event.lngLat.lat.toFixed(7));
+
+        localisationSelectionnee = {
+            latitude,
+            longitude,
+            adresse: "",
+            ville: "",
+            pays: ""
+        };
+
+        if (marqueurSelectionLocalisation) {
+            marqueurSelectionLocalisation.remove();
+        }
+
+        marqueurSelectionLocalisation =
+            new maplibregl.Marker()
+                .setLngLat([longitude, latitude])
+                .addTo(carteSelectionLocalisation);
+
+        localisationCoordonnees.textContent =
+            latitude.toFixed(6) + " ; " + longitude.toFixed(6);
+
+        localisationSelectionMessage.textContent =
+            "Recherche de l'adresse…";
+
+        boutonUtiliserLocalisation.disabled = true;
+
+        try {
+            const infos = await geocoderInverseLocalisation(
+                latitude,
+                longitude
+            );
+
+            if (!localisationSelectionnee) {
+                return;
+            }
+
+            localisationSelectionnee.adresse = infos.adresse;
+            localisationSelectionnee.ville = infos.ville;
+            localisationSelectionnee.pays = infos.pays;
+
+            const resume = [
+                infos.adresse,
+                infos.ville,
+                infos.pays
+            ].filter(Boolean).join(" · ");
+
+            localisationSelectionMessage.textContent =
+                resume ||
+                "Aucune adresse trouvée. Les coordonnées restent utilisables.";
+
+        } catch (erreur) {
+
+            console.warn(
+                "Géocodage inverse :",
+                erreur
+            );
+
+            localisationSelectionMessage.textContent =
+                "Adresse non trouvée automatiquement. Les coordonnées sélectionnées restent disponibles.";
+        }
+
+        boutonUtiliserLocalisation.disabled = false;
+    });
+}
+
+
+function ouvrirSelectionLocalisation() {
+
+    if (!utilisateurConnecte) {
+        messageFormulaire.textContent =
+            "Vous devez être connecté.";
+        return;
+    }
+
+    const latitude = Number(
+        document.getElementById("champ-latitude").value
+    );
+    const longitude = Number(
+        document.getElementById("champ-longitude").value
+    );
+
+    contexteOuvertureLocalisation = {
+        latitude: Number.isFinite(latitude) ? latitude : null,
+        longitude: Number.isFinite(longitude) ? longitude : null
+    };
+
+    localisationSelectionnee = null;
+    boutonUtiliserLocalisation.disabled = true;
+    localisationCoordonnees.textContent = "Cliquez sur la carte";
+    localisationSelectionMessage.textContent =
+        "Cliquez sur la carte pour choisir précisément le lieu. L'adresse, la ville et le pays seront recherchés automatiquement.";
+
+    fondModalLocalisation.style.display = "flex";
+
+    initialiserCarteSelectionLocalisation();
+
+    const positionValide =
+        Number.isFinite(latitude) &&
+        Number.isFinite(longitude) &&
+        latitude >= -90 && latitude <= 90 &&
+        longitude >= -180 && longitude <= 180;
+
+    const appliquerPosition = () => {
+
+        carteSelectionLocalisation.resize();
+
+        if (positionValide) {
+            carteSelectionLocalisation.jumpTo({
+                center: [longitude, latitude],
+                zoom: Math.max(14, carteSelectionLocalisation.getZoom())
+            });
+
+            if (marqueurSelectionLocalisation) {
+                marqueurSelectionLocalisation.remove();
+            }
+
+            marqueurSelectionLocalisation =
+                new maplibregl.Marker()
+                    .setLngLat([longitude, latitude])
+                    .addTo(carteSelectionLocalisation);
+
+            localisationSelectionnee = {
+                latitude,
+                longitude,
+                adresse: document.getElementById("champ-adresse").value.trim(),
+                ville: document.getElementById("champ-ville").value.trim(),
+                pays: document.getElementById("champ-pays").value.trim()
+            };
+
+            localisationCoordonnees.textContent =
+                latitude.toFixed(6) + " ; " + longitude.toFixed(6);
+
+            localisationSelectionMessage.textContent =
+                "Position actuelle du lieu. Cliquez ailleurs pour la déplacer.";
+
+            boutonUtiliserLocalisation.disabled = false;
+        }
+    };
+
+    if (carteSelectionLocalisation.loaded()) {
+        appliquerPosition();
+    } else {
+        carteSelectionLocalisation.once("load", appliquerPosition);
+    }
+}
+
+
+function fermerSelectionLocalisation() {
+
+    fondModalLocalisation.style.display = "none";
+    contexteOuvertureLocalisation = null;
+}
+
+
+boutonChoisirEmplacement.addEventListener(
+    "click",
+    ouvrirSelectionLocalisation
+);
+
+boutonFermerLocalisation.addEventListener(
+    "click",
+    fermerSelectionLocalisation
+);
+
+boutonAnnulerLocalisation.addEventListener(
+    "click",
+    fermerSelectionLocalisation
+);
+
+fondModalLocalisation.addEventListener(
+    "click",
+    function(event) {
+        if (event.target === fondModalLocalisation) {
+            fermerSelectionLocalisation();
+        }
+    }
+);
+
+boutonUtiliserLocalisation.addEventListener(
+    "click",
+    function() {
+
+        if (!localisationSelectionnee) {
+            return;
+        }
+
+        const selection = localisationSelectionnee;
+
+        document.getElementById("champ-latitude").value =
+            selection.latitude;
+
+        document.getElementById("champ-longitude").value =
+            selection.longitude;
+
+        if (selection.adresse) {
+            document.getElementById("champ-adresse").value =
+                selection.adresse;
+        }
+
+        if (selection.ville) {
+            document.getElementById("champ-ville").value =
+                selection.ville;
+        }
+
+        if (selection.pays) {
+            document.getElementById("champ-pays").value =
+                selection.pays;
+        }
+
+        fermerSelectionLocalisation();
+    }
+);
 
 
 // ==========================================================
