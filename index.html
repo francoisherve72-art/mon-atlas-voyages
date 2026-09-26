@@ -1888,6 +1888,7 @@ main {
             <div id="message-visite-formulaire"></div>
 
             <div id="actions-visite-formulaire" style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+                <button type="button" id="boutonNouvelleVisite" class="bouton">Nouvelle visite</button>
                 <button type="button" id="boutonAnnulerVisite" class="bouton">Annuler</button>
                 <button type="button" id="boutonEnregistrerVisite" class="bouton bouton-principal">Enregistrer la visite</button>
             </div>
@@ -4650,9 +4651,18 @@ function genererNouvelIdLieu() {
 
 function genererNouvelIdVisite() {
 
+    if (
+        typeof crypto !== "undefined" &&
+        typeof crypto.randomUUID === "function"
+    ) {
+        return "VIS-" + crypto.randomUUID();
+    }
+
     return (
         "VIS-" +
-        crypto.randomUUID()
+        Date.now().toString(36) +
+        "-" +
+        Math.random().toString(36).slice(2, 10)
     );
 }
 
@@ -6869,7 +6879,7 @@ const boutonFermerVisites =
     document.getElementById("boutonFermerVisites");
 
 const boutonNouveauVisite =
-    document.getElementById("boutonAnnulerVisite");
+    document.getElementById("boutonNouvelleVisite");
 
 const boutonEnregistrerVisite =
     document.getElementById("boutonEnregistrerVisite");
@@ -7227,6 +7237,16 @@ boutonGererVisites.addEventListener("click", function() {
 boutonFermerVisites.addEventListener("click", fermerGestionVisites);
 
 boutonNouveauVisite.addEventListener("click", function() {
+    const lieuId = document.getElementById("champ-visite-lieu-id-gestion").value;
+    reinitialiserFormulaireVisiteGestion();
+    document.getElementById("champ-visite-lieu-id-gestion").value = lieuId;
+    document.getElementById("titre-form-visite").textContent = "Ajouter une visite";
+    document.getElementById("champ-visite-id-gestion").value = "";
+});
+
+// Le bouton Annuler annule uniquement l'édition en cours et revient
+// à un formulaire vierge, sans fermer la fenêtre de gestion.
+document.getElementById("boutonAnnulerVisite").addEventListener("click", function() {
     const lieuId = document.getElementById("champ-visite-lieu-id-gestion").value;
     reinitialiserFormulaireVisiteGestion();
     document.getElementById("champ-visite-lieu-id-gestion").value = lieuId;
