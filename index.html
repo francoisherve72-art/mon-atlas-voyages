@@ -1110,6 +1110,31 @@ main {
 
 
 /* ==========================================================
+   ETAPE 13.3 — REGROUPEMENT DES MARQUEURS
+   ========================================================== */
+
+.cluster-cercle {
+    cursor: pointer;
+}
+
+.cluster-nombre {
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.lieu-cluster-point {
+    cursor: pointer;
+}
+
+@media (max-width: 700px) {
+    .cluster-nombre {
+        font-size: 11px;
+    }
+}
+
+
+/* ==========================================================
    ETAPE 13.1 — OPTIMISATION MOBILE
    ========================================================== */
 
@@ -1332,8 +1357,12 @@ main {
 
         <select id="modeCarte" class="filtre">
 
+            <option value="clusters">
+                🗺️ Lieux regroupés
+            </option>
+
             <option value="marqueurs">
-                📍 Lieux
+                📍 Lieux individuels
             </option>
 
             <option value="heatmap">
@@ -2314,7 +2343,7 @@ let texteRechercheParLieu = {};
 
 let marqueurs = [];
 
-let modeAffichage = "marqueurs";
+let modeAffichage = "clusters";
 
 let utilisateurConnecte = null;
 
@@ -2492,7 +2521,8 @@ try {
     map.on(
         "load",
         function() {
-            afficherLieuxFiltres();
+            initialiserInteractionsClustering();
+            afficherLieuxFiltres(true);
         }
     );
 
@@ -3402,6 +3432,332 @@ function supprimerHeatmap() {
 }
 
 
+function supprimerClustering() {
+
+    if (!map || !map.isStyleLoaded()) {
+        return;
+    }
+
+    const couches =
+        [
+            "clusters-lieux-cercle",
+            "clusters-lieux-nombre",
+            "clusters-lieux-point"
+        ];
+
+    couches.forEach(
+        couche => {
+
+            if (map.getLayer(couche)) {
+                map.removeLayer(couche);
+            }
+        }
+    );
+
+    if (map.getSource("lieux-clusters")) {
+        map.removeSource("lieux-clusters");
+    }
+}
+
+
+function initialiserInteractionsClustering() {
+
+    if (!map) {
+        return;
+    }
+
+    // Un clic sur un cluster zoome jusqu'à son éclatement.
+    map.on(
+        "click",
+        "clusters-lieux-cercle",
+        function(event) {
+
+            const feature =
+                event.features &&
+                event.features[0];
+
+            if (!feature) {
+                return;
+            }
+
+            const clusterId =
+                Number(
+                    feature.properties &&
+                    feature.properties.cluster_id
+                );
+
+            const source =
+                map.getSource(
+                    "lieux-clusters"
+                );
+
+            if (
+                !source ||
+                !Number.isFinite(clusterId)
+            ) {
+                return;
+            }
+
+            source.getClusterExpansionZoom(
+                clusterId,
+                function(erreur, zoom) {
+
+                    if (erreur) {
+                        console.warn(
+                            "Impossible d'ouvrir le cluster :",
+                            erreur
+                        );
+                        return;
+                    }
+
+                    map.easeTo({
+                        center:
+                            feature.geometry.coordinates,
+                        zoom: zoom
+                    });
+                }
+            );
+        }
+    );
+
+
+    // Un clic sur un lieu individuel ouvre la même fiche
+    // que les marqueurs classiques.
+    map.on(
+        "click",
+        "clusters-lieux-point",
+        function(event) {
+
+            const feature =
+                event.features &&
+                event.features[0];
+
+            if (!feature) {
+                return;
+            }
+
+            const lieuId =
+                feature.properties &&
+                feature.properties.lieu_id;
+
+            const lieu =
+                lieuxParId[String(lieuId)];
+
+            if (!lieu) {
+                return;
+            }
+
+            const visitesLieu =
+                visitesParLieu[lieu.lieu_id] || [];
+
+            const photosLieu =
+                photosParLieu[lieu.lieu_id] || [];
+
+            new maplibregl.Popup({
+                offset: 12,
+                maxWidth: "420px"
+            })
+                .setLngLat(
+                    feature.geometry.coordinates
+                )
+                .setHTML(
+                    creerFiche(
+                        lieu,
+                        visitesLieu,
+                        photosLieu
+                    )
+                )
+                .addTo(map);
+        }
+    );
+
+
+    // Curseur main sur les clusters et les lieux.
+    map.on(
+        "mouseenter",
+        "clusters-lieux-cercle",
+        function() {
+            map.getCanvas().style.cursor =
+                "pointer";
+        }
+    );
+
+    map.on(
+        "mouseleave",
+        "clusters-lieux-cercle",
+        function() {
+            map.getCanvas().style.cursor =
+                "";
+        }
+    );
+
+    map.on(
+        "mouseenter",
+        "clusters-lieux-point",
+        function() {
+            map.getCanvas().style.cursor =
+                "pointer";
+        }
+    );
+
+    map.on(
+        "mouseleave",
+        "clusters-lieux-point",
+        function() {
+            map.getCanvas().style.cursor =
+                "";
+        }
+    );
+}
+
+
+function afficherLieuxClusters(
+    lieuxFiltres,
+    bounds
+) {
+
+    if (
+        !map ||
+        !map.isStyleLoaded()
+    ) {
+        return;
+    }
+
+    const geojson = {
+        type: "FeatureCollection",
+        features:
+            lieuxFiltres.map(
+                lieu => ({
+                    type: "Feature",
+                    geometry: {
+                        type: "Point",
+                        coordinates: [
+                            Number(lieu.longitude),
+                            Number(lieu.latitude)
+                        ]
+                    },
+                    properties: {
+                        lieu_id:
+                            String(lieu.lieu_id || "")
+                    }
+                })
+            )
+    };
+
+
+    map.addSource(
+        "lieux-clusters",
+        {
+            type: "geojson",
+            data: geojson,
+            cluster: true,
+            clusterMaxZoom: 12,
+            clusterRadius: 50
+        }
+    );
+
+
+    // Cercles des clusters.
+    map.addLayer({
+        id: "clusters-lieux-cercle",
+        type: "circle",
+        source: "lieux-clusters",
+        filter: [
+            "has",
+            "point_count"
+        ],
+        paint: {
+            "circle-color": [
+                "step",
+                [
+                    "get",
+                    "point_count"
+                ],
+                "#4f83cc",
+                10,
+                "#3f6fb1",
+                25,
+                "#315b96",
+                50,
+                "#244a7c"
+            ],
+            "circle-radius": [
+                "step",
+                [
+                    "get",
+                    "point_count"
+                ],
+                18,
+                10,
+                22,
+                25,
+                27,
+                50,
+                32
+            ],
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#ffffff"
+        }
+    });
+
+
+    // Nombre de lieux dans chaque cluster.
+    map.addLayer({
+        id: "clusters-lieux-nombre",
+        type: "symbol",
+        source: "lieux-clusters",
+        filter: [
+            "has",
+            "point_count"
+        ],
+        layout: {
+            "text-field": [
+                "get",
+                "point_count_abbreviated"
+            ],
+            "text-font": [
+                "Open Sans Bold"
+            ],
+            "text-size": 12
+        },
+        paint: {
+            "text-color": "#ffffff"
+        }
+    });
+
+
+    // Lieux qui ne sont plus regroupés à ce niveau de zoom.
+    map.addLayer({
+        id: "clusters-lieux-point",
+        type: "circle",
+        source: "lieux-clusters",
+        filter: [
+            "!",
+            [
+                "has",
+                "point_count"
+            ]
+        ],
+        paint: {
+            "circle-radius": 7,
+            "circle-color": "#2f6db0",
+            "circle-stroke-width": 2,
+            "circle-stroke-color": "#ffffff"
+        }
+    });
+
+
+    map.fitBounds(
+        bounds,
+        {
+            padding: 70,
+            maxZoom: 6,
+            duration: 450
+        }
+    );
+}
+
+
 function afficherLieuxFiltres(force = false) {
 
     if (
@@ -3431,6 +3787,7 @@ function afficherLieuxFiltres(force = false) {
 
     supprimerMarqueurs();
     supprimerHeatmap();
+    supprimerClustering();
 
     const voyageSelectionne =
         filtreVoyage.value;
@@ -3594,6 +3951,17 @@ function afficherLieuxFiltres(force = false) {
             Number(lieu.latitude)
         ]);
     });
+
+    if (modeAffichage === "clusters") {
+
+        afficherLieuxClusters(
+            lieuxFiltres,
+            bounds
+        );
+
+        return;
+    }
+
 
     if (modeAffichage === "heatmap") {
 
@@ -5803,8 +6171,8 @@ function afficherVoyageActuelSurCarte() {
     filtreTypeLieu.value = "";
     filtreExperience.value = "";
     filtreAnnee.value = "";
-    modeCarte.value = "marqueurs";
-    modeAffichage = "marqueurs";
+    modeCarte.value = "clusters";
+    modeAffichage = "clusters";
     fermerDetailVoyage();
     afficherLieuxFiltres();
 }
