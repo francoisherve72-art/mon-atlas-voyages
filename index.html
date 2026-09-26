@@ -3682,63 +3682,117 @@ async function chargerDonnees() {
 
     try {
 
-        const [
+        /*
+         * IMPORTANT : les cinq tables ne doivent pas être
+         * traitées comme un seul bloc bloquant.
+         *
+         * Si, par exemple, une politique RLS empêche
+         * momentanément la lecture des photos ou des types
+         * de contexte, les lieux doivent quand même pouvoir
+         * être affichés sur la carte.
+         *
+         * Promise.allSettled permet donc de charger chaque
+         * table indépendamment et de conserver les données
+         * disponibles.
+         */
 
-            lieux,
-            voyages,
-            visites,
-            typesContexte,
-            photos
+        const resultats =
+            await Promise.allSettled([
 
-        ] = await Promise.all([
+                recupererTable(
+                    "lieux",
+                    "*",
+                    "lieu_id.asc"
+                ),
 
-            recupererTable(
-                "lieux",
-                "*",
-                "lieu_id.asc"
-            ),
+                recupererTable(
+                    "voyages",
+                    "*",
+                    "voyage_id.asc"
+                ),
 
-            recupererTable(
-                "voyages",
-                "*",
-                "voyage_id.asc"
-            ),
+                recupererTable(
+                    "visites",
+                    "*",
+                    "lieu_id.asc"
+                ),
 
-            recupererTable(
-                "visites",
-                "*",
-                "lieu_id.asc"
-            ),
+                recupererTable(
+                    "types_contexte",
+                    "code,nom",
+                    "nom.asc"
+                ),
 
-            recupererTable(
-                "types_contexte",
-                "code,nom",
-                "nom.asc"
-            ),
+                recupererTable(
+                    "photos",
+                    "*",
+                    "ordre.asc"
+                )
 
-            recupererTable(
-                "photos",
-                "*",
-                "ordre.asc"
-            )
+            ]);
 
-        ]);
+
+        const nomsTables = [
+            "lieux",
+            "voyages",
+            "visites",
+            "types_contexte",
+            "photos"
+        ];
+
+
+        resultats.forEach(
+            (resultat, index) => {
+
+                if (resultat.status === "rejected") {
+
+                    console.warn(
+                        "Lecture Supabase impossible pour " +
+                        nomsTables[index] + ":",
+                        resultat.reason
+                    );
+
+                }
+
+            }
+        );
+
+
+        /*
+         * Les lieux constituent la seule donnée indispensable
+         * pour afficher la carte.
+         */
+
+        if (
+            resultats[0].status !== "fulfilled"
+        ) {
+
+            throw resultats[0].reason;
+        }
 
 
         tousLesLieux =
-            lieux;
+            resultats[0].value || [];
 
         tousLesVoyages =
-            voyages;
+            resultats[1].status === "fulfilled"
+                ? resultats[1].value || []
+                : [];
 
         toutesLesVisites =
-            visites;
+            resultats[2].status === "fulfilled"
+                ? resultats[2].value || []
+                : [];
 
         tousLesTypesContexte =
-            typesContexte;
+            resultats[3].status === "fulfilled"
+                ? resultats[3].value || []
+                : [];
 
         toutesLesPhotos =
-            photos;
+            resultats[4].status === "fulfilled"
+                ? resultats[4].value || []
+                : [];
 
 
         reconstruireTousLesIndex();
@@ -3750,11 +3804,17 @@ async function chargerDonnees() {
 
     } catch (erreur) {
 
-        console.error(erreur);
+        console.error(
+            "Erreur chargement des données :",
+            erreur
+        );
 
         afficherErreur(
-            "Impossible de charger les données : " +
-            erreur.message
+            "Impossible de charger les lieux : " +
+            (
+                erreur.message ||
+                String(erreur)
+            )
         );
     }
 }
