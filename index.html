@@ -2363,6 +2363,9 @@ let marqueurs = [];
 
 let lieuxAffichesActuels = [];
 
+// Évite les courses entre le chargement des données et celui du style MapLibre.
+let renduCarteEnAttente = false;
+
 let modeAffichage = "marqueurs";
 
 let utilisateurConnecte = null;
@@ -2537,6 +2540,7 @@ try {
     map.on(
         "load",
         function() {
+            renduCarteEnAttente = false;
             afficherLieuxFiltres();
         }
     );
@@ -3152,10 +3156,21 @@ function supprimerHeatmap() {
 
 function afficherLieuxFiltres() {
 
-    if (
-        !map ||
-        !map.isStyleLoaded()
-    ) {
+    if (!map) {
+        return;
+    }
+
+    // Le style MapLibre peut être en cours de chargement alors que
+    // les données Supabase sont déjà disponibles. On reprogramme alors
+    // le rendu au lieu de simplement abandonner l'affichage.
+    if (!map.isStyleLoaded()) {
+        if (!renduCarteEnAttente) {
+            renduCarteEnAttente = true;
+            setTimeout(function() {
+                renduCarteEnAttente = false;
+                afficherLieuxFiltres();
+            }, 100);
+        }
         return;
     }
 
@@ -3349,6 +3364,10 @@ function afficherLieuxFiltres() {
     );
 
 
+    // Cette liste représente exactement les lieux sélectionnés par les filtres.
+    // Elle est disponible avant la création des fiches pour la navigation.
+    lieuxAffichesActuels = [...lieuxFiltres];
+
     if (
         modeAffichage === "heatmap"
     ) {
@@ -3510,75 +3529,115 @@ function afficherLieuxFiltres() {
     }
 
 
-    lieuxAffichesActuels = [...lieuxFiltres];
-
     lieuxFiltres.forEach(
         lieu => {
 
-            const voyage =
-                voyagesParId[
-                    lieu.voyage_id
-                ];
+            const latitude =
+                Number(lieu.latitude);
 
-            const visitesLieu =
-                visitesParLieu[
-                    lieu.lieu_id
-                ] || [];
+            const longitude =
+                Number(lieu.longitude);
 
-            const photosLieu =
-                photosParLieu[
-                    lieu.lieu_id
-                ] || [];
+            // Sécurité supplémentaire : un lieu dont les coordonnées
+            // ne sont pas numériques ne doit pas bloquer les autres.
+            if (
+                !Number.isFinite(latitude) ||
+                !Number.isFinite(longitude)
+            ) {
+                console.warn(
+                    "Coordonnées invalides pour le lieu :",
+                    lieu
+                );
+                return;
+            }
 
-
-            const popup =
-                new maplibregl.Popup({
-
-                    offset: 25,
-
-                    maxWidth:
-                        "min(92vw, 360px)"
-
-                });
-
-
-            popup.setHTML(
-
-                creerFiche(
-
-                    lieu,
-                    visitesLieu,
-                    photosLieu
-
-                )
-
-            );
-
-
+            // Le marqueur est créé avant la fiche. Ainsi, une éventuelle
+            // erreur dans les données détaillées d'une fiche ne peut pas
+            // empêcher l'affichage du lieu sur la carte.
             const marqueur =
                 new maplibregl.Marker()
-
                     .setLngLat([
-
-                        Number(
-                            lieu.longitude
-                        ),
-
-                        Number(
-                            lieu.latitude
-                        )
-
+                        longitude,
+                        latitude
                     ])
-
-                    .setPopup(popup)
-
                     .addTo(map);
-
 
             marqueurs.push(
                 marqueur
             );
 
+            try {
+
+                const visitesLieu =
+                    visitesParLieu[
+                        lieu.lieu_id
+                    ] || [];
+
+                const photosLieu =
+                    photosParLieu[
+                        lieu.lieu_id
+                    ] || [];
+
+                const popup =
+                    new maplibregl.Popup({
+
+                        offset: 25,
+
+                        maxWidth:
+                            "min(92vw, 360px)"
+
+                    });
+
+                popup.setHTML(
+
+                    creerFiche(
+                        lieu,
+                        visitesLieu,
+                        photosLieu
+                    )
+
+                );
+
+                marqueur.setPopup(
+                    popup
+                );
+
+            } catch (erreurFiche) {
+
+                // Le lieu reste cliquable même si une donnée particulière
+                // provoque une erreur lors de la construction de sa fiche.
+                console.error(
+                    "Erreur création fiche pour " +
+                    (lieu.lieu_id || lieu.nom || "lieu") +
+                    ":",
+                    erreurFiche
+                );
+
+                const popupSecours =
+                    new maplibregl.Popup({
+
+                        offset: 25,
+
+                        maxWidth:
+                            "min(92vw, 360px)"
+
+                    });
+
+                popupSecours.setHTML(
+                    `<div class="fiche-lieu">
+                        <div class="fiche-titre">${echapperHTML(lieu.nom || "Lieu")}</div>
+                        <div class="fiche-localisation">${echapperHTML(
+                            [lieu.ville, lieu.pays]
+                                .filter(Boolean)
+                                .join(" · ")
+                        )}</div>
+                    </div>`
+                );
+
+                marqueur.setPopup(
+                    popupSecours
+                );
+            }
         }
     );
 
@@ -3683,27 +3742,38 @@ async function chargerDonnees() {
     try {
 
         /*
-         * IMPORTANT : les cinq tables ne doivent pas être
-         * traitées comme un seul bloc bloquant.
+         * IMPORTANT : les lieux sont la seule donnée nécessaire
+         * pour afficher la carte. On les charge donc en premier.
          *
-         * Si, par exemple, une politique RLS empêche
-         * momentanément la lecture des photos ou des types
-         * de contexte, les lieux doivent quand même pouvoir
-         * être affichés sur la carte.
-         *
-         * Promise.allSettled permet donc de charger chaque
-         * table indépendamment et de conserver les données
-         * disponibles.
+         * Les autres tables sont chargées ensuite en parallèle.
+         * Ainsi, une difficulté sur les photos, les visites,
+         * les voyages ou les contextes ne peut pas empêcher
+         * l'affichage des marqueurs.
          */
 
-        const resultats =
-            await Promise.allSettled([
+        const lieux =
+            await recupererTable(
+                "lieux",
+                "*",
+                "lieu_id.asc"
+            );
 
-                recupererTable(
-                    "lieux",
-                    "*",
-                    "lieu_id.asc"
-                ),
+
+        tousLesLieux =
+            lieux || [];
+
+
+        // Les index minimums permettent immédiatement d'afficher
+        // les marqueurs, même avant l'arrivée des autres tables.
+        reconstruireTousLesIndex();
+
+        remplirFiltres();
+
+        afficherLieuxFiltres();
+
+
+        const resultatsSecondaires =
+            await Promise.allSettled([
 
                 recupererTable(
                     "voyages",
@@ -3732,8 +3802,7 @@ async function chargerDonnees() {
             ]);
 
 
-        const nomsTables = [
-            "lieux",
+        const nomsTablesSecondaires = [
             "voyages",
             "visites",
             "types_contexte",
@@ -3741,60 +3810,46 @@ async function chargerDonnees() {
         ];
 
 
-        resultats.forEach(
+        tousLesVoyages =
+            resultatsSecondaires[0].status === "fulfilled"
+                ? resultatsSecondaires[0].value || []
+                : [];
+
+        toutesLesVisites =
+            resultatsSecondaires[1].status === "fulfilled"
+                ? resultatsSecondaires[1].value || []
+                : [];
+
+        tousLesTypesContexte =
+            resultatsSecondaires[2].status === "fulfilled"
+                ? resultatsSecondaires[2].value || []
+                : [];
+
+        toutesLesPhotos =
+            resultatsSecondaires[3].status === "fulfilled"
+                ? resultatsSecondaires[3].value || []
+                : [];
+
+
+        resultatsSecondaires.forEach(
             (resultat, index) => {
 
-                if (resultat.status === "rejected") {
+                if (
+                    resultat.status === "rejected"
+                ) {
 
                     console.warn(
                         "Lecture Supabase impossible pour " +
-                        nomsTables[index] + ":",
+                        nomsTablesSecondaires[index] + ":",
                         resultat.reason
                     );
-
                 }
-
             }
         );
 
 
-        /*
-         * Les lieux constituent la seule donnée indispensable
-         * pour afficher la carte.
-         */
-
-        if (
-            resultats[0].status !== "fulfilled"
-        ) {
-
-            throw resultats[0].reason;
-        }
-
-
-        tousLesLieux =
-            resultats[0].value || [];
-
-        tousLesVoyages =
-            resultats[1].status === "fulfilled"
-                ? resultats[1].value || []
-                : [];
-
-        toutesLesVisites =
-            resultats[2].status === "fulfilled"
-                ? resultats[2].value || []
-                : [];
-
-        tousLesTypesContexte =
-            resultats[3].status === "fulfilled"
-                ? resultats[3].value || []
-                : [];
-
-        toutesLesPhotos =
-            resultats[4].status === "fulfilled"
-                ? resultats[4].value || []
-                : [];
-
-
+        // Les tables complémentaires étant maintenant disponibles,
+        // on reconstruit les index puis on rafraîchit les fiches.
         reconstruireTousLesIndex();
 
         remplirFiltres();
