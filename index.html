@@ -3498,25 +3498,37 @@ function initialiserInteractionsClustering() {
                 return;
             }
 
-            source.getClusterExpansionZoom(
-                clusterId,
-                function(erreur, zoom) {
+            // MapLibre GL JS 5.x renvoie une Promise ici.
+            // L'ancienne forme callback ne déclenche donc rien.
+            source
+                .getClusterExpansionZoom(clusterId)
+                .then(
+                    function(zoom) {
 
-                    if (erreur) {
+                        if (!Number.isFinite(zoom)) {
+                            console.warn(
+                                "Zoom d'ouverture du cluster invalide :",
+                                zoom
+                            );
+                            return;
+                        }
+
+                        map.easeTo({
+                            center:
+                                feature.geometry.coordinates,
+                            zoom: Math.min(zoom, 20),
+                            duration: 450
+                        });
+                    }
+                )
+                .catch(
+                    function(erreur) {
                         console.warn(
                             "Impossible d'ouvrir le cluster :",
                             erreur
                         );
-                        return;
                     }
-
-                    map.easeTo({
-                        center:
-                            feature.geometry.coordinates,
-                        zoom: zoom
-                    });
-                }
-            );
+                );
         }
     );
 
