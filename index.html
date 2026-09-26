@@ -2167,6 +2167,21 @@ const SUPABASE_KEY =
 const MAPTILER_KEY =
     "knGFRadbYDcoOEytbBIZ";
 
+// ==========================================================
+// SECURITE — GARDE-FOUS COTE CLIENT
+// ==========================================================
+// La vraie autorisation reste assurée par Supabase/RLS.
+// Ces contrôles limitent surtout les erreurs et abus côté navigateur.
+const TAILLE_MAX_PHOTO = 15 * 1024 * 1024; // 15 Mo
+const TYPES_PHOTO_AUTORISES = new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif"
+]);
+const TAILLE_MAX_EXCEL = 10 * 1024 * 1024; // 10 Mo
+const LIGNES_MAX_IMPORT_EXCEL = 5000;
+
 
 const supabaseClient =
     window.supabase.createClient(
@@ -4451,46 +4466,85 @@ function afficherInterfaceAuthentification() {
 // CONNEXION
 // ==========================================================
 
+function demanderMotDePasseMasque() {
+    return new Promise(resolve => {
+        const fond = document.createElement("div");
+        fond.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;";
+
+        const boite = document.createElement("form");
+        boite.style.cssText = "background:#fff;padding:20px;border-radius:12px;width:min(420px,100%);box-shadow:0 10px 35px rgba(0,0,0,.25);";
+
+        const titre = document.createElement("h3");
+        titre.textContent = "Connexion";
+        titre.style.marginTop = "0";
+
+        const label = document.createElement("label");
+        label.textContent = "Mot de passe";
+        label.style.display = "block";
+        label.style.marginBottom = "6px";
+
+        const champ = document.createElement("input");
+        champ.type = "password";
+        champ.autocomplete = "current-password";
+        champ.required = true;
+        champ.style.cssText = "width:100%;box-sizing:border-box;margin-bottom:14px;";
+
+        const actions = document.createElement("div");
+        actions.style.cssText = "display:flex;gap:8px;justify-content:flex-end;";
+
+        const annuler = document.createElement("button");
+        annuler.type = "button";
+        annuler.className = "bouton";
+        annuler.textContent = "Annuler";
+
+        const valider = document.createElement("button");
+        valider.type = "submit";
+        valider.className = "bouton";
+        valider.textContent = "Se connecter";
+
+        actions.append(annuler, valider);
+        boite.append(titre, label, champ, actions);
+        fond.appendChild(boite);
+        document.body.appendChild(fond);
+
+        const terminer = valeur => {
+            fond.remove();
+            resolve(valeur);
+        };
+
+        annuler.addEventListener("click", () => terminer(null));
+        fond.addEventListener("click", event => {
+            if (event.target === fond) terminer(null);
+        });
+        boite.addEventListener("submit", event => {
+            event.preventDefault();
+            terminer(champ.value);
+        });
+
+        champ.focus();
+    });
+}
+
 boutonConnexion.addEventListener(
     "click",
     async function() {
 
-        const email =
-            prompt(
-                "Adresse e-mail :"
-            );
+        const email = prompt("Adresse e-mail :");
+        if (!email) return;
 
-        if (!email) {
-            return;
-        }
+        // Le mot de passe n'est plus saisi via prompt(), qui l'affichait
+        // en clair dans le navigateur. On crée temporairement un champ
+        // password natif avec saisie masquée.
+        const motDePasse = await demanderMotDePasseMasque();
+        if (!motDePasse) return;
 
+        message.style.display = "none";
 
-        const motDePasse =
-            prompt(
-                "Mot de passe :"
-            );
-
-        if (!motDePasse) {
-            return;
-        }
-
-
-        message.style.display =
-            "none";
-
-
-        const {
-            error
-        } =
-        await supabaseClient.auth.signInWithPassword({
-
-            email:
-                email,
-
-            password:
-                motDePasse
-
-        });
+        const { error } =
+            await supabaseClient.auth.signInWithPassword({
+                email: email.trim(),
+                password: motDePasse
+            });
 
 
         if (error) {
@@ -4533,6 +4587,19 @@ boutonDeconnexion.addEventListener(
 
     }
 );
+
+
+// ==========================================================
+// GARDE AUTHENTIFICATION POUR LES MUTATIONS
+// ==========================================================
+
+async function verifierSessionPourMutation() {
+    const { data, error } = await supabaseClient.auth.getSession();
+    if (error || !data.session?.user) {
+        throw new Error("Votre session n'est plus active. Veuillez vous reconnecter.");
+    }
+    return data.session;
+}
 
 
 // ==========================================================
@@ -6658,6 +6725,17 @@ function chargerPhotoDansFormulaire(photoId) {
     messagePhotoFormulaire.textContent = "Modification de « " + (photo.titre || photo.photo_id) + " ». Laisser le fichier vide pour conserver la photo actuelle.";
 }
 
+function validerFichierPhoto(fichier) {
+    if (!fichier) return null;
+    if (!TYPES_PHOTO_AUTORISES.has(fichier.type)) {
+        return "Format photo non autorisé. Utilisez JPEG, PNG, WebP ou GIF.";
+    }
+    if (fichier.size > TAILLE_MAX_PHOTO) {
+        return "La photo dépasse la taille maximale de 15 Mo.";
+    }
+    return null;
+}
+
 formulairePhoto.addEventListener("submit", async event => {
     event.preventDefault();
     if (!utilisateurConnecte) return;
@@ -6665,6 +6743,11 @@ formulairePhoto.addEventListener("submit", async event => {
     const photoId = document.getElementById("champ-photo-id-gestion").value.trim();
     const lieuId = document.getElementById("champ-photo-lieu").value;
     const fichierSelectionne = document.getElementById("champ-photo-fichier").files[0] || null;
+    const erreurFichierPhoto = validerFichierPhoto(fichierSelectionne);
+    if (erreurFichierPhoto) {
+        messagePhotoFormulaire.textContent = erreurFichierPhoto;
+        return;
+    }
     if (!lieuId) {
         messagePhotoFormulaire.textContent = "Le lieu est obligatoire.";
         return;
@@ -8103,6 +8186,10 @@ async function analyserImportExcel() {
     }
 
     const fichier = fichierImportExcel.files[0];
+    if (fichier.size > TAILLE_MAX_EXCEL) {
+        alert("Le fichier Excel dépasse la taille maximale de 10 Mo.");
+        return;
+    }
     const buffer = await fichier.arrayBuffer();
     const workbook = XLSX.read(buffer, { type: "array", cellDates: false });
     const resultatsParTable = {};
@@ -8120,6 +8207,9 @@ async function analyserImportExcel() {
             defval: null,
             raw: true
         });
+        if (lignes.length > LIGNES_MAX_IMPORT_EXCEL) {
+            throw new Error(`La feuille « ${table} » contient ${lignes.length} lignes. Maximum autorisé : ${LIGNES_MAX_IMPORT_EXCEL}.`);
+        }
         resultatsParTable[table] = analyserFeuilleExcel(table, lignes);
     });
 
@@ -8226,6 +8316,13 @@ async function executerImportExcel() {
 
     if (!utilisateurConnecte) {
         alert("Vous devez être connecté pour importer des données.");
+        return;
+    }
+
+    try {
+        await verifierSessionPourMutation();
+    } catch (erreurSession) {
+        alert(erreurSession.message);
         return;
     }
 
