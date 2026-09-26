@@ -176,11 +176,8 @@ main {
 
 .fiche-lieu {
     font-family: Arial, sans-serif;
-    line-height: 1.35;
+    line-height: 1.4;
     width: 100%;
-    max-height: 68vh;
-    overflow-y: auto;
-    padding-right: 2px;
 }
 
 .fiche-titre {
@@ -270,26 +267,25 @@ main {
 
 .fiche-photo {
     display: block;
-    width: 115px;
-    height: 82px;
+    width: 100%;
+    height: 220px;
     object-fit: cover;
-    border-radius: 7px;
-    margin: 0;
+    border-radius: 8px;
+    margin-bottom: 10px;
     cursor: pointer;
-    flex-shrink: 0;
 }
 
 .fiche-galerie {
     display: flex;
-    gap: 5px;
+    gap: 6px;
     overflow-x: auto;
-    margin: 7px 0 8px;
-    padding-bottom: 2px;
+    margin-bottom: 12px;
+    padding-bottom: 3px;
 }
 
 .fiche-miniature {
-    width: 58px;
-    height: 44px;
+    width: 64px;
+    height: 50px;
     object-fit: cover;
     border-radius: 6px;
     flex-shrink: 0;
@@ -403,57 +399,6 @@ main {
 /* ==========================================================
    BOUTONS DANS POPUP
    ========================================================== */
-
-.fiche-entete {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    margin-bottom: 7px;
-}
-
-.fiche-entete-texte {
-    min-width: 0;
-    flex: 1;
-}
-
-.fiche-navigation {
-    display: flex;
-    justify-content: space-between;
-    gap: 6px;
-    margin: 0 0 9px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #ddd;
-}
-
-.bouton-navigation-fiche {
-    flex: 1;
-    min-width: 0;
-    padding: 6px 8px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: #f7f7f7;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-.bouton-navigation-fiche:disabled {
-    opacity: 0.4;
-    cursor: default;
-}
-
-.fiche-section-compact {
-    margin-top: 7px;
-}
-
-.fiche-section-compact summary {
-    cursor: pointer;
-    font-weight: bold;
-    padding: 5px 0;
-}
-
-.fiche-section-compact[open] summary {
-    margin-bottom: 5px;
-}
 
 .actions-lieu {
     display: flex;
@@ -2361,11 +2306,6 @@ let photosParLieu = {};
 
 let marqueurs = [];
 
-let lieuxAffichesActuels = [];
-
-// Évite les courses entre le chargement des données et celui du style MapLibre.
-let renduCarteEnAttente = false;
-
 let modeAffichage = "marqueurs";
 
 let utilisateurConnecte = null;
@@ -2540,7 +2480,6 @@ try {
     map.on(
         "load",
         function() {
-            renduCarteEnAttente = false;
             afficherLieuxFiltres();
         }
     );
@@ -2616,56 +2555,70 @@ function creerFiche(
     photos
 ) {
 
-    const visitesLieu = Array.isArray(visites)
-        ? [...visites].sort((a, b) => {
-            const dateA = a.date_debut || a.date_fin || "";
-            const dateB = b.date_debut || b.date_fin || "";
-            if (dateA !== dateB) return String(dateB).localeCompare(String(dateA));
-            return String(a.date_texte || "").localeCompare(String(b.date_texte || ""), "fr");
-        })
-        : [];
+    const visitesLieu =
+        Array.isArray(visites)
+            ? [...visites]
+            : [];
+
+
+    // On affiche les visites de la plus récente à la plus ancienne.
+    visitesLieu.sort(
+        (a, b) => {
+            const dateA =
+                a.date_debut ||
+                a.date_fin ||
+                "";
+
+            const dateB =
+                b.date_debut ||
+                b.date_fin ||
+                "";
+
+            if (dateA !== dateB) {
+                return String(dateB).localeCompare(String(dateA));
+            }
+
+            return String(a.date_texte || "").localeCompare(
+                String(b.date_texte || ""),
+                "fr"
+            );
+        }
+    );
+
+
+    let html = `
+        <div class="fiche-lieu">
+    `;
+
+
+    // ------------------------------------------------------
+    // PHOTOS : ordre principal puis ordre numérique
+    // ------------------------------------------------------
 
     const photosAffichees = Array.isArray(photos)
-        ? [...photos].filter(photo => photo && photo.fichier).sort((a, b) => {
-            if (Boolean(b.photo_principale) !== Boolean(a.photo_principale)) {
-                return Boolean(b.photo_principale) ? 1 : -1;
-            }
-            return Number(a.ordre || 1) - Number(b.ordre || 1);
-        })
+        ? [...photos]
+            .filter(photo => photo && photo.fichier)
+            .sort((a, b) => {
+                if (Boolean(b.photo_principale) !== Boolean(a.photo_principale)) {
+                    return Boolean(b.photo_principale) ? 1 : -1;
+                }
+                return Number(a.ordre || 1) - Number(b.ordre || 1);
+            })
         : [];
 
     const photoPrincipale = photosAffichees[0] || null;
-    const indexLieu = lieuxAffichesActuels.findIndex(item => item.lieu_id === lieu.lieu_id);
-    const precedent = indexLieu > 0 ? lieuxAffichesActuels[indexLieu - 1] : null;
-    const suivant = indexLieu >= 0 && indexLieu < lieuxAffichesActuels.length - 1
-        ? lieuxAffichesActuels[indexLieu + 1]
-        : null;
 
-    let html = `<div class="fiche-lieu">`;
-
-    // Navigation entre les lieux actuellement affichés sur la carte.
-    if (lieuxAffichesActuels.length > 1) {
-        html += `
-            <div class="fiche-navigation">
-                <button type="button" class="bouton-navigation-fiche bouton-fiche-precedent"
-                    data-lieu-id="${echapperHTML(precedent?.lieu_id || "")}" ${precedent ? "" : "disabled"}>
-                    ← Précédent
-                </button>
-                <button type="button" class="bouton-navigation-fiche bouton-fiche-suivant"
-                    data-lieu-id="${echapperHTML(suivant?.lieu_id || "")}" ${suivant ? "" : "disabled"}>
-                    Suivant →
-                </button>
-            </div>
-        `;
-    }
-
-    // En-tête compact : petite photo + identité du lieu.
-    html += `<div class="fiche-entete">`;
 
     if (photoPrincipale) {
-        const urlPhoto = construireUrlPhoto(photoPrincipale.fichier);
+
+        const urlPhoto =
+            construireUrlPhoto(
+                photoPrincipale.fichier
+            );
+
         html += `
-            <img class="fiche-photo"
+            <img
+                class="fiche-photo"
                 src="${echapperHTML(urlPhoto)}"
                 data-photo-index="0"
                 data-photo-url="${echapperHTML(urlPhoto)}"
@@ -2673,115 +2626,402 @@ function creerFiche(
                 data-photo-description="${echapperHTML(photoPrincipale.description || "")}"
                 data-photo-date="${echapperHTML(photoPrincipale.date_photo || "")}"
                 alt="${echapperHTML(photoPrincipale.titre || lieu.nom)}"
-                title="Cliquer pour agrandir">
+                title="Cliquer pour agrandir"
+            >
         `;
     }
 
-    html += `<div class="fiche-entete-texte">
-        <div class="fiche-titre">${echapperHTML(lieu.nom)}</div>`;
 
-    const localisation = [lieu.ville, lieu.pays].filter(Boolean).map(echapperHTML).join(" · ");
-    if (localisation) {
-        html += `<div class="fiche-localisation">📍 ${localisation}</div>`;
+    // ------------------------------------------------------
+    // MINI-GALERIE
+    // ------------------------------------------------------
+
+    if (
+        Array.isArray(photos) &&
+        photos.length > 1
+    ) {
+
+        html += `
+            <div class="fiche-galerie">
+        `;
+
+        photosAffichees.forEach(
+            (photo, index) => {
+
+                const urlPhoto =
+                    construireUrlPhoto(photo.fichier);
+
+                html += `
+                    <img
+                        class="fiche-miniature"
+                        src="${echapperHTML(urlPhoto)}"
+                        data-photo-index="${index}"
+                        data-photo-url="${echapperHTML(urlPhoto)}"
+                        data-photo-titre="${echapperHTML(photo.titre || lieu.nom)}"
+                        data-photo-description="${echapperHTML(photo.description || "")}"
+                        data-photo-date="${echapperHTML(photo.date_photo || "")}"
+                        alt="${echapperHTML(photo.titre || lieu.nom)}"
+                        title="Cliquer pour agrandir"
+                    >
+                `;
+            }
+        );
+
+        html += `
+            </div>
+        `;
     }
+
+
+    if (photosAffichees.length > 0) {
+        html += `
+            <div class="fiche-visite-meta">
+                📷 ${photosAffichees.length} photo${photosAffichees.length > 1 ? "s" : ""} · cliquer pour agrandir
+            </div>
+        `;
+    }
+
+
+    // ------------------------------------------------------
+    // IDENTITE DU LIEU
+    // ------------------------------------------------------
+
+    html += `
+        <div class="fiche-titre">
+            ${echapperHTML(lieu.nom)}
+        </div>
+    `;
+
+
+    const localisation = [
+        lieu.ville,
+        lieu.pays
+    ]
+        .filter(Boolean)
+        .map(echapperHTML)
+        .join(" · ");
+
+
+    if (localisation) {
+        html += `
+            <div class="fiche-localisation">
+                📍 ${localisation}
+            </div>
+        `;
+    }
+
 
     if (lieu.type_lieu) {
-        html += `<div class="fiche-visite-meta">📍 ${echapperHTML(lieu.type_lieu)}</div>`;
+        html += `
+            <div class="fiche-rubrique">
+                📍 <strong>Type :</strong>
+                ${echapperHTML(lieu.type_lieu)}
+            </div>
+        `;
     }
 
-    html += `</div></div>`;
 
-    if (photosAffichees.length > 1) {
-        html += `<div class="fiche-galerie">`;
-        photosAffichees.forEach((photo, index) => {
-            const urlPhoto = construireUrlPhoto(photo.fichier);
-            html += `
-                <img class="fiche-miniature"
-                    src="${echapperHTML(urlPhoto)}"
-                    data-photo-index="${index}"
-                    data-photo-url="${echapperHTML(urlPhoto)}"
-                    data-photo-titre="${echapperHTML(photo.titre || lieu.nom)}"
-                    data-photo-description="${echapperHTML(photo.description || "")}"
-                    data-photo-date="${echapperHTML(photo.date_photo || "")}"
-                    alt="${echapperHTML(photo.titre || lieu.nom)}"
-                    title="Cliquer pour agrandir">
-            `;
-        });
-        html += `</div>`;
+    if (lieu.adresse) {
+        html += `
+            <div class="fiche-rubrique">
+                🏠 <strong>Adresse :</strong><br>
+                ${echapperHTML(lieu.adresse)}
+            </div>
+        `;
     }
 
-    // Informations essentielles visibles immédiatement.
-    const resume = [];
-    if (visitesLieu.length) resume.push(`🗓️ ${visitesLieu.length} visite${visitesLieu.length > 1 ? "s" : ""}`);
-    if (lieu.adresse) resume.push(`🏠 ${echapperHTML(lieu.adresse)}`);
-    if (photosAffichees.length) resume.push(`📷 ${photosAffichees.length} photo${photosAffichees.length > 1 ? "s" : ""}`);
-    if (resume.length) html += `<div class="fiche-visite-meta">${resume.join(" · ")}</div>`;
 
-    // Historique repliable pour alléger la fiche.
+    // ------------------------------------------------------
+    // HISTORIQUE COMPLET DES VISITES
+    // ------------------------------------------------------
+
     if (visitesLieu.length > 0) {
-        html += `<details class="fiche-section-compact">
-            <summary>🗓️ Historique des visites (${visitesLieu.length})</summary>
-            <div class="fiche-visites-liste">`;
 
-        visitesLieu.forEach(visite => {
-            const dateVisite = afficherPeriode(visite.date_debut, visite.date_fin, visite.date_precision, visite.date_texte);
-            const nomContexte = obtenirNomContexte(visite);
-            const voyageVisite = voyagesParId[visite.voyage_id];
-            const meta = [];
-            if (nomContexte) meta.push("🧭 " + echapperHTML(nomContexte));
-            if (voyageVisite) meta.push("✈️ " + echapperHTML(voyageVisite.nom));
-            if (visite.type_experience) meta.push("✨ " + echapperHTML(visite.type_experience));
-            if (visite.note !== null && visite.note !== undefined) meta.push("⭐ " + echapperHTML(visite.note) + "/5");
+        html += `
+            <div class="fiche-historique">
+                <div class="fiche-sous-titre">
+                    🗓️ Historique des visites (${visitesLieu.length})
+                </div>
+                <div class="fiche-visites-liste">
+        `;
 
-            html += `<div class="fiche-visite">
-                <div class="fiche-visite-date">📅 ${echapperHTML(dateVisite || "Date non renseignée")}</div>`;
-            if (meta.length) html += `<div class="fiche-visite-meta">${meta.join(" · ")}</div>`;
-            if (visite.description) html += `<div class="fiche-visite-detail">${echapperHTML(visite.description)}</div>`;
-            if (visite.notes) html += `<div class="fiche-visite-notes">📝 ${echapperHTML(visite.notes)}</div>`;
-            html += `</div>`;
-        });
+        visitesLieu.forEach(
+            visite => {
 
-        html += `</div></details>`;
+                const dateVisite =
+                    afficherPeriode(
+                        visite.date_debut,
+                        visite.date_fin,
+                        visite.date_precision,
+                        visite.date_texte
+                    );
+
+                const nomContexte =
+                    obtenirNomContexte(visite);
+
+                const voyageVisite =
+                    voyagesParId[visite.voyage_id];
+
+                html += `
+                    <div class="fiche-visite">
+                        <div class="fiche-visite-date">
+                            📅 ${echapperHTML(
+                                dateVisite || "Date non renseignée"
+                            )}
+                        </div>
+                `;
+
+                const meta = [];
+
+                if (nomContexte) {
+                    meta.push(
+                        "🧭 " + echapperHTML(nomContexte)
+                    );
+                }
+
+                if (voyageVisite) {
+                    meta.push(
+                        "✈️ " + echapperHTML(voyageVisite.nom)
+                    );
+                }
+
+                if (visite.type_experience) {
+                    meta.push(
+                        "✨ " + echapperHTML(visite.type_experience)
+                    );
+                }
+
+                if (
+                    visite.note !== null &&
+                    visite.note !== undefined
+                ) {
+                    meta.push(
+                        "⭐ " + echapperHTML(visite.note) + "/5"
+                    );
+                }
+
+                if (meta.length > 0) {
+                    html += `
+                        <div class="fiche-visite-meta">
+                            ${meta.join(" · ")}
+                        </div>
+                    `;
+                }
+
+                if (visite.description) {
+                    html += `
+                        <div class="fiche-visite-detail">
+                            ${echapperHTML(visite.description)}
+                        </div>
+                    `;
+                }
+
+                if (visite.notes) {
+                    html += `
+                        <div class="fiche-visite-notes">
+                            📝 ${echapperHTML(visite.notes)}
+                        </div>
+                    `;
+                }
+
+                html += `
+                    </div>
+                `;
+            }
+        );
+
+        html += `
+                </div>
+            </div>
+        `;
+
     } else {
-        const dateLieu = afficherPeriode(lieu.date_debut, lieu.date_fin, lieu.date_precision, lieu.date_texte);
-        if (dateLieu) html += `<div class="fiche-visite-meta">📅 ${echapperHTML(dateLieu)}</div>`;
+
+        // Informations historiques éventuellement stockées directement sur le lieu.
+        const dateLieu =
+            afficherPeriode(
+                lieu.date_debut,
+                lieu.date_fin,
+                lieu.date_precision,
+                lieu.date_texte
+            );
+
+        if (dateLieu) {
+            html += `
+                <div class="fiche-rubrique">
+                    📅 <strong>Date :</strong>
+                    ${echapperHTML(dateLieu)}
+                </div>
+            `;
+        }
     }
+
+
+    // ------------------------------------------------------
+    // DESCRIPTION GENERALE DU LIEU
+    // ------------------------------------------------------
 
     if (lieu.description) {
-        html += `<details class="fiche-section-compact">
-            <summary>ℹ️ Description</summary>
-            <div>${echapperHTML(lieu.description)}</div>
-        </details>`;
+        html += `
+            <div class="fiche-description">
+                <div class="fiche-sous-titre">
+                    Description du lieu
+                </div>
+                <div>
+                    ${echapperHTML(lieu.description)}
+                </div>
+            </div>
+        `;
     }
+
 
     if (lieu.notes) {
-        html += `<details class="fiche-section-compact">
-            <summary>📝 Notes personnelles</summary>
-            <div>${echapperHTML(lieu.notes)}</div>
-        </details>`;
+        html += `
+            <div class="fiche-notes">
+                <div class="fiche-sous-titre">
+                    Notes personnelles
+                </div>
+                <div>
+                    ${echapperHTML(lieu.notes)}
+                </div>
+            </div>
+        `;
     }
+
+
+    // ------------------------------------------------------
+    // ACTIONS ADMINISTRATEUR
+    // ------------------------------------------------------
 
     if (utilisateurConnecte) {
-        html += `<div class="actions-lieu">
-            <button class="bouton bouton-modifier" data-lieu-id="${echapperHTML(lieu.lieu_id)}">✏️ Modifier</button>
-            <button class="bouton bouton-danger bouton-supprimer" data-lieu-id="${echapperHTML(lieu.lieu_id)}">🗑️ Supprimer</button>
-        </div>`;
+
+        html += `
+            <div class="actions-lieu">
+                <button
+                    class="bouton bouton-modifier"
+                    data-lieu-id="${echapperHTML(lieu.lieu_id)}"
+                >
+                    ✏️ Modifier
+                </button>
+
+                <button
+                    class="bouton bouton-danger bouton-supprimer"
+                    data-lieu-id="${echapperHTML(lieu.lieu_id)}"
+                >
+                    🗑️ Supprimer
+                </button>
+            </div>
+        `;
     }
 
-    html += `</div>`;
+
+    html += `
+        </div>
+    `;
+
     return html;
 }
 
+// ==========================================================
+// RECHERCHE
+// ==========================================================
 
-function ouvrirLieuDepuisFiche(lieuId) {
-    if (!lieuId) return;
-
-    const index = lieuxAffichesActuels.findIndex(lieu => lieu.lieu_id === lieuId);
-    if (index < 0 || !marqueurs[index]) return;
-
-    map.closePopup();
-    marqueurs[index].togglePopup();
+function normaliserTexteRecherche(texte) {
+    return String(texte ?? "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
 }
+
+
+function construireTexteRechercheLieu(lieu) {
+
+    const morceaux = [
+        lieu.nom,
+        lieu.ville,
+        lieu.pays,
+        lieu.type_lieu,
+        lieu.adresse,
+        lieu.description,
+        lieu.notes,
+        lieu.statut,
+        lieu.type_experience
+    ];
+
+    const visitesLieu =
+        visitesParLieu[lieu.lieu_id] || [];
+
+    visitesLieu.forEach(visite => {
+
+        morceaux.push(
+            visite.date_texte,
+            visite.description,
+            visite.notes,
+            visite.type_experience,
+            visite.type_contexte,
+            visite.statut
+        );
+
+        if (visite.voyage_id) {
+            morceaux.push(
+                voyagesParId[visite.voyage_id]?.nom
+            );
+        }
+
+        if (visite.type_contexte) {
+            morceaux.push(
+                typesContexteParCode[
+                    visite.type_contexte
+                ]?.nom
+            );
+        }
+    });
+
+    const photosLieu =
+        photosParLieu[lieu.lieu_id] || [];
+
+    photosLieu.forEach(photo => {
+        morceaux.push(
+            photo.titre,
+            photo.description
+        );
+    });
+
+    if (lieu.voyage_id) {
+        morceaux.push(
+            voyagesParId[lieu.voyage_id]?.nom
+        );
+    }
+
+    return normaliserTexteRecherche(
+        morceaux
+            .filter(Boolean)
+            .join(" ")
+    );
+}
+
+
+function lieuCorrespondRecherche(lieu, recherche) {
+
+    if (!recherche) {
+        return true;
+    }
+
+    const termes =
+        normaliserTexteRecherche(recherche)
+            .split(/\s+/)
+            .filter(Boolean);
+
+    const texte =
+        construireTexteRechercheLieu(lieu);
+
+    return termes.every(
+        terme => texte.includes(terme)
+    );
+}
+
+
 
 // ==========================================================
 // FILTRES
@@ -3156,21 +3396,10 @@ function supprimerHeatmap() {
 
 function afficherLieuxFiltres() {
 
-    if (!map) {
-        return;
-    }
-
-    // Le style MapLibre peut être en cours de chargement alors que
-    // les données Supabase sont déjà disponibles. On reprogramme alors
-    // le rendu au lieu de simplement abandonner l'affichage.
-    if (!map.isStyleLoaded()) {
-        if (!renduCarteEnAttente) {
-            renduCarteEnAttente = true;
-            setTimeout(function() {
-                renduCarteEnAttente = false;
-                afficherLieuxFiltres();
-            }, 100);
-        }
+    if (
+        !map ||
+        !map.isStyleLoaded()
+    ) {
         return;
     }
 
@@ -3364,10 +3593,6 @@ function afficherLieuxFiltres() {
     );
 
 
-    // Cette liste représente exactement les lieux sélectionnés par les filtres.
-    // Elle est disponible avant la création des fiches pour la navigation.
-    lieuxAffichesActuels = [...lieuxFiltres];
-
     if (
         modeAffichage === "heatmap"
     ) {
@@ -3532,112 +3757,70 @@ function afficherLieuxFiltres() {
     lieuxFiltres.forEach(
         lieu => {
 
-            const latitude =
-                Number(lieu.latitude);
+            const voyage =
+                voyagesParId[
+                    lieu.voyage_id
+                ];
 
-            const longitude =
-                Number(lieu.longitude);
+            const visitesLieu =
+                visitesParLieu[
+                    lieu.lieu_id
+                ] || [];
 
-            // Sécurité supplémentaire : un lieu dont les coordonnées
-            // ne sont pas numériques ne doit pas bloquer les autres.
-            if (
-                !Number.isFinite(latitude) ||
-                !Number.isFinite(longitude)
-            ) {
-                console.warn(
-                    "Coordonnées invalides pour le lieu :",
-                    lieu
-                );
-                return;
-            }
+            const photosLieu =
+                photosParLieu[
+                    lieu.lieu_id
+                ] || [];
 
-            // Le marqueur est créé avant la fiche. Ainsi, une éventuelle
-            // erreur dans les données détaillées d'une fiche ne peut pas
-            // empêcher l'affichage du lieu sur la carte.
+
+            const popup =
+                new maplibregl.Popup({
+
+                    offset: 25,
+
+                    maxWidth:
+                        "420px"
+
+                });
+
+
+            popup.setHTML(
+
+                creerFiche(
+
+                    lieu,
+                    visitesLieu,
+                    photosLieu
+
+                )
+
+            );
+
+
             const marqueur =
                 new maplibregl.Marker()
+
                     .setLngLat([
-                        longitude,
-                        latitude
+
+                        Number(
+                            lieu.longitude
+                        ),
+
+                        Number(
+                            lieu.latitude
+                        )
+
                     ])
+
+                    .setPopup(popup)
+
                     .addTo(map);
+
 
             marqueurs.push(
                 marqueur
             );
 
-            try {
-
-                const visitesLieu =
-                    visitesParLieu[
-                        lieu.lieu_id
-                    ] || [];
-
-                const photosLieu =
-                    photosParLieu[
-                        lieu.lieu_id
-                    ] || [];
-
-                const popup =
-                    new maplibregl.Popup({
-
-                        offset: 25,
-
-                        maxWidth:
-                            "min(92vw, 360px)"
-
-                    });
-
-                popup.setHTML(
-
-                    creerFiche(
-                        lieu,
-                        visitesLieu,
-                        photosLieu
-                    )
-
-                );
-
-                marqueur.setPopup(
-                    popup
-                );
-
-            } catch (erreurFiche) {
-
-                // Le lieu reste cliquable même si une donnée particulière
-                // provoque une erreur lors de la construction de sa fiche.
-                console.error(
-                    "Erreur création fiche pour " +
-                    (lieu.lieu_id || lieu.nom || "lieu") +
-                    ":",
-                    erreurFiche
-                );
-
-                const popupSecours =
-                    new maplibregl.Popup({
-
-                        offset: 25,
-
-                        maxWidth:
-                            "min(92vw, 360px)"
-
-                    });
-
-                popupSecours.setHTML(
-                    `<div class="fiche-lieu">
-                        <div class="fiche-titre">${echapperHTML(lieu.nom || "Lieu")}</div>
-                        <div class="fiche-localisation">${echapperHTML(
-                            [lieu.ville, lieu.pays]
-                                .filter(Boolean)
-                                .join(" · ")
-                        )}</div>
-                    </div>`
-                );
-
-                marqueur.setPopup(
-                    popupSecours
-                );
-            }
         }
     );
 
@@ -3741,115 +3924,65 @@ async function chargerDonnees() {
 
     try {
 
-        /*
-         * IMPORTANT : les lieux sont la seule donnée nécessaire
-         * pour afficher la carte. On les charge donc en premier.
-         *
-         * Les autres tables sont chargées ensuite en parallèle.
-         * Ainsi, une difficulté sur les photos, les visites,
-         * les voyages ou les contextes ne peut pas empêcher
-         * l'affichage des marqueurs.
-         */
+        const [
 
-        const lieux =
-            await recupererTable(
+            lieux,
+            voyages,
+            visites,
+            typesContexte,
+            photos
+
+        ] = await Promise.all([
+
+            recupererTable(
                 "lieux",
                 "*",
                 "lieu_id.asc"
-            );
+            ),
+
+            recupererTable(
+                "voyages",
+                "*",
+                "voyage_id.asc"
+            ),
+
+            recupererTable(
+                "visites",
+                "*",
+                "lieu_id.asc"
+            ),
+
+            recupererTable(
+                "types_contexte",
+                "code,nom",
+                "nom.asc"
+            ),
+
+            recupererTable(
+                "photos",
+                "*",
+                "ordre.asc"
+            )
+
+        ]);
 
 
         tousLesLieux =
-            lieux || [];
-
-
-        // Les index minimums permettent immédiatement d'afficher
-        // les marqueurs, même avant l'arrivée des autres tables.
-        reconstruireTousLesIndex();
-
-        remplirFiltres();
-
-        afficherLieuxFiltres();
-
-
-        const resultatsSecondaires =
-            await Promise.allSettled([
-
-                recupererTable(
-                    "voyages",
-                    "*",
-                    "voyage_id.asc"
-                ),
-
-                recupererTable(
-                    "visites",
-                    "*",
-                    "lieu_id.asc"
-                ),
-
-                recupererTable(
-                    "types_contexte",
-                    "code,nom",
-                    "nom.asc"
-                ),
-
-                recupererTable(
-                    "photos",
-                    "*",
-                    "ordre.asc"
-                )
-
-            ]);
-
-
-        const nomsTablesSecondaires = [
-            "voyages",
-            "visites",
-            "types_contexte",
-            "photos"
-        ];
-
+            lieux;
 
         tousLesVoyages =
-            resultatsSecondaires[0].status === "fulfilled"
-                ? resultatsSecondaires[0].value || []
-                : [];
+            voyages;
 
         toutesLesVisites =
-            resultatsSecondaires[1].status === "fulfilled"
-                ? resultatsSecondaires[1].value || []
-                : [];
+            visites;
 
         tousLesTypesContexte =
-            resultatsSecondaires[2].status === "fulfilled"
-                ? resultatsSecondaires[2].value || []
-                : [];
+            typesContexte;
 
         toutesLesPhotos =
-            resultatsSecondaires[3].status === "fulfilled"
-                ? resultatsSecondaires[3].value || []
-                : [];
+            photos;
 
 
-        resultatsSecondaires.forEach(
-            (resultat, index) => {
-
-                if (
-                    resultat.status === "rejected"
-                ) {
-
-                    console.warn(
-                        "Lecture Supabase impossible pour " +
-                        nomsTablesSecondaires[index] + ":",
-                        resultat.reason
-                    );
-                }
-            }
-        );
-
-
-        // Les tables complémentaires étant maintenant disponibles,
-        // on reconstruit les index puis on rafraîchit les fiches.
         reconstruireTousLesIndex();
 
         remplirFiltres();
@@ -3859,17 +3992,11 @@ async function chargerDonnees() {
 
     } catch (erreur) {
 
-        console.error(
-            "Erreur chargement des données :",
-            erreur
-        );
+        console.error(erreur);
 
         afficherErreur(
-            "Impossible de charger les lieux : " +
-            (
-                erreur.message ||
-                String(erreur)
-            )
+            "Impossible de charger les données : " +
+            erreur.message
         );
     }
 }
@@ -7068,22 +7195,6 @@ document.addEventListener(
             supprimerLieu(
                 boutonSupprimer.dataset.lieuId
             );
-            return;
-        }
-
-        const boutonPrecedent =
-            event.target.closest(".bouton-fiche-precedent");
-
-        if (boutonPrecedent && !boutonPrecedent.disabled) {
-            ouvrirLieuDepuisFiche(boutonPrecedent.dataset.lieuId);
-            return;
-        }
-
-        const boutonSuivant =
-            event.target.closest(".bouton-fiche-suivant");
-
-        if (boutonSuivant && !boutonSuivant.disabled) {
-            ouvrirLieuDepuisFiche(boutonSuivant.dataset.lieuId);
             return;
         }
 
