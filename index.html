@@ -2298,17 +2298,29 @@ let toutesLesPhotos = [];
 
 let voyagesParId = {};
 
+let lieuxParId = {};
+
 let visitesParLieu = {};
+
+let visitesParId = {};
 
 let typesContexteParCode = {};
 
 let photosParLieu = {};
+
+let photosParId = {};
+
+let texteRechercheParLieu = {};
 
 let marqueurs = [];
 
 let modeAffichage = "marqueurs";
 
 let utilisateurConnecte = null;
+
+let rechercheDebounceTimer = null;
+
+let dernierEtatAffichageCarte = null;
 
 let carteSelectionLocalisation = null;
 let marqueurSelectionLocalisation = null;
@@ -2555,35 +2567,13 @@ function creerFiche(
     photos
 ) {
 
+    // Les visites sont déjà indexées et triées dans
+    // reconstruireIndexVisites(). On évite donc de recopier et
+    // retrier le tableau à chaque ouverture de popup.
     const visitesLieu =
         Array.isArray(visites)
-            ? [...visites]
+            ? visites
             : [];
-
-
-    // On affiche les visites de la plus récente à la plus ancienne.
-    visitesLieu.sort(
-        (a, b) => {
-            const dateA =
-                a.date_debut ||
-                a.date_fin ||
-                "";
-
-            const dateB =
-                b.date_debut ||
-                b.date_fin ||
-                "";
-
-            if (dateA !== dateB) {
-                return String(dateB).localeCompare(String(dateA));
-            }
-
-            return String(a.date_texte || "").localeCompare(
-                String(b.date_texte || ""),
-                "fr"
-            );
-        }
-    );
 
 
     let html = `
@@ -2595,15 +2585,9 @@ function creerFiche(
     // PHOTOS : ordre principal puis ordre numérique
     // ------------------------------------------------------
 
+    // Les photos sont déjà filtrées et triées dans l'index.
     const photosAffichees = Array.isArray(photos)
-        ? [...photos]
-            .filter(photo => photo && photo.fichier)
-            .sort((a, b) => {
-                if (Boolean(b.photo_principale) !== Boolean(a.photo_principale)) {
-                    return Boolean(b.photo_principale) ? 1 : -1;
-                }
-                return Number(a.ordre || 1) - Number(b.ordre || 1);
-            })
+        ? photos
         : [];
 
     const photoPrincipale = photosAffichees[0] || null;
@@ -3002,21 +2986,45 @@ function construireTexteRechercheLieu(lieu) {
 }
 
 
-function lieuCorrespondRecherche(lieu, recherche) {
+function reconstruireIndexRecherche() {
+
+    texteRechercheParLieu = {};
+
+    tousLesLieux.forEach(lieu => {
+        if (!lieu.lieu_id) return;
+
+        texteRechercheParLieu[lieu.lieu_id] =
+            construireTexteRechercheLieu(lieu);
+    });
+}
+
+
+function obtenirTermesRecherche(recherche) {
+
+    if (!recherche) {
+        return [];
+    }
+
+    return normaliserTexteRecherche(recherche)
+        .split(/\s+/)
+        .filter(Boolean);
+}
+
+
+function lieuCorrespondRecherche(lieu, recherche, termes = null) {
 
     if (!recherche) {
         return true;
     }
 
-    const termes =
-        normaliserTexteRecherche(recherche)
-            .split(/\s+/)
-            .filter(Boolean);
+    const termesRecherche =
+        termes || obtenirTermesRecherche(recherche);
 
     const texte =
+        texteRechercheParLieu[lieu.lieu_id] ??
         construireTexteRechercheLieu(lieu);
 
-    return termes.every(
+    return termesRecherche.every(
         terme => texte.includes(terme)
     );
 }
@@ -3394,7 +3402,7 @@ function supprimerHeatmap() {
 }
 
 
-function afficherLieuxFiltres() {
+function afficherLieuxFiltres(force = false) {
 
     if (
         !map ||
@@ -3403,11 +3411,26 @@ function afficherLieuxFiltres() {
         return;
     }
 
+    const etat =
+        JSON.stringify({
+            mode: modeAffichage,
+            recherche: rechercheLieu.value.trim(),
+            voyage: filtreVoyage.value,
+            contexte: filtreContexte.value,
+            typeLieu: filtreTypeLieu.value,
+            experience: filtreExperience.value,
+            annee: filtreAnnee.value,
+            connecte: Boolean(utilisateurConnecte)
+        });
+
+    if (!force && etat === dernierEtatAffichageCarte) {
+        return;
+    }
+
+    dernierEtatAffichageCarte = etat;
 
     supprimerMarqueurs();
-
     supprimerHeatmap();
-
 
     const voyageSelectionne =
         filtreVoyage.value;
@@ -3427,19 +3450,36 @@ function afficherLieuxFiltres() {
     const recherche =
         rechercheLieu.value.trim();
 
+    const termesRecherche =
+        obtenirTermesRecherche(recherche);
 
+    const filtreVisiteActif =
+        Boolean(
+            voyageSelectionne ||
+            contexteSelectionne ||
+            experienceSelectionnee ||
+            anneeSelectionnee
+        );
+
+    /*
+     * Le point coûteux de l'ancienne version était le
+     * toutesLesVisites.filter(...) exécuté pour chaque lieu,
+     * ainsi que la reconstruction complète du texte de recherche
+     * à chaque frappe. Les deux utilisent maintenant des index
+     * préparés une seule fois lors du chargement/modification.
+     */
     const lieuxFiltres =
         tousLesLieux.filter(lieu => {
 
             if (
                 !lieuCorrespondRecherche(
                     lieu,
-                    recherche
+                    recherche,
+                    termesRecherche
                 )
             ) {
                 return false;
             }
-
 
             if (
                 typeLieuSelectionne &&
@@ -3449,36 +3489,18 @@ function afficherLieuxFiltres() {
                 return false;
             }
 
-
             const visitesLieu =
-                toutesLesVisites.filter(
-                    visite =>
-                        String(visite.lieu_id) ===
-                        String(lieu.lieu_id)
-                );
-
-
-            // Les filtres Voyage / Contexte / Expérience / Année
-            // portent sur une même visite. Cela évite, par exemple,
-            // de combiner le voyage d'une visite avec le contexte
-            // d'une autre visite du même lieu.
-            const filtreVisiteActif =
-                Boolean(
-                    voyageSelectionne ||
-                    contexteSelectionne ||
-                    experienceSelectionnee ||
-                    anneeSelectionnee
-                );
-
+                visitesParLieu[lieu.lieu_id] || [];
 
             if (!filtreVisiteActif) {
                 return (
-                    lieu.latitude !== null &&
-                    lieu.longitude !== null
+                    Number.isFinite(Number(lieu.latitude)) &&
+                    Number.isFinite(Number(lieu.longitude))
                 );
             }
 
-
+            // Les filtres Voyage / Contexte / Expérience / Année
+            // portent sur une même visite.
             const correspond =
                 visitesLieu.some(visite => {
 
@@ -3528,10 +3550,7 @@ function afficherLieuxFiltres() {
                     return true;
                 });
 
-
-            // Compatibilité avec les anciennes données :
-            // si le voyage est encore porté uniquement par le lieu,
-            // on continue à pouvoir le filtrer.
+            // Compatibilité avec les anciennes données.
             if (
                 voyageSelectionne &&
                 visitesLieu.length === 0 &&
@@ -3542,19 +3561,17 @@ function afficherLieuxFiltres() {
                 !anneeSelectionnee
             ) {
                 return (
-                    lieu.latitude !== null &&
-                    lieu.longitude !== null
+                    Number.isFinite(Number(lieu.latitude)) &&
+                    Number.isFinite(Number(lieu.longitude))
                 );
             }
 
-
             return (
                 correspond &&
-                lieu.latitude !== null &&
-                lieu.longitude !== null
+                Number.isFinite(Number(lieu.latitude)) &&
+                Number.isFinite(Number(lieu.longitude))
             );
         });
-
 
     compteur.textContent =
         lieuxFiltres.length +
@@ -3564,284 +3581,155 @@ function afficherLieuxFiltres() {
                 : " lieu"
         );
 
-
     if (lieuxFiltres.length === 0) {
         return;
     }
 
-
     const bounds =
         new maplibregl.LngLatBounds();
 
+    lieuxFiltres.forEach(lieu => {
+        bounds.extend([
+            Number(lieu.longitude),
+            Number(lieu.latitude)
+        ]);
+    });
 
-    lieuxFiltres.forEach(
-        lieu => {
-
-            bounds.extend([
-
-                Number(
-                    lieu.longitude
-                ),
-
-                Number(
-                    lieu.latitude
-                )
-
-            ]);
-
-        }
-    );
-
-
-    if (
-        modeAffichage === "heatmap"
-    ) {
+    if (modeAffichage === "heatmap") {
 
         const geojson = {
-
             type: "FeatureCollection",
-
-            features:
-                lieuxFiltres.map(
-                    lieu => ({
-
-                        type: "Feature",
-
-                        geometry: {
-
-                            type: "Point",
-
-                            coordinates: [
-
-                                Number(
-                                    lieu.longitude
-                                ),
-
-                                Number(
-                                    lieu.latitude
-                                )
-
-                            ]
-
-                        },
-
-                        properties: {
-
-                            lieu_id:
-                                lieu.lieu_id
-
-                        }
-
-                    })
-                )
+            features: lieuxFiltres.map(lieu => ({
+                type: "Feature",
+                geometry: {
+                    type: "Point",
+                    coordinates: [
+                        Number(lieu.longitude),
+                        Number(lieu.latitude)
+                    ]
+                },
+                properties: {
+                    lieu_id: lieu.lieu_id
+                }
+            }))
         };
-
 
         map.addSource(
             "lieux-heatmap",
             {
-
                 type: "geojson",
-
                 data: geojson
-
             }
         );
 
-
         map.addLayer({
-
             id: "heatmap-lieux",
-
             type: "heatmap",
-
             source: "lieux-heatmap",
-
             maxzoom: 12,
-
             paint: {
-
                 "heatmap-intensity": [
-
                     "interpolate",
                     ["linear"],
                     ["zoom"],
-
                     2, 0.7,
                     4, 0.9,
                     6, 1.15,
                     8, 1.4,
                     10, 1.7,
                     12, 2.0
-
                 ],
-
                 "heatmap-radius": [
-
                     "interpolate",
                     ["linear"],
                     ["zoom"],
-
                     2, 14,
                     4, 20,
                     6, 27,
                     8, 34,
                     10, 40,
                     12, 46
-
                 ],
-
                 "heatmap-opacity": [
-
                     "interpolate",
                     ["linear"],
                     ["zoom"],
-
                     2, 0.70,
                     5, 0.75,
                     8, 0.80,
                     12, 0.84
-
                 ],
-
                 "heatmap-color": [
-
                     "interpolate",
                     ["linear"],
                     ["heatmap-density"],
-
-                    0,
-                    "rgba(33,102,172,0)",
-
-                    0.08,
-                    "rgba(33,102,172,0.30)",
-
-                    0.20,
-                    "rgba(103,169,207,0.55)",
-
-                    0.35,
-                    "rgba(209,229,240,0.70)",
-
-                    0.50,
-                    "rgba(253,219,199,0.78)",
-
-                    0.65,
-                    "rgba(239,138,98,0.84)",
-
-                    0.80,
-                    "rgba(215,48,39,0.90)",
-
-                    1,
-                    "rgba(165,0,38,0.96)"
-
+                    0, "rgba(33,102,172,0)",
+                    0.08, "rgba(33,102,172,0.30)",
+                    0.20, "rgba(103,169,207,0.55)",
+                    0.35, "rgba(209,229,240,0.70)",
+                    0.50, "rgba(253,219,199,0.78)",
+                    0.65, "rgba(239,138,98,0.84)",
+                    0.80, "rgba(215,48,39,0.90)",
+                    1, "rgba(165,0,38,0.96)"
                 ]
-
             }
-
         });
-
 
         map.fitBounds(
             bounds,
             {
                 padding: 70,
                 maxZoom: 6,
-                duration: 700
+                duration: 450
             }
         );
 
         return;
     }
 
+    lieuxFiltres.forEach(lieu => {
 
-    lieuxFiltres.forEach(
-        lieu => {
+        const visitesLieu =
+            visitesParLieu[lieu.lieu_id] || [];
 
-            const voyage =
-                voyagesParId[
-                    lieu.voyage_id
-                ];
+        const photosLieu =
+            photosParLieu[lieu.lieu_id] || [];
 
-            const visitesLieu =
-                visitesParLieu[
-                    lieu.lieu_id
-                ] || [];
+        const popup =
+            new maplibregl.Popup({
+                offset: 25,
+                maxWidth: "420px"
+            });
 
-            const photosLieu =
-                photosParLieu[
-                    lieu.lieu_id
-                ] || [];
+        popup.setHTML(
+            creerFiche(
+                lieu,
+                visitesLieu,
+                photosLieu
+            )
+        );
 
+        const marqueur =
+            new maplibregl.Marker()
+                .setLngLat([
+                    Number(lieu.longitude),
+                    Number(lieu.latitude)
+                ])
+                .setPopup(popup)
+                .addTo(map);
 
-            const popup =
-                new maplibregl.Popup({
-
-                    offset: 25,
-
-                    maxWidth:
-                        "420px"
-
-                });
-
-
-            popup.setHTML(
-
-                creerFiche(
-
-                    lieu,
-                    visitesLieu,
-                    photosLieu
-
-                )
-
-            );
-
-
-            const marqueur =
-                new maplibregl.Marker()
-
-                    .setLngLat([
-
-                        Number(
-                            lieu.longitude
-                        ),
-
-                        Number(
-                            lieu.latitude
-                        )
-
-                    ])
-
-                    .setPopup(popup)
-
-                    .addTo(map);
-
-
-            marqueurs.push(
-                marqueur
-            );
-
-        }
-    );
-
+        marqueurs.push(marqueur);
+    });
 
     map.fitBounds(
-
         bounds,
-
         {
-
             padding: 70,
-
             maxZoom: 6,
-
-            duration: 700
-
+            duration: 450
         }
-
     );
 }
-
 
 // ==========================================================
 // LECTURE SUPABASE
@@ -4010,106 +3898,105 @@ function reconstruireTousLesIndex() {
 
     voyagesParId = {};
 
-    tousLesVoyages.forEach(
-        voyage => {
-
-            if (voyage.voyage_id) {
-
-                voyagesParId[
-                    voyage.voyage_id
-                ] = voyage;
-
-            }
-
+    tousLesVoyages.forEach(voyage => {
+        if (voyage.voyage_id) {
+            voyagesParId[voyage.voyage_id] = voyage;
         }
-    );
+    });
 
+    lieuxParId = {};
+
+    tousLesLieux.forEach(lieu => {
+        if (lieu.lieu_id) {
+            lieuxParId[lieu.lieu_id] = lieu;
+        }
+    });
 
     reconstruireIndexVisites();
 
-
     typesContexteParCode = {};
 
-    tousLesTypesContexte.forEach(
-        contexte => {
-
-            if (contexte.code) {
-
-                typesContexteParCode[
-                    contexte.code
-                ] = contexte;
-
-            }
-
+    tousLesTypesContexte.forEach(contexte => {
+        if (contexte.code) {
+            typesContexteParCode[contexte.code] = contexte;
         }
-    );
-
+    });
 
     photosParLieu = {};
+    photosParId = {};
 
-    toutesLesPhotos.forEach(
-        photo => {
+    toutesLesPhotos.forEach(photo => {
 
-            if (!photo.lieu_id) {
-                return;
-            }
-
-            if (
-                !photosParLieu[
-                    photo.lieu_id
-                ]
-            ) {
-
-                photosParLieu[
-                    photo.lieu_id
-                ] = [];
-
-            }
-
-            photosParLieu[
-                photo.lieu_id
-            ].push(photo);
-
+        if (photo.photo_id) {
+            photosParId[photo.photo_id] = photo;
         }
-    );
+
+        if (!photo.lieu_id) {
+            return;
+        }
+
+        if (!photosParLieu[photo.lieu_id]) {
+            photosParLieu[photo.lieu_id] = [];
+        }
+
+        photosParLieu[photo.lieu_id].push(photo);
+    });
+
+    Object.values(photosParLieu).forEach(photos => {
+        photos.sort((a, b) => {
+            if (Boolean(b.photo_principale) !== Boolean(a.photo_principale)) {
+                return Boolean(b.photo_principale) ? 1 : -1;
+            }
+
+            return Number(a.ordre || 1) - Number(b.ordre || 1);
+        });
+    });
+
+    reconstruireIndexRecherche();
+
+    // Les données ont changé : le prochain affichage doit être recalculé.
+    dernierEtatAffichageCarte = null;
 }
 
-
-// ==========================================================
-// RECONSTRUIRE INDEX VISITES
-// ==========================================================
 
 function reconstruireIndexVisites() {
 
     visitesParLieu = {};
+    visitesParId = {};
 
-    toutesLesVisites.forEach(
-        visite => {
+    toutesLesVisites.forEach(visite => {
 
-            if (!visite.lieu_id) {
-                return;
-            }
-
-            if (
-                !visitesParLieu[
-                    visite.lieu_id
-                ]
-            ) {
-
-                visitesParLieu[
-                    visite.lieu_id
-                ] = [];
-
-            }
-
-            visitesParLieu[
-                visite.lieu_id
-            ].push(visite);
-
+        if (visite.visite_id) {
+            visitesParId[visite.visite_id] = visite;
         }
-    );
-}
 
+        if (!visite.lieu_id) {
+            return;
+        }
+
+        if (!visitesParLieu[visite.lieu_id]) {
+            visitesParLieu[visite.lieu_id] = [];
+        }
+
+        visitesParLieu[visite.lieu_id].push(visite);
+    });
+
+    Object.values(visitesParLieu).forEach(visites => {
+        visites.sort((a, b) => {
+            const dateA = a.date_debut || a.date_fin || "";
+            const dateB = b.date_debut || b.date_fin || "";
+
+            if (dateA !== dateB) {
+                return String(dateB).localeCompare(String(dateA));
+            }
+
+            return String(b.date_texte || "").localeCompare(
+                String(a.date_texte || ""),
+                "fr"
+            );
+        });
+    });
+}
 
 // ==========================================================
 // AUTHENTIFICATION
@@ -5655,7 +5542,7 @@ function fermerGestionVoyages() {
 }
 
 function chargerVoyageDansFormulaire(voyageId) {
-    const voyage = tousLesVoyages.find(v => v.voyage_id === voyageId);
+    const voyage = voyagesParId[voyageId];
     if (!voyage) return;
     document.getElementById("champ-voyage-id-gestion").value = voyage.voyage_id || "";
     document.getElementById("champ-voyage-nom").value = voyage.nom || "";
@@ -5843,7 +5730,7 @@ function ouvrirDetailVoyage(voyageId) {
         if (String(lieu.voyage_id || "") === String(voyageId)) lieuxDuVoyage.set(lieu.lieu_id, lieu);
     });
     visitesVoyage.forEach(visite => {
-        const lieu = tousLesLieux.find(l => l.lieu_id === visite.lieu_id);
+        const lieu = lieuxParId[visite.lieu_id];
         if (lieu) lieuxDuVoyage.set(lieu.lieu_id, lieu);
     });
 
@@ -5873,7 +5760,7 @@ function ouvrirDetailVoyage(voyageId) {
     if (visitesVoyage.length) {
         html += `<div class="voyage-detail-section"><h3>🗓️ Chronologie des visites</h3>`;
         visitesVoyage.forEach(visite => {
-            const lieu = tousLesLieux.find(l => l.lieu_id === visite.lieu_id);
+            const lieu = lieuxParId[visite.lieu_id];
             const contexte = obtenirNomContexte(visite);
             const dateVisite = afficherPeriode(visite.date_debut, visite.date_fin, visite.date_precision, visite.date_texte);
             const meta = [];
@@ -5943,9 +5830,20 @@ function obtenirLieuxFiltresPourStatistiques() {
     const anneeSelectionnee = filtreAnnee.value;
     const recherche = rechercheLieu.value.trim();
 
+    const termesRecherche =
+        obtenirTermesRecherche(recherche);
+
+    const filtreVisiteActif =
+        Boolean(
+            voyageSelectionne ||
+            contexteSelectionne ||
+            experienceSelectionnee ||
+            anneeSelectionnee
+        );
+
     return tousLesLieux.filter(lieu => {
 
-        if (!lieuCorrespondRecherche(lieu, recherche)) {
+        if (!lieuCorrespondRecherche(lieu, recherche, termesRecherche)) {
             return false;
         }
 
@@ -5956,16 +5854,8 @@ function obtenirLieuxFiltresPourStatistiques() {
             return false;
         }
 
-        const visitesLieu = toutesLesVisites.filter(
-            visite => String(visite.lieu_id) === String(lieu.lieu_id)
-        );
-
-        const filtreVisiteActif = Boolean(
-            voyageSelectionne ||
-            contexteSelectionne ||
-            experienceSelectionnee ||
-            anneeSelectionnee
-        );
+        const visitesLieu =
+            visitesParLieu[lieu.lieu_id] || [];
 
         if (!filtreVisiteActif) {
             return true;
@@ -6124,9 +6014,16 @@ function construireBlocStatistiques(donnees) {
     const visites = toutesLesVisites.filter(
         visite => lieuIds.has(String(visite.lieu_id))
     );
+    const voyageIdsDesLieux = new Set(
+        lieux
+            .map(lieu => lieu.voyage_id)
+            .filter(Boolean)
+            .map(String)
+    );
+
     const photos = toutesLesPhotos.filter(photo =>
         lieuIds.has(String(photo.lieu_id)) ||
-        (photo.voyage_id && lieux.some(lieu => String(lieu.voyage_id || "") === String(photo.voyage_id)))
+        (photo.voyage_id && voyageIdsDesLieux.has(String(photo.voyage_id)))
     );
 
     const voyageIds = new Set();
@@ -6331,7 +6228,7 @@ function afficherListePhotosGestion() {
     [...toutesLesPhotos]
         .sort((a,b) => String(a.lieu_id || "").localeCompare(String(b.lieu_id || "")) || Number(a.ordre || 1) - Number(b.ordre || 1))
         .forEach(photo => {
-            const lieu = tousLesLieux.find(l => l.lieu_id === photo.lieu_id);
+            const lieu = lieuxParId[photo.lieu_id];
             const url = construireUrlPhoto(photo.fichier);
             const div = document.createElement("div");
             div.className = "ligne-gestion";
@@ -6671,7 +6568,7 @@ function ouvrirGestionVisites(lieuId) {
     if (!utilisateurConnecte) return;
 
     const lieu =
-        tousLesLieux.find(item => item.lieu_id === lieuId);
+        lieuxParId[lieuId];
 
     if (!lieu) return;
 
@@ -6693,7 +6590,7 @@ function fermerGestionVisites() {
 function chargerVisiteDansFormulaire(visiteId) {
 
     const visite =
-        toutesLesVisites.find(item => item.visite_id === visiteId);
+        visitesParId[visiteId];
 
     if (!visite) return;
 
@@ -7258,7 +7155,14 @@ rechercheLieu.addEventListener(
                 ? "inline-block"
                 : "none";
 
-        afficherLieuxFiltres();
+        if (rechercheDebounceTimer) {
+            clearTimeout(rechercheDebounceTimer);
+        }
+
+        rechercheDebounceTimer = setTimeout(
+            () => afficherLieuxFiltres(),
+            180
+        );
     }
 );
 
@@ -7271,6 +7175,11 @@ boutonEffacerRecherche.addEventListener(
 
         boutonEffacerRecherche.style.display =
             "none";
+
+        if (rechercheDebounceTimer) {
+            clearTimeout(rechercheDebounceTimer);
+            rechercheDebounceTimer = null;
+        }
 
         afficherLieuxFiltres();
 
