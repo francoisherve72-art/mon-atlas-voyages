@@ -1485,6 +1485,14 @@ main {
                 📊 Statistiques
             </button>
 
+            <button
+                id="boutonSauvegardeControles"
+                class="bouton"
+                style="display:none"
+            >
+                🛡️ Sauvegarde & contrôles
+            </button>
+
         </div>
 
     </div>
@@ -1991,6 +1999,71 @@ main {
 
 
 <!-- ========================================================
+     MODALE SAUVEGARDE & CONTROLES — ETAPE 13.5
+     ======================================================== -->
+
+<div id="fond-modal-sauvegarde-controles" class="fond-modal-gestion">
+    <div class="modal-gestion modal-sauvegarde-controles">
+        <h2>🛡️ Sauvegarde & contrôles</h2>
+
+        <p class="import-export-help">
+            Cette fonction permet de conserver une copie locale des données de l’Atlas
+            et de vérifier rapidement leur cohérence. La sauvegarde JSON contient les
+            données et métadonnées, mais <strong>pas les fichiers image eux-mêmes</strong>.
+        </p>
+
+        <div class="import-export-section">
+            <h3>💾 Sauvegarde locale</h3>
+            <p class="import-export-help">
+                Télécharge une copie complète des tables <strong>voyages</strong>,
+                <strong>lieux</strong>, <strong>visites</strong>,
+                <strong>photos</strong> et <strong>types_contexte</strong>.
+                Conserve ce fichier dans un emplacement sûr.
+            </p>
+            <div class="import-export-actions">
+                <button type="button" id="boutonSauvegardeJSON" class="bouton bouton-principal">
+                    💾 Télécharger une sauvegarde JSON
+                </button>
+            </div>
+            <div id="message-sauvegarde-json"></div>
+        </div>
+
+        <div class="import-export-section">
+            <h3>🔎 Contrôle de cohérence</h3>
+            <p class="import-export-help">
+                Vérifie les identifiants, les références entre tables, les coordonnées
+                et quelques contraintes essentielles. Le contrôle est en lecture seule :
+                <strong>aucune donnée n’est modifiée</strong>.
+            </p>
+            <div class="import-export-actions">
+                <button type="button" id="boutonControleIntegrite" class="bouton">
+                    🔎 Lancer le contrôle
+                </button>
+            </div>
+            <div id="resultat-controle-integrite"></div>
+        </div>
+
+        <div class="import-export-section">
+            <h3>📌 Bonnes pratiques</h3>
+            <ul class="import-export-help">
+                <li>Faire régulièrement une sauvegarde JSON ou Excel.</li>
+                <li>Conserver plusieurs versions datées des sauvegardes.</li>
+                <li>Les images du bucket Supabase doivent être sauvegardées séparément :
+                    le JSON ne contient que leurs métadonnées et chemins.</li>
+                <li>Le contrôle de cohérence ne remplace pas une sauvegarde.</li>
+            </ul>
+        </div>
+
+        <div class="import-export-actions">
+            <button type="button" id="boutonFermerSauvegardeControles" class="bouton">
+                Fermer
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ========================================================
      MODALE IMPORT / EXPORT EXCEL — ETAPE 12
      ======================================================== -->
 
@@ -2257,6 +2330,27 @@ const statsIntro =
 
 const boutonImportExport =
     document.getElementById("boutonImportExport");
+
+const boutonSauvegardeControles =
+    document.getElementById("boutonSauvegardeControles");
+
+const fondModalSauvegardeControles =
+    document.getElementById("fond-modal-sauvegarde-controles");
+
+const boutonSauvegardeJSON =
+    document.getElementById("boutonSauvegardeJSON");
+
+const boutonControleIntegrite =
+    document.getElementById("boutonControleIntegrite");
+
+const boutonFermerSauvegardeControles =
+    document.getElementById("boutonFermerSauvegardeControles");
+
+const messageSauvegardeJSON =
+    document.getElementById("message-sauvegarde-json");
+
+const resultatControleIntegrite =
+    document.getElementById("resultat-controle-integrite");
 
 const fondModalImportExport =
     document.getElementById("fond-modal-import-export");
@@ -4433,6 +4527,8 @@ function afficherInterfaceAuthentification() {
 
         boutonImportExport.style.display =
             "inline-block";
+        boutonSauvegardeControles.style.display =
+            "inline-block";
 
     } else {
 
@@ -4455,6 +4551,8 @@ function afficherInterfaceAuthentification() {
             "none";
 
         boutonImportExport.style.display =
+            "none";
+        boutonSauvegardeControles.style.display =
             "none";
     }
 
@@ -7838,6 +7936,198 @@ function donneesPourExcel(table, sources = null) {
     });
 }
 
+
+// ==========================================================
+// ETAPE 13.5 — SAUVEGARDE LOCALE & CONTROLE D'INTEGRITE
+// ==========================================================
+
+function afficherModalSauvegardeControles() {
+    fondModalSauvegardeControles.style.display = "flex";
+    messageSauvegardeJSON.innerHTML = "";
+    resultatControleIntegrite.innerHTML = "";
+}
+
+function fermerModalSauvegardeControles() {
+    fondModalSauvegardeControles.style.display = "none";
+}
+
+function creerSauvegardeAtlasJSON() {
+    return {
+        format: "atlas-voyages-backup",
+        version: 1,
+        date_export: new Date().toISOString(),
+        avertissement: "Cette sauvegarde contient les donnees et metadonnees, pas les fichiers image binaires.",
+        tables: {
+            voyages: tousLesVoyages || [],
+            lieux: tousLesLieux || [],
+            visites: toutesLesVisites || [],
+            photos: toutesLesPhotos || [],
+            types_contexte: tousLesTypesContexte || []
+        }
+    };
+}
+
+function telechargerSauvegardeJSON() {
+    try {
+        const sauvegarde = creerSauvegardeAtlasJSON();
+        const contenu = JSON.stringify(sauvegarde, null, 2);
+        const blob = new Blob([contenu], { type: "application/json;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const lien = document.createElement("a");
+        const date = new Date().toISOString().slice(0, 10);
+
+        lien.href = url;
+        lien.download = `atlas_voyages_sauvegarde_${date}.json`;
+        document.body.appendChild(lien);
+        lien.click();
+        lien.remove();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        messageSauvegardeJSON.innerHTML =
+            `<div class="message-succes">✅ Sauvegarde téléchargée le ${new Date().toLocaleString("fr-FR")}.</div>`;
+    } catch (erreur) {
+        console.error("Erreur sauvegarde JSON :", erreur);
+        messageSauvegardeJSON.innerHTML =
+            `<div class="message-erreur">❌ Impossible de créer la sauvegarde : ${echapperHTML(erreur.message || erreur)}</div>`;
+    }
+}
+
+function controlerDoublons(table, lignes, cle, erreurs) {
+    const vus = new Set();
+
+    (lignes || []).forEach((ligne, index) => {
+        const valeur = ligne?.[cle];
+
+        if (!valeur) {
+            erreurs.push(`${table} : ligne ${index + 1} sans ${cle}.`);
+            return;
+        }
+
+        if (vus.has(String(valeur))) {
+            erreurs.push(`${table} : identifiant dupliqué ${valeur}.`);
+        }
+
+        vus.add(String(valeur));
+    });
+}
+
+function lancerControleIntegrite() {
+    const erreurs = [];
+    const avertissements = [];
+
+    const voyages = tousLesVoyages || [];
+    const lieux = tousLesLieux || [];
+    const visites = toutesLesVisites || [];
+    const photos = toutesLesPhotos || [];
+    const contextes = tousLesTypesContexte || [];
+
+    controlerDoublons("voyages", voyages, "voyage_id", erreurs);
+    controlerDoublons("lieux", lieux, "lieu_id", erreurs);
+    controlerDoublons("visites", visites, "visite_id", erreurs);
+    controlerDoublons("photos", photos, "photo_id", erreurs);
+    controlerDoublons("types_contexte", contextes, "code", erreurs);
+
+    const voyageIds = new Set(voyages.map(v => String(v.voyage_id)));
+    const lieuIds = new Set(lieux.map(l => String(l.lieu_id)));
+    const contexteCodes = new Set(contextes.map(c => String(c.code)));
+
+    lieux.forEach(lieu => {
+        if (lieu.voyage_id && !voyageIds.has(String(lieu.voyage_id))) {
+            erreurs.push(`lieu ${lieu.lieu_id} : voyage_id ${lieu.voyage_id} inexistant.`);
+        }
+
+        const lat = Number(lieu.latitude);
+        const lon = Number(lieu.longitude);
+
+        if (lieu.latitude !== null && lieu.latitude !== "" &&
+            (!Number.isFinite(lat) || lat < -90 || lat > 90)) {
+            erreurs.push(`lieu ${lieu.lieu_id} : latitude invalide.`);
+        }
+
+        if (lieu.longitude !== null && lieu.longitude !== "" &&
+            (!Number.isFinite(lon) || lon < -180 || lon > 180)) {
+            erreurs.push(`lieu ${lieu.lieu_id} : longitude invalide.`);
+        }
+
+        if ((lieu.latitude === null || lieu.latitude === "" ||
+             lieu.longitude === null || lieu.longitude === "") &&
+            lieu.statut !== "à vérifier") {
+            avertissements.push(`lieu ${lieu.lieu_id} : coordonnées absentes.`);
+        }
+    });
+
+    visites.forEach(visite => {
+        if (!lieuIds.has(String(visite.lieu_id))) {
+            erreurs.push(`visite ${visite.visite_id} : lieu_id ${visite.lieu_id} inexistant.`);
+        }
+
+        if (visite.voyage_id && !voyageIds.has(String(visite.voyage_id))) {
+            erreurs.push(`visite ${visite.visite_id} : voyage_id ${visite.voyage_id} inexistant.`);
+        }
+
+        if (!visite.type_contexte || !contexteCodes.has(String(visite.type_contexte))) {
+            erreurs.push(`visite ${visite.visite_id} : type_contexte invalide ou absent.`);
+        }
+    });
+
+    photos.forEach(photo => {
+        if (!lieuIds.has(String(photo.lieu_id))) {
+            erreurs.push(`photo ${photo.photo_id} : lieu_id ${photo.lieu_id} inexistant.`);
+        }
+
+        if (photo.voyage_id && !voyageIds.has(String(photo.voyage_id))) {
+            erreurs.push(`photo ${photo.photo_id} : voyage_id ${photo.voyage_id} inexistant.`);
+        }
+
+        if (!photo.fichier) {
+            avertissements.push(`photo ${photo.photo_id} : chemin de fichier absent.`);
+        }
+    });
+
+    const total = erreurs.length + avertissements.length;
+    const statut = erreurs.length
+        ? `<div class="message-erreur">❌ ${erreurs.length} erreur(s) détectée(s).</div>`
+        : `<div class="message-succes">✅ Aucune erreur de cohérence détectée.</div>`;
+
+    let html = `
+        ${statut}
+        <p class="import-export-help">
+            ${voyages.length} voyage(s) · ${lieux.length} lieu(x) ·
+            ${visites.length} visite(s) · ${photos.length} photo(s) ·
+            ${contextes.length} contexte(s)
+        </p>
+    `;
+
+    if (erreurs.length) {
+        html += `<details open><summary><strong>Erreurs (${erreurs.length})</strong></summary><ul>`;
+        erreurs.slice(0, 100).forEach(erreur => {
+            html += `<li>${echapperHTML(erreur)}</li>`;
+        });
+        if (erreurs.length > 100) {
+            html += `<li>… ${erreurs.length - 100} erreur(s) supplémentaire(s).</li>`;
+        }
+        html += `</ul></details>`;
+    }
+
+    if (avertissements.length) {
+        html += `<details><summary><strong>Avertissements (${avertissements.length})</strong></summary><ul>`;
+        avertissements.slice(0, 100).forEach(avertissement => {
+            html += `<li>${echapperHTML(avertissement)}</li>`;
+        });
+        if (avertissements.length > 100) {
+            html += `<li>… ${avertissements.length - 100} avertissement(s) supplémentaire(s).</li>`;
+        }
+        html += `</ul></details>`;
+    }
+
+    if (!total) {
+        html += `<p class="import-export-help">Les principales relations entre les tables et les coordonnées sont cohérentes.</p>`;
+    }
+
+    resultatControleIntegrite.innerHTML = html;
+}
+
 async function exporterAtlasExcel(modele = false) {
     if (typeof XLSX === "undefined") {
         alert("La bibliothèque Excel n'est pas disponible. Vérifiez votre connexion internet.");
@@ -8401,6 +8691,35 @@ async function executerImportExcel() {
 }
 
 boutonImportExport.addEventListener("click", afficherModalImportExport);
+
+boutonSauvegardeControles.addEventListener(
+    "click",
+    afficherModalSauvegardeControles
+);
+
+boutonFermerSauvegardeControles.addEventListener(
+    "click",
+    fermerModalSauvegardeControles
+);
+
+boutonSauvegardeJSON.addEventListener(
+    "click",
+    telechargerSauvegardeJSON
+);
+
+boutonControleIntegrite.addEventListener(
+    "click",
+    lancerControleIntegrite
+);
+
+fondModalSauvegardeControles.addEventListener(
+    "click",
+    event => {
+        if (event.target === fondModalSauvegardeControles) {
+            fermerModalSauvegardeControles();
+        }
+    }
+);
 boutonFermerImportExport.addEventListener("click", fermerModalImportExport);
 boutonAnalyserImport.addEventListener("click", analyserImportExcel);
 boutonExecuterImport.addEventListener("click", executerImportExcel);
