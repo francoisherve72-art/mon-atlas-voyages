@@ -7408,22 +7408,36 @@ async function enregistrerVisiteGestion() {
 
         if (visiteId) {
 
-            const { data, error } =
+            /*
+             * On ne dépend plus du retour de UPDATE pour mettre à jour
+             * l'interface. Selon la configuration RLS/PostgREST, une
+             * mutation peut réussir alors que la ligne modifiée n'est pas
+             * renvoyée par .select().
+             *
+             * On met donc à jour la base, puis on met à jour immédiatement
+             * notre copie locale avec les valeurs effectivement envoyées.
+             */
+            const { error } =
                 await supabaseClient
                     .from("visites")
                     .update(visiteData)
-                    .eq("visite_id", visiteId)
-                    .select()
-                    .single();
+                    .eq("visite_id", visiteId);
 
             if (error) throw error;
-            if (!data) throw new Error("Aucune visite n'a été renvoyée après modification.");
 
             const index =
                 toutesLesVisites.findIndex(item => item.visite_id === visiteId);
 
+            const visiteLocale = {
+                ...(index !== -1 ? toutesLesVisites[index] : {}),
+                visite_id: visiteId,
+                ...visiteData
+            };
+
             if (index !== -1) {
-                toutesLesVisites[index] = data;
+                toutesLesVisites[index] = visiteLocale;
+            } else {
+                toutesLesVisites.push(visiteLocale);
             }
 
         } else {
@@ -7433,17 +7447,19 @@ async function enregistrerVisiteGestion() {
                 ...visiteData
             };
 
-            const { data, error } =
+            /*
+             * Même principe pour INSERT : la création en base ne dépend pas
+             * d'un retour .select().single(). La ligne locale est ajoutée
+             * immédiatement après un INSERT réussi.
+             */
+            const { error } =
                 await supabaseClient
                     .from("visites")
-                    .insert(nouvelleVisite)
-                    .select()
-                    .single();
+                    .insert(nouvelleVisite);
 
             if (error) throw error;
-            if (!data) throw new Error("Aucune visite n'a été renvoyée après création.");
 
-            toutesLesVisites.push(data);
+            toutesLesVisites.push(nouvelleVisite);
         }
 
         reconstruireTousLesIndex();
