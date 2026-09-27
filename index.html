@@ -7406,17 +7406,10 @@ async function enregistrerVisiteGestion() {
 
     try {
 
+        let identifiantVisiteEnregistree = visiteId;
+
         if (visiteId) {
 
-            /*
-             * On ne dépend plus du retour de UPDATE pour mettre à jour
-             * l'interface. Selon la configuration RLS/PostgREST, une
-             * mutation peut réussir alors que la ligne modifiée n'est pas
-             * renvoyée par .select().
-             *
-             * On met donc à jour la base, puis on met à jour immédiatement
-             * notre copie locale avec les valeurs effectivement envoyées.
-             */
             const { error } =
                 await supabaseClient
                     .from("visites")
@@ -7425,21 +7418,6 @@ async function enregistrerVisiteGestion() {
 
             if (error) throw error;
 
-            const index =
-                toutesLesVisites.findIndex(item => item.visite_id === visiteId);
-
-            const visiteLocale = {
-                ...(index !== -1 ? toutesLesVisites[index] : {}),
-                visite_id: visiteId,
-                ...visiteData
-            };
-
-            if (index !== -1) {
-                toutesLesVisites[index] = visiteLocale;
-            } else {
-                toutesLesVisites.push(visiteLocale);
-            }
-
         } else {
 
             const nouvelleVisite = {
@@ -7447,24 +7425,43 @@ async function enregistrerVisiteGestion() {
                 ...visiteData
             };
 
-            /*
-             * Même principe pour INSERT : la création en base ne dépend pas
-             * d'un retour .select().single(). La ligne locale est ajoutée
-             * immédiatement après un INSERT réussi.
-             */
+            identifiantVisiteEnregistree = nouvelleVisite.visite_id;
+
             const { error } =
                 await supabaseClient
                     .from("visites")
                     .insert(nouvelleVisite);
 
             if (error) throw error;
+        }
 
-            toutesLesVisites.push(nouvelleVisite);
+        /*
+         * Après la mutation, on relit la table visites depuis Supabase.
+         * Cela évite toute divergence entre l'état local et la base :
+         * - une UPDATE peut réussir sans renvoyer la ligne ;
+         * - un INSERT peut être accepté avec une valeur normalisée par
+         *   PostgreSQL ;
+         * - les index locaux doivent toujours être reconstruits à partir
+         *   de la donnée réellement enregistrée.
+         */
+        toutesLesVisites =
+            await recupererTable("visites", "*", "visite_id.asc");
+
+        // Contrôle final : la ligne enregistrée doit être réellement relue depuis Supabase.
+        const visiteVerifiee =
+            toutesLesVisites.find(
+                visite => String(visite.visite_id) === String(identifiantVisiteEnregistree)
+            );
+
+        if (!visiteVerifiee) {
+            throw new Error(
+                "La visite n'a pas été retrouvée après l'enregistrement."
+            );
         }
 
         reconstruireTousLesIndex();
         remplirFiltres();
-        afficherLieuxFiltres();
+        afficherLieuxFiltres(true);
 
         document.getElementById("message-visite-formulaire").textContent =
             "Visite enregistrée.";
@@ -7483,7 +7480,6 @@ async function enregistrerVisiteGestion() {
         boutonEnregistrerVisite.disabled = false;
     }
 }
-
 
 async function supprimerVisiteGestion(visiteId) {
 
