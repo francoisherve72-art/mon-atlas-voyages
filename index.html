@@ -1340,9 +1340,10 @@ main {
             <input
                 type="search"
                 id="rechercheLieu"
-                placeholder="🔎 Rechercher un lieu, ville, pays..."
+                placeholder="🔎 Rechercher dans tout l’Atlas..."
                 autocomplete="off"
-                aria-label="Rechercher un lieu, une ville ou un pays"
+                title="Recherche globale : lieux, voyages, visites, photos, descriptions et notes"
+                aria-label="Rechercher dans tout l’Atlas : lieux, voyages, visites, photos, descriptions et notes"
             >
             <button
                 type="button"
@@ -3047,8 +3048,21 @@ function creerFiche(
 }
 
 // ==========================================================
-// RECHERCHE
+// RECHERCHE GLOBALE — ETAPE 13.6
 // ==========================================================
+//
+// La recherche porte sur l’ensemble des informations déjà
+// indexées pour chaque lieu :
+// - lieu, ville, pays, adresse et type ;
+// - description, notes, statut et expérience ;
+// - voyages associés ;
+// - visites (dates, descriptions, notes, contexte, expérience) ;
+// - photos (titre et description).
+//
+// La recherche est insensible aux accents et tous les termes
+// saisis doivent être présents. L’index est construit une seule
+// fois après le chargement ou la modification des données afin
+// de conserver les optimisations de l’étape 13.2.
 
 function normaliserTexteRecherche(texte) {
     return String(texte ?? "")
