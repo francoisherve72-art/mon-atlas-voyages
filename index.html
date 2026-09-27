@@ -151,6 +151,66 @@ main {
 
 
 /* ==========================================================
+   FICHE LIEU FIXE
+   ========================================================== */
+
+#fiche-fixe-lieu {
+    position: fixed;
+    left: 12px;
+    top: 72px;
+    bottom: 12px;
+    width: min(390px, 38vw);
+    z-index: 1200;
+    display: none;
+    flex-direction: column;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.25);
+    overflow: hidden;
+}
+
+#fiche-fixe-entete {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #ddd;
+    flex-shrink: 0;
+    background: white;
+}
+
+#fiche-fixe-contenu {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+}
+
+#fiche-fixe-contenu .fiche-photo {
+    height: 220px;
+}
+
+@media (max-width: 800px) {
+    #fiche-fixe-lieu {
+        left: 8px;
+        right: 8px;
+        top: auto;
+        bottom: 8px;
+        width: auto;
+        height: min(72vh, 620px);
+        max-height: 72vh;
+    }
+
+    #fiche-fixe-contenu .fiche-photo {
+        height: 180px;
+    }
+}
+
+
+/* ==========================================================
    MESSAGE
    ========================================================== */
 
@@ -1512,6 +1572,18 @@ main {
 
 
 <!-- ========================================================
+     FICHE LIEU FIXE
+     ======================================================== -->
+
+<div id="fiche-fixe-lieu" aria-label="Fiche du lieu sélectionné">
+    <div id="fiche-fixe-entete">
+        <button type="button" id="boutonFermerFicheFixe" class="bouton">✕ Fermer</button>
+    </div>
+    <div id="fiche-fixe-contenu"></div>
+</div>
+
+
+<!-- ========================================================
      MODALE FORMULAIRE
      ======================================================== -->
 
@@ -2467,6 +2539,15 @@ let marqueurSelectionLocalisation = null;
 let localisationSelectionnee = null;
 let contexteOuvertureLocalisation = null;
 
+const ficheFixeLieu =
+    document.getElementById("fiche-fixe-lieu");
+
+const contenuFicheFixe =
+    document.getElementById("fiche-fixe-contenu");
+
+const boutonFermerFicheFixe =
+    document.getElementById("boutonFermerFicheFixe");
+
 
 // ==========================================================
 // ERREURS
@@ -3046,6 +3127,56 @@ function creerFiche(
 
     return html;
 }
+
+// ==========================================================
+// FICHE LIEU FIXE
+// ==========================================================
+
+function fermerFicheFixe() {
+    if (!ficheFixeLieu) return;
+    ficheFixeLieu.style.display = "none";
+    if (contenuFicheFixe) {
+        contenuFicheFixe.innerHTML = "";
+    }
+}
+
+
+function ouvrirFicheFixe(lieuId, centreCarte = true) {
+
+    const lieu =
+        lieuxParId[String(lieuId)];
+
+    if (!lieu) return;
+
+    const visitesLieu =
+        visitesParLieu[lieu.lieu_id] || [];
+
+    const photosLieu =
+        photosParLieu[lieu.lieu_id] || [];
+
+    contenuFicheFixe.innerHTML =
+        creerFiche(
+            lieu,
+            visitesLieu,
+            photosLieu
+        );
+
+    ficheFixeLieu.style.display = "flex";
+
+    if (centreCarte && map && Number.isFinite(Number(lieu.longitude)) && Number.isFinite(Number(lieu.latitude))) {
+        map.easeTo({
+            center: [Number(lieu.longitude), Number(lieu.latitude)],
+            duration: 350
+        });
+    }
+}
+
+
+boutonFermerFicheFixe.addEventListener(
+    "click",
+    fermerFicheFixe
+);
+
 
 // ==========================================================
 // RECHERCHE GLOBALE — ETAPE 13.6
@@ -3689,21 +3820,10 @@ function initialiserInteractionsClustering() {
             const photosLieu =
                 photosParLieu[lieu.lieu_id] || [];
 
-            new maplibregl.Popup({
-                offset: 12,
-                maxWidth: "420px"
-            })
-                .setLngLat(
-                    feature.geometry.coordinates
-                )
-                .setHTML(
-                    creerFiche(
-                        lieu,
-                        visitesLieu,
-                        photosLieu
-                    )
-                )
-                .addTo(map);
+            ouvrirFicheFixe(
+                lieu.lieu_id,
+                true
+            );
         }
     );
 
@@ -4199,28 +4319,23 @@ function afficherLieuxFiltres(force = false) {
         const photosLieu =
             photosParLieu[lieu.lieu_id] || [];
 
-        const popup =
-            new maplibregl.Popup({
-                offset: 25,
-                maxWidth: "420px"
-            });
-
-        popup.setHTML(
-            creerFiche(
-                lieu,
-                visitesLieu,
-                photosLieu
-            )
-        );
-
         const marqueur =
             new maplibregl.Marker()
                 .setLngLat([
                     Number(lieu.longitude),
                     Number(lieu.latitude)
                 ])
-                .setPopup(popup)
                 .addTo(map);
+
+        marqueur.getElement().addEventListener(
+            "click",
+            function() {
+                ouvrirFicheFixe(
+                    lieu.lieu_id,
+                    true
+                );
+            }
+        );
 
         marqueurs.push(marqueur);
     });
@@ -4780,11 +4895,115 @@ function genererNouvelIdVisite() {
 
 
 // ==========================================================
+// VISITE AUTOMATIQUE LORS DE LA CREATION D'UN LIEU
+// ==========================================================
+
+function obtenirContexteAutomatiquePourLieu(lieu, contextePreferé = null) {
+    if (contextePreferé && typesContexteParCode[contextePreferé]) {
+        return contextePreferé;
+    }
+
+    if (lieu?.voyage_id && typesContexteParCode["voyage"]) {
+        return "voyage";
+    }
+
+    if (typesContexteParCode["autre"]) {
+        return "autre";
+    }
+
+    const premierContexte =
+        tousLesTypesContexte.find(contexte => contexte.code);
+
+    return premierContexte?.code || null;
+}
+
+
+function construireVisiteAutomatiqueDepuisLieu(lieu, contextePreferé = null) {
+
+    const contexte =
+        obtenirContexteAutomatiquePourLieu(lieu, contextePreferé);
+
+    if (!contexte) {
+        throw new Error(
+            "Impossible de créer automatiquement la première visite : aucun contexte de visite n'est disponible dans types_contexte."
+        );
+    }
+
+    return {
+        visite_id: genererNouvelIdVisite(),
+        lieu_id: lieu.lieu_id,
+        voyage_id: lieu.voyage_id || null,
+        type_contexte: contexte,
+        date_debut: lieu.date_debut || null,
+        date_fin: lieu.date_fin || null,
+        date_texte: lieu.date_texte || null,
+        type_experience: lieu.type_experience || null,
+        description: lieu.description || null,
+        note: lieu.note ?? null,
+        notes: lieu.notes || null
+    };
+}
+
+
+async function creerVisiteAutomatiquePourLieu(lieu, contextePreferé = null) {
+
+    const visite =
+        construireVisiteAutomatiqueDepuisLieu(lieu, contextePreferé);
+
+    const { error } =
+        await supabaseClient
+            .from("visites")
+            .insert(visite);
+
+    if (error) {
+        throw error;
+    }
+
+    toutesLesVisites.push(visite);
+    return visite;
+}
+
+
+async function creerVisitesAutomatiquesPourLieuxSansVisite(lieuxCibles) {
+
+    const candidats = (lieuxCibles || []).filter(lieu => {
+        const visites =
+            toutesLesVisites.filter(
+                visite => String(visite.lieu_id) === String(lieu.lieu_id)
+            );
+
+        return visites.length === 0;
+    });
+
+    if (!candidats.length) {
+        return 0;
+    }
+
+    const visites = candidats.map(
+        construireVisiteAutomatiqueDepuisLieu
+    );
+
+    const { error } =
+        await supabaseClient
+            .from("visites")
+            .insert(visites);
+
+    if (error) {
+        throw error;
+    }
+
+    toutesLesVisites.push(...visites);
+    return visites.length;
+}
+
+
+// ==========================================================
 // OUVRIR AJOUT
 // ==========================================================
 
 function ouvrirFormulaireAjout() {
 
+    fermerFicheFixe();
     formulaireLieu.reset();
 
     document.getElementById(
@@ -4815,6 +5034,8 @@ function ouvrirFormulaireAjout() {
 function ouvrirFormulaireModification(
     lieuId
 ) {
+
+    fermerFicheFixe();
 
     const lieu =
         tousLesLieux.find(
@@ -5507,7 +5728,19 @@ formulaireLieu.addEventListener(
             adresse:
                 document.getElementById(
                     "champ-adresse"
-                ).value.trim() || null
+                ).value.trim() || null,
+
+            description:
+                description,
+
+            note:
+                note,
+
+            type_experience:
+                experience,
+
+            notes:
+                notes
 
         };
 
@@ -5578,98 +5811,31 @@ formulaireLieu.addEventListener(
 
 
                 // ----------------------------------------------
-                // CREATION DE LA VISITE
+                // CREATION AUTOMATIQUE DE LA PREMIERE VISITE
                 // ----------------------------------------------
 
-                if (contexte) {
-
-                    const nouvelleVisiteData = {
-
-                        visite_id:
-                            genererNouvelIdVisite(),
-
-                        lieu_id:
-                            nouvelId,
-
-                        voyage_id:
-                            voyageId,
-
-                        type_contexte:
-                            contexte,
-
-                        date_debut:
-                            dateDebut,
-
-                        date_fin:
-                            dateFin,
-
-                        date_texte:
-                            dateTexte,
-
-                        type_experience:
-                            experience,
-
-                        description:
-                            description,
-
-                        note:
-                            note,
-
-                        notes:
-                            notes
-
-                    };
-
-
-                    const {
-                        error: erreurVisite
-                    } =
-                        await supabaseClient
-
-                            .from("visites")
-
-                            .insert(
-                                nouvelleVisiteData
-                            );
-
-
-                    if (erreurVisite) {
-
-                        /*
-                         * Si la visite échoue, on supprime
-                         * le lieu que nous venons de créer.
-                         */
-
-                        await supabaseClient
-                            .from("lieux")
-                            .delete()
-                            .eq(
-                                "lieu_id",
-                                nouvelId
-                            );
-
-
-                        /*
-                         * Et on retire également le lieu
-                         * des données locales.
-                         */
-
-                        tousLesLieux =
-                            tousLesLieux.filter(
-                                item =>
-                                    item.lieu_id !==
-                                    nouvelId
-                            );
-
-
-                        throw erreurVisite;
-                    }
-
-
-                    toutesLesVisites.push(
-                        nouvelleVisiteData
+                try {
+                    await creerVisiteAutomatiquePourLieu(
+                        lieuData,
+                        contexte
                     );
+                } catch (erreurVisite) {
 
+                    /*
+                     * Le lieu ne doit pas rester orphelin si la
+                     * première visite obligatoire ne peut pas être créée.
+                     */
+                    await supabaseClient
+                        .from("lieux")
+                        .delete()
+                        .eq("lieu_id", nouvelId);
+
+                    tousLesLieux =
+                        tousLesLieux.filter(
+                            item => item.lieu_id !== nouvelId
+                        );
+
+                    throw erreurVisite;
                 }
 
 
@@ -7697,10 +7863,10 @@ document.addEventListener(
             return;
         }
 
-        const popup =
-            elementPhoto.closest(".maplibregl-popup");
+        const conteneurFiche =
+            elementPhoto.closest(".maplibregl-popup, #fiche-fixe-contenu");
 
-        if (!popup) {
+        if (!conteneurFiche) {
             return;
         }
 
@@ -7708,12 +7874,12 @@ document.addEventListener(
         // La grande photo n'est utilisée comme source que lorsqu'il n'y a
         // qu'une seule photo (donc pas de miniatures).
         const elementsPhotos =
-            [...popup.querySelectorAll(".fiche-miniature")];
+            [...conteneurFiche.querySelectorAll(".fiche-miniature")];
 
         const sources =
             elementsPhotos.length > 0
                 ? elementsPhotos
-                : [popup.querySelector(".fiche-photo")].filter(Boolean);
+                : [conteneurFiche.querySelector(".fiche-photo")].filter(Boolean);
 
         const images = sources
             .map(element => ({
@@ -8560,11 +8726,11 @@ function regrouperActionsImport(resultats) {
 }
 
 async function appliquerImportTable(table, resultats) {
-    if (!resultats.length) return { insert: 0, update: 0, delete: 0 };
+    if (!resultats.length) return { insert: 0, update: 0, delete: 0, insertedIds: [] };
 
     const cle = CLES_EXCEL[table];
     const groupes = regrouperActionsImport(resultats);
-    let stats = { insert: 0, update: 0, delete: 0 };
+    let stats = { insert: 0, update: 0, delete: 0, insertedIds: [] };
 
     const ensembleExistant = new Set(({
         voyages: tousLesVoyages,
@@ -8588,6 +8754,9 @@ async function appliquerImportTable(table, resultats) {
             .insert(lignes);
         if (error) throw new Error(`${table} INSERT : ${error.message}`);
         stats.insert += lignes.length;
+        stats.insertedIds.push(
+            ...groupes.insert.map(r => String(r.data[cle]))
+        );
     }
 
     if (groupes.update.length) {
@@ -8676,7 +8845,33 @@ async function executerImportExcel() {
             );
         }
 
+        // On recharge d'abord les données pour tenir compte des visites
+        // éventuellement présentes dans le fichier Excel.
         await chargerDonnees();
+
+        // Pour chaque nouveau lieu importé qui n'a pas de visite explicite
+        // dans le fichier, on crée automatiquement une première visite
+        // reprenant ses caractéristiques.
+        const lieuxImportesIds =
+            resultats.lieux?.insertedIds || [];
+
+        let visitesAutomatiques = 0;
+
+        if (lieuxImportesIds.length) {
+            const lieuxImportes =
+                lieuxImportesIds
+                    .map(id => lieuxParId[String(id)])
+                    .filter(Boolean);
+
+            visitesAutomatiques =
+                await creerVisitesAutomatiquesPourLieuxSansVisite(
+                    lieuxImportes
+                );
+
+            reconstruireTousLesIndex();
+            remplirFiltres();
+            afficherLieuxFiltres(true);
+        }
 
         const total = Object.values(resultats).reduce(
             (acc, x) => ({
@@ -8691,7 +8886,8 @@ async function executerImportExcel() {
             `Import terminé.\n\n` +
             `${total.insert} ajout(s)\n` +
             `${total.update} modification(s)\n` +
-            `${total.delete} suppression(s)`
+            `${total.delete} suppression(s)\n` +
+            `${visitesAutomatiques} première(s) visite(s) automatique(s)`
         );
 
         fermerModalImportExport();
