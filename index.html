@@ -8786,6 +8786,31 @@ async function appliquerImportTable(table, resultats) {
         const ids = groupes.delete.map(r => r.data[cle]);
         let fichiersPhotos = [];
 
+        /*
+         * CAS PARTICULIER : suppression d'un voyage.
+         *
+         * La table visites possède une FK vers voyages avec ON DELETE NO ACTION.
+         * On ne peut donc pas supprimer directement un voyage encore référencé
+         * par des visites. Les visites restent volontairement conservées, mais
+         * leur rattachement au voyage supprimé est retiré (voyage_id = NULL).
+         *
+         * Les autres relations sont déjà compatibles avec cette logique :
+         * - lieux.voyage_id -> SET NULL ;
+         * - photos.voyage_id -> CASCADE.
+         */
+        if (table === "voyages") {
+            const { error: erreurDetachement } = await supabaseClient
+                .from("visites")
+                .update({ voyage_id: null })
+                .in("voyage_id", ids);
+
+            if (erreurDetachement) {
+                throw new Error(
+                    `voyages DELETE : impossible de détacher les visites : ${erreurDetachement.message}`
+                );
+            }
+        }
+
         if (table === "photos") {
             fichiersPhotos = groupes.delete
                 .map(r => toutesLesPhotos.find(p => String(p.photo_id) === String(r.data[cle]))?.fichier)
@@ -8849,12 +8874,61 @@ async function executerImportExcel() {
     try {
         const resultats = {};
 
-        // Ordre choisi pour respecter les relations : références avant dépendants.
-        for (const table of ["voyages", "types_contexte", "lieux", "visites", "photos"]) {
+        /*
+         * ORDRE DE L'IMPORT
+         *
+         * Les INSERT/UPDATE sont effectués des tables parentes vers les tables
+         * dépendantes afin que les clés étrangères puissent être résolues.
+         *
+         * Les DELETE sont traités dans appliquerImportTable mais, pour éviter
+         * les violations de FK, on traite les tables dans l'ordre inverse :
+         * photos -> visites -> lieux -> types_contexte -> voyages.
+         *
+         * Une table peut donc être appelée plusieurs fois : une fois pour ses
+         * INSERT/UPDATE et une fois pour ses DELETE. Cela permet de conserver
+         * le comportement INSERT/UPDATE existant tout en gérant correctement
+         * les suppressions.
+         */
+        const ordreInsertUpdate = [
+            "voyages",
+            "types_contexte",
+            "lieux",
+            "visites",
+            "photos"
+        ];
+
+        const ordreDelete = [
+            "photos",
+            "visites",
+            "lieux",
+            "types_contexte",
+            "voyages"
+        ];
+
+        for (const table of ordreInsertUpdate) {
+            const lignes =
+                importExcelPrepare.resultatsParTable[table] || [];
+
             resultats[table] = await appliquerImportTable(
                 table,
-                importExcelPrepare.resultatsParTable[table] || []
+                lignes.filter(r => r.action !== "DELETE")
             );
+        }
+
+        for (const table of ordreDelete) {
+            const lignes =
+                importExcelPrepare.resultatsParTable[table] || [];
+
+            const statsDelete = await appliquerImportTable(
+                table,
+                lignes.filter(r => r.action === "DELETE")
+            );
+
+            if (!resultats[table]) {
+                resultats[table] = { insert: 0, update: 0, delete: 0, insertedIds: [] };
+            }
+
+            resultats[table].delete += statsDelete.delete;
         }
 
         // On recharge d'abord les données pour tenir compte des visites
