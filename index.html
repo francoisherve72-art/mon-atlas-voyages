@@ -8073,8 +8073,100 @@ function normaliserEnteteExcel(valeur) {
         .toUpperCase();
 }
 
-function valeurExcelVersJS(valeur) {
+const COLONNES_DATE_EXCEL = {
+    voyages: new Set(["date_debut", "date_fin"]),
+    lieux: new Set(["date_debut", "date_fin"]),
+    visites: new Set(["date_debut", "date_fin"]),
+    photos: new Set(["date_photo"])
+};
+
+function formaterDateISODepuisObjetDate(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+        return null;
+    }
+
+    // On utilise les composantes locales lorsque SheetJS nous fournit un
+    // objet Date issu d'une cellule Excel, puis on restitue exclusivement
+    // YYYY-MM-DD attendu par PostgreSQL pour une colonne de type date.
+    const annee = date.getFullYear();
+    const mois = String(date.getMonth() + 1).padStart(2, "0");
+    const jour = String(date.getDate()).padStart(2, "0");
+
+    return `${annee}-${mois}-${jour}`;
+}
+
+function convertirNumeroSerieExcelEnDate(numero) {
+    if (!Number.isFinite(numero) || numero <= 0) return null;
+
+    // Excel utilise le système de dates 1900 et considère à tort 1900 comme
+    // année bissextile. Le point de référence 1899-12-30 permet de reproduire
+    // directement les numéros de série Excel usuels (ex. 44479).
+    const date = new Date(Date.UTC(1899, 11, 30) + Math.round(numero * 86400000));
+
+    if (Number.isNaN(date.getTime())) return null;
+
+    const annee = date.getUTCFullYear();
+    const mois = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const jour = String(date.getUTCDate()).padStart(2, "0");
+
+    return `${annee}-${mois}-${jour}`;
+}
+
+function normaliserDateExcel(valeur) {
+    if (valeur === undefined || valeur === null || valeur === "") return null;
+
+    if (valeur instanceof Date) {
+        return formaterDateISODepuisObjetDate(valeur);
+    }
+
+    if (typeof valeur === "number") {
+        return convertirNumeroSerieExcelEnDate(valeur);
+    }
+
+    const texte = String(valeur).trim();
+    if (!texte) return null;
+
+    // Déjà au format PostgreSQL / ISO.
+    let correspondance = texte.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+    if (correspondance) {
+        const annee = Number(correspondance[1]);
+        const mois = Number(correspondance[2]);
+        const jour = Number(correspondance[3]);
+        const date = new Date(Date.UTC(annee, mois - 1, jour));
+        if (date.getUTCFullYear() === annee &&
+            date.getUTCMonth() + 1 === mois &&
+            date.getUTCDate() === jour) {
+            return `${String(annee).padStart(4, "0")}-${String(mois).padStart(2, "0")}-${String(jour).padStart(2, "0")}`;
+        }
+        return null;
+    }
+
+    // Formats courants saisis dans Excel en français : DD/MM/YYYY ou
+    // DD-MM-YYYY.
+    correspondance = texte.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/);
+    if (correspondance) {
+        const jour = Number(correspondance[1]);
+        const mois = Number(correspondance[2]);
+        const annee = Number(correspondance[3]);
+        const date = new Date(Date.UTC(annee, mois - 1, jour));
+        if (date.getUTCFullYear() === annee &&
+            date.getUTCMonth() + 1 === mois &&
+            date.getUTCDate() === jour) {
+            return `${String(annee).padStart(4, "0")}-${String(mois).padStart(2, "0")}-${String(jour).padStart(2, "0")}`;
+        }
+        return null;
+    }
+
+    return texte;
+}
+
+function valeurExcelVersJS(valeur, estDate = false) {
     if (valeur === undefined || valeur === null) return null;
+
+    if (estDate) {
+        return normaliserDateExcel(valeur);
+    }
+
     if (typeof valeur === "string") {
         const v = valeur.trim();
         return v === "" ? null : v;
@@ -8398,8 +8490,13 @@ function analyserFeuilleExcel(table, lignesBrutes) {
     lignesBrutes.forEach((ligneBrute, index) => {
         const ligne = {};
         colonnes.forEach(colonne => {
+            const valeur = obtenirValeurColonneExcel(ligneBrute, colonne);
+            const estDate =
+                Boolean(COLONNES_DATE_EXCEL[table]?.has(colonne));
+
             ligne[colonne] = valeurExcelVersJS(
-                obtenirValeurColonneExcel(ligneBrute, colonne)
+                valeur,
+                estDate
             );
         });
 
@@ -8693,7 +8790,10 @@ async function analyserImportExcel() {
         return;
     }
     const buffer = await fichier.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: "array", cellDates: false });
+    const workbook = XLSX.read(buffer, {
+        type: "array",
+        cellDates: true
+    });
     const resultatsParTable = {};
 
     ORDRE_IMPORT.forEach(table => {
