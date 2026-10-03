@@ -8141,13 +8141,38 @@ function normaliserDateExcel(valeur) {
         return null;
     }
 
-    // Formats courants saisis dans Excel en français : DD/MM/YYYY ou
-    // DD-MM-YYYY.
+    // Dates saisies comme texte dans Excel.
+    // On accepte explicitement les deux conventions :
+    //   DD/MM/YYYY (française)
+    //   MM/DD/YYYY (américaine)
+    // La convention est déterminée sans ambiguïté lorsque l'un des deux
+    // premiers nombres est > 12. Exemple : 10/20/2021 = 20 octobre 2021.
+    // Pour une date ambiguë (ex. 10/10/2021), on conserve la convention
+    // française par défaut : DD/MM/YYYY. Les vraies cellules Excel de type
+    // date passent normalement par le bloc Date ci-dessus et ne sont donc
+    // pas concernées par cette ambiguïté.
     correspondance = texte.match(/^(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{4})$/);
     if (correspondance) {
-        const jour = Number(correspondance[1]);
-        const mois = Number(correspondance[2]);
+        const premier = Number(correspondance[1]);
+        const second = Number(correspondance[2]);
         const annee = Number(correspondance[3]);
+        let jour;
+        let mois;
+
+        if (second > 12 && premier >= 1 && premier <= 12) {
+            // MM/DD/YYYY
+            mois = premier;
+            jour = second;
+        } else if (premier > 12 && second >= 1 && second <= 12) {
+            // DD/MM/YYYY
+            jour = premier;
+            mois = second;
+        } else {
+            // Cas ambigu : convention française par défaut.
+            jour = premier;
+            mois = second;
+        }
+
         const date = new Date(Date.UTC(annee, mois - 1, jour));
         if (date.getUTCFullYear() === annee &&
             date.getUTCMonth() + 1 === mois &&
