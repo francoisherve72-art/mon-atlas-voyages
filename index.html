@@ -1418,14 +1418,6 @@ main {
 
         <select id="modeCarte" class="filtre">
 
-            <option value="apercu">
-                🗺️ Aperçu adaptatif
-            </option>
-
-            <option value="points-discrets">
-                • Points discrets
-            </option>
-
             <option value="clusters">
                 🗺️ Lieux regroupés
             </option>
@@ -2534,7 +2526,7 @@ let texteRechercheParLieu = {};
 
 let marqueurs = [];
 
-let modeAffichage = "apercu";
+let modeAffichage = "clusters";
 
 let utilisateurConnecte = null;
 
@@ -2721,11 +2713,7 @@ try {
     map.on(
         "load",
         function() {
-            // Le mode « aperçu adaptatif » est le mode d'affichage par défaut.
-            modeCarte.value = "apercu";
-            modeAffichage = "apercu";
             initialiserInteractionsClustering();
-            initialiserInteractionsApercu();
             initialiserInteractionsCreationVisiteCarte();
             afficherLieuxFiltres(true);
         }
@@ -3670,30 +3658,6 @@ function supprimerMarqueurs() {
 }
 
 
-function supprimerPointsDiscrets() {
-
-    if (!map || !map.isStyleLoaded()) {
-        return;
-    }
-
-    const couches = [
-        "lieux-discrets-point"
-    ];
-
-    couches.forEach(
-        couche => {
-            if (map.getLayer(couche)) {
-                map.removeLayer(couche);
-            }
-        }
-    );
-
-    if (map.getSource("lieux-discrets")) {
-        map.removeSource("lieux-discrets");
-    }
-}
-
-
 function supprimerHeatmap() {
 
     if (!map || !map.isStyleLoaded()) {
@@ -3734,10 +3698,7 @@ function supprimerClustering() {
         [
             "clusters-lieux-cercle",
             "clusters-lieux-nombre",
-            "clusters-lieux-point",
-            "apercu-lieux-cercle",
-            "apercu-lieux-nombre",
-            "apercu-lieux-point"
+            "clusters-lieux-point"
         ];
 
     couches.forEach(
@@ -3752,10 +3713,6 @@ function supprimerClustering() {
     if (map.getSource("lieux-clusters")) {
         map.removeSource("lieux-clusters");
     }
-
-    if (map.getSource("lieux-apercu")) {
-        map.removeSource("lieux-apercu");
-    }
 }
 
 
@@ -3764,61 +3721,6 @@ function initialiserInteractionsClustering() {
     if (!map) {
         return;
     }
-
-    // Les points discrets restent interactifs comme les autres modes.
-    // Un clic ouvre la fiche du lieu. Le clic droit et l'appui long sont
-    // pris en charge par le gestionnaire global de la carte, qui détecte
-    // également un point discret sous le doigt ou le pointeur.
-    map.on(
-        "click",
-        "lieux-discrets-point",
-        function(event) {
-
-            const feature =
-                event.features &&
-                event.features[0];
-
-            if (!feature) {
-                return;
-            }
-
-            const lieuId =
-                feature.properties &&
-                feature.properties.lieu_id;
-
-            if (!lieuId) {
-                return;
-            }
-
-            const lieu =
-                lieuxParId[String(lieuId)];
-
-            if (!lieu) {
-                return;
-            }
-
-            ouvrirFicheFixe(
-                lieu.lieu_id,
-                true
-            );
-        }
-    );
-
-    map.on(
-        "mouseenter",
-        "lieux-discrets-point",
-        function() {
-            map.getCanvas().style.cursor = "pointer";
-        }
-    );
-
-    map.on(
-        "mouseleave",
-        "lieux-discrets-point",
-        function() {
-            map.getCanvas().style.cursor = "";
-        }
-    );
 
     // Un clic sur un cluster zoome jusqu'à son éclatement.
     map.on(
@@ -3961,344 +3863,6 @@ function initialiserInteractionsClustering() {
         function() {
             map.getCanvas().style.cursor =
                 "";
-        }
-    );
-}
-
-
-
-// Interactions de l'aperçu adaptatif. Elles sont installées une seule fois
-// après le chargement de la carte ; les couches peuvent ensuite être recréées.
-let interactionsApercuInstallees = false;
-
-function initialiserInteractionsApercu() {
-
-    if (!map || interactionsApercuInstallees) {
-        return;
-    }
-
-    interactionsApercuInstallees = true;
-
-    map.on(
-        "click",
-        "apercu-lieux-cercle",
-        function(event) {
-            const feature = event.features && event.features[0];
-            if (!feature) return;
-
-            const clusterId = Number(
-                feature.properties && feature.properties.cluster_id
-            );
-
-            const source = map.getSource("lieux-apercu");
-            if (!source || !Number.isFinite(clusterId)) return;
-
-            source.getClusterExpansionZoom(clusterId)
-                .then(function(zoom) {
-                    if (!Number.isFinite(zoom)) return;
-                    map.easeTo({
-                        center: feature.geometry.coordinates,
-                        zoom: Math.min(zoom, 20),
-                        duration: 400
-                    });
-                })
-                .catch(function(erreur) {
-                    console.warn("Impossible d'ouvrir le regroupement :", erreur);
-                });
-        }
-    );
-
-    map.on(
-        "click",
-        "apercu-lieux-point",
-        function(event) {
-            const feature = event.features && event.features[0];
-            if (!feature) return;
-
-            const lieuId =
-                feature.properties && feature.properties.lieu_id;
-
-            const lieu = lieuxParId[String(lieuId || "")];
-            if (!lieu) return;
-
-            ouvrirFicheFixe(lieu.lieu_id, true);
-        }
-    );
-
-    ["apercu-lieux-cercle", "apercu-lieux-point"].forEach(function(couche) {
-        map.on("mouseenter", couche, function() {
-            map.getCanvas().style.cursor = "pointer";
-        });
-        map.on("mouseleave", couche, function() {
-            map.getCanvas().style.cursor = "";
-        });
-    });
-}
-
-
-function afficherLieuxApercuAdaptatif(
-    lieuxFiltres,
-    bounds
-) {
-
-    if (
-        !map ||
-        !map.isStyleLoaded()
-    ) {
-        return;
-    }
-
-    const geojson = {
-        type: "FeatureCollection",
-        features:
-            lieuxFiltres.map(
-                lieu => ({
-                    type: "Feature",
-                    geometry: {
-                        type: "Point",
-                        coordinates: [
-                            Number(lieu.longitude),
-                            Number(lieu.latitude)
-                        ]
-                    },
-                    properties: {
-                        lieu_id:
-                            String(lieu.lieu_id || "")
-                    }
-                })
-            )
-    };
-
-    /*
-     * ETAPE 14.0 — APERCU ADAPTATIF
-     *
-     * L'objectif est de conserver une carte lisible à tous les niveaux
-     * de zoom sans rendre les lieux presque invisibles lorsque la carte
-     * est très dézoomée.
-     *
-     * L'aperçu combine donc automatiquement trois comportements :
-     * - très dézoomé : regroupement fort des lieux proches avec compteur ;
-     * - zoom intermédiaire : regroupement plus léger ;
-     * - zoom rapproché : retour progressif aux points individuels.
-     *
-     * Le regroupement est géré nativement par MapLibre et se recalcule
-     * automatiquement lorsque l'utilisateur zoome ou déplace la carte.
-     */
-    map.addSource(
-        "lieux-apercu",
-        {
-            type: "geojson",
-            data: geojson,
-            cluster: true,
-            clusterMaxZoom: 10,
-            clusterRadius: 58,
-            clusterMinPoints: 2
-        }
-    );
-
-    map.addLayer({
-        id: "apercu-lieux-cercle",
-        type: "circle",
-        source: "lieux-apercu",
-        filter: ["has", "point_count"],
-        paint: {
-            "circle-color": [
-                "step",
-                ["get", "point_count"],
-                "#557fa8",
-                5,
-                "#416e9b",
-                15,
-                "#315d8d",
-                40,
-                "#244c7c"
-            ],
-            "circle-radius": [
-                "step",
-                ["get", "point_count"],
-                15,
-                5,
-                18,
-                15,
-                22,
-                40,
-                27
-            ],
-            "circle-stroke-width": 1.5,
-            "circle-stroke-color": "#ffffff",
-            "circle-opacity": 0.92
-        }
-    });
-
-    map.addLayer({
-        id: "apercu-lieux-nombre",
-        type: "symbol",
-        source: "lieux-apercu",
-        filter: ["has", "point_count"],
-        layout: {
-            "text-field": ["get", "point_count_abbreviated"],
-            "text-font": ["Open Sans Bold"],
-            "text-size": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                1, 10,
-                5, 11,
-                9, 12
-            ]
-        },
-        paint: {
-            "text-color": "#ffffff"
-        }
-    });
-
-    map.addLayer({
-        id: "apercu-lieux-point",
-        type: "circle",
-        source: "lieux-apercu",
-        filter: ["!", ["has", "point_count"]],
-        paint: {
-            "circle-radius": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                1, 3.5,
-                3, 4,
-                5, 4.5,
-                7, 5.2,
-                9, 6,
-                12, 7,
-                16, 8
-            ],
-            "circle-color": "#2f6db0",
-            "circle-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                1, 0.82,
-                5, 0.88,
-                10, 0.94,
-                16, 0.98
-            ],
-            "circle-stroke-width": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                1, 1,
-                7, 1.5,
-                12, 2
-            ],
-            "circle-stroke-color": "#ffffff"
-        }
-    });
-
-    map.fitBounds(
-        bounds,
-        {
-            padding: 70,
-            maxZoom: 6,
-            duration: 450
-        }
-    );
-}
-
-function afficherLieuxPointsDiscrets(
-    lieuxFiltres,
-    bounds
-) {
-
-    if (
-        !map ||
-        !map.isStyleLoaded()
-    ) {
-        return;
-    }
-
-    const geojson = {
-        type: "FeatureCollection",
-        features:
-            lieuxFiltres.map(
-                lieu => ({
-                    type: "Feature",
-                    geometry: {
-                        type: "Point",
-                        coordinates: [
-                            Number(lieu.longitude),
-                            Number(lieu.latitude)
-                        ]
-                    },
-                    properties: {
-                        lieu_id:
-                            String(lieu.lieu_id || "")
-                    }
-                })
-            )
-    };
-
-    map.addSource(
-        "lieux-discrets",
-        {
-            type: "geojson",
-            data: geojson
-        }
-    );
-
-    /*
-     * Mode destiné à donner une vue d'ensemble de l'atlas :
-     * les lieux sont matérialisés par de très petits points,
-     * nettement moins envahissants que les marqueurs classiques.
-     * Leur taille augmente légèrement lorsque l'on zoome, tout en
-     * restant volontairement discrète.
-     */
-    map.addLayer({
-        id: "lieux-discrets-point",
-        type: "circle",
-        source: "lieux-discrets",
-        paint: {
-            "circle-radius": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                1, 1.8,
-                3, 2.1,
-                5, 2.5,
-                7, 3.0,
-                9, 3.5,
-                12, 4.2,
-                16, 5.0,
-                20, 5.5
-            ],
-            "circle-color": "#245b8f",
-            "circle-opacity": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                1, 0.55,
-                5, 0.62,
-                9, 0.72,
-                14, 0.82,
-                20, 0.88
-            ],
-            "circle-stroke-width": [
-                "interpolate",
-                ["linear"],
-                ["zoom"],
-                1, 0,
-                7, 0.5,
-                12, 1,
-                20, 1
-            ],
-            "circle-stroke-color": "#ffffff",
-            "circle-stroke-opacity": 0.55
-        }
-    });
-
-    map.fitBounds(
-        bounds,
-        {
-            padding: 70,
-            maxZoom: 6,
-            duration: 450
         }
     );
 }
@@ -4711,47 +4275,6 @@ function traiterInteractionSecondaireCarte(event, lieuId = null) {
 
     let point = obtenirPointCarteDepuisEvenement(event);
 
-    /*
-     * Si l'interaction secondaire a lieu directement sur un point discret,
-     * on récupère le lieu concerné au lieu de traiter le geste comme un
-     * nouvel emplacement vide. Cela permet notamment le clic droit sur PC
-     * et l'appui long sur tablette/téléphone.
-     */
-    if (!lieuId && map && event) {
-        try {
-            const canvas = map.getCanvas();
-            const rect = canvas.getBoundingClientRect();
-            const x = Number(event.clientX) - rect.left;
-            const y = Number(event.clientY) - rect.top;
-
-            if (Number.isFinite(x) && Number.isFinite(y)) {
-                const couches = [
-                    "lieux-discrets-point",
-                    "clusters-lieux-point"
-                ].filter(couche => map.getLayer(couche));
-
-                if (couches.length) {
-                    const features =
-                        map.queryRenderedFeatures(
-                            [x, y],
-                            { layers: couches }
-                        );
-
-                    if (features.length) {
-                        lieuId =
-                            features[0].properties?.lieu_id ||
-                            null;
-                    }
-                }
-            }
-        } catch (erreur) {
-            console.warn(
-                "Impossible d'identifier le lieu sous le geste :",
-                erreur
-            );
-        }
-    }
-
     if (!point && event?.touches?.length) {
         const touch = event.touches[0];
         point = obtenirPointCarteDepuisEvenement(touch);
@@ -5001,7 +4524,6 @@ function afficherLieuxFiltres(force = false) {
     dernierEtatAffichageCarte = etat;
 
     supprimerMarqueurs();
-    supprimerPointsDiscrets();
     supprimerHeatmap();
     supprimerClustering();
 
@@ -5167,28 +4689,6 @@ function afficherLieuxFiltres(force = false) {
             Number(lieu.latitude)
         ]);
     });
-
-    if (modeAffichage === "apercu") {
-
-        afficherLieuxApercuAdaptatif(
-            lieuxFiltres,
-            bounds
-        );
-
-        return;
-    }
-
-
-    if (modeAffichage === "points-discrets") {
-
-        afficherLieuxPointsDiscrets(
-            lieuxFiltres,
-            bounds
-        );
-
-        return;
-    }
-
 
     if (modeAffichage === "clusters") {
 
@@ -7525,8 +7025,8 @@ function afficherVoyageActuelSurCarte() {
     filtreTypeLieu.value = "";
     filtreExperience.value = "";
     filtreAnnee.value = "";
-    modeCarte.value = "apercu";
-    modeAffichage = "apercu";
+    modeCarte.value = "clusters";
+    modeAffichage = "clusters";
     fermerDetailVoyage();
     afficherLieuxFiltres();
 }
