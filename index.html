@@ -2714,6 +2714,7 @@ try {
         "load",
         function() {
             initialiserInteractionsClustering();
+            initialiserInteractionsCreationVisiteCarte();
             afficherLieuxFiltres(true);
         }
     );
@@ -4014,6 +4015,487 @@ function afficherLieuxClusters(
 }
 
 
+
+
+// ==========================================================
+// CREATION RAPIDE D'UNE VISITE DEPUIS LA CARTE
+// ==========================================================
+
+let minuteurAppuiLongCarte = null;
+let appuiLongCarteDeclenche = false;
+let pointAppuiLongCarte = null;
+
+
+function obtenirContexteParDefautCreationVisite() {
+
+    const contexteFiltre =
+        filtreContexte &&
+        filtreContexte.value;
+
+    if (
+        contexteFiltre &&
+        tousLesTypesContexte.some(
+            contexte => contexte.code === contexteFiltre
+        )
+    ) {
+        return contexteFiltre;
+    }
+
+    if (
+        tousLesTypesContexte.some(
+            contexte => contexte.code === "voyage"
+        )
+    ) {
+        return "voyage";
+    }
+
+    if (
+        tousLesTypesContexte.some(
+            contexte => contexte.code === "autre"
+        )
+    ) {
+        return "autre";
+    }
+
+    return tousLesTypesContexte[0]?.code || "";
+}
+
+
+function preRemplirFormulaireDepuisPointCarte(
+    latitude,
+    longitude,
+    infos = null
+) {
+
+    document.getElementById("champ-latitude").value =
+        Number(latitude.toFixed(7));
+
+    document.getElementById("champ-longitude").value =
+        Number(longitude.toFixed(7));
+
+    if (infos?.adresse) {
+        document.getElementById("champ-adresse").value = infos.adresse;
+    }
+
+    if (infos?.ville) {
+        document.getElementById("champ-ville").value = infos.ville;
+    }
+
+    if (infos?.pays) {
+        document.getElementById("champ-pays").value = infos.pays;
+    }
+
+    const nomAutomatique =
+        infos?.adresse ||
+        infos?.ville ||
+        "Lieu à préciser";
+
+    if (!document.getElementById("champ-nom").value.trim()) {
+        document.getElementById("champ-nom").value = nomAutomatique;
+    }
+
+    const voyageFiltre =
+        filtreVoyage && filtreVoyage.value;
+
+    if (voyageFiltre) {
+        document.getElementById("champ-voyage").value = voyageFiltre;
+    }
+
+    const contexte =
+        obtenirContexteParDefautCreationVisite();
+
+    if (contexte) {
+        document.getElementById("champ-contexte").value = contexte;
+    }
+
+    document.getElementById("champ-type-lieu").focus();
+}
+
+
+async function creerVisiteDepuisPointCarte(
+    longitude,
+    latitude,
+    lieuId = null
+) {
+
+    if (!utilisateurConnecte) {
+        alert("Vous devez être connecté pour créer une visite.");
+        return;
+    }
+
+    const latitudeArrondie = Number(latitude.toFixed(7));
+    const longitudeArrondie = Number(longitude.toFixed(7));
+
+    if (lieuId) {
+
+        const lieu =
+            lieuxParId[String(lieuId)] ||
+            tousLesLieux.find(
+                item => String(item.lieu_id) === String(lieuId)
+            );
+
+        if (!lieu) {
+            return;
+        }
+
+        const confirmer = confirm(
+            "Créer une nouvelle visite pour « " +
+            (lieu.nom || lieu.lieu_id) +
+            " » ?\n\nLes informations de la dernière visite seront reprises dans le formulaire."
+        );
+
+        if (!confirmer) {
+            return;
+        }
+
+        ouvrirGestionVisites(lieu.lieu_id);
+
+        const visiteSource =
+            (visitesParLieu[lieu.lieu_id] || [])[0] || null;
+
+        reinitialiserFormulaireVisiteGestion();
+        document.getElementById("champ-visite-lieu-id-gestion").value = lieu.lieu_id;
+
+        document.getElementById("champ-visite-voyage").value =
+            visiteSource?.voyage_id ||
+            lieu.voyage_id ||
+            (filtreVoyage?.value || "");
+
+        document.getElementById("champ-visite-contexte").value =
+            visiteSource?.type_contexte ||
+            obtenirContexteParDefautCreationVisite();
+
+        document.getElementById("champ-visite-date-debut").value =
+            visiteSource?.date_debut || "";
+        document.getElementById("champ-visite-date-fin").value =
+            visiteSource?.date_fin || "";
+        document.getElementById("champ-visite-date-texte").value =
+            visiteSource?.date_texte || "";
+        document.getElementById("champ-visite-experience").value =
+            visiteSource?.type_experience || lieu.type_experience || "";
+        document.getElementById("champ-visite-note").value =
+            visiteSource?.note ?? lieu.note ?? "";
+        document.getElementById("champ-visite-description").value =
+            visiteSource?.description || lieu.description || "";
+        document.getElementById("champ-visite-notes").value =
+            visiteSource?.notes || lieu.notes || "";
+        document.getElementById("titre-form-visite").textContent =
+            "Ajouter une visite";
+        document.getElementById("message-visite-formulaire").textContent =
+            "Informations reprises de la dernière visite. Modifiez-les si nécessaire.";
+
+        return;
+    }
+
+    const confirmer = confirm(
+        "Créer une nouvelle visite à cet emplacement ?\n\n" +
+        "Un nouveau lieu sera créé avec les coordonnées et l'adresse trouvées sur la carte."
+    );
+
+    if (!confirmer) {
+        return;
+    }
+
+    ouvrirFormulaireAjout();
+    preRemplirFormulaireDepuisPointCarte(
+        latitudeArrondie,
+        longitudeArrondie
+    );
+
+    messageFormulaire.textContent =
+        "Recherche de l'adresse de l'emplacement…";
+
+    try {
+        const infos =
+            await geocoderInverseLocalisation(
+                latitudeArrondie,
+                longitudeArrondie
+            );
+
+        if (document.getElementById("champ-lieu-id").value) {
+            return;
+        }
+
+        preRemplirFormulaireDepuisPointCarte(
+            latitudeArrondie,
+            longitudeArrondie,
+            infos
+        );
+
+        messageFormulaire.textContent =
+            "Lieu et visite préremplis. Vérifiez les informations puis cliquez sur Enregistrer.";
+
+    } catch (erreur) {
+
+        console.warn(
+            "Géocodage inverse depuis la carte impossible :",
+            erreur
+        );
+
+        messageFormulaire.textContent =
+            "Coordonnées préremplies. L'adresse n'a pas pu être récupérée ; vous pouvez compléter les champs manuellement.";
+    }
+}
+
+
+function obtenirPointCarteDepuisEvenement(event) {
+
+    if (!map || !event) {
+        return null;
+    }
+
+    if (event.lngLat) {
+        return {
+            longitude: Number(event.lngLat.lng),
+            latitude: Number(event.lngLat.lat)
+        };
+    }
+
+    const rect = map.getCanvas().getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    const lngLat = map.unproject([x, y]);
+
+    return {
+        longitude: Number(lngLat.lng),
+        latitude: Number(lngLat.lat)
+    };
+}
+
+
+function traiterInteractionSecondaireCarte(event, lieuId = null) {
+
+    if (event?.preventDefault) {
+        event.preventDefault();
+    }
+
+    if (event?.stopPropagation) {
+        event.stopPropagation();
+    }
+
+    let point = obtenirPointCarteDepuisEvenement(event);
+
+    if (!point && event?.touches?.length) {
+        const touch = event.touches[0];
+        point = obtenirPointCarteDepuisEvenement(touch);
+    }
+
+    if (!point && event?.changedTouches?.length) {
+        const touch = event.changedTouches[0];
+        point = obtenirPointCarteDepuisEvenement(touch);
+    }
+
+    if (!point) {
+        return;
+    }
+
+    creerVisiteDepuisPointCarte(
+        point.longitude,
+        point.latitude,
+        lieuId
+    );
+}
+
+
+function attacherGestesCreationVisiteCarte(element, lieuId = null) {
+
+    if (!element || element.dataset.creationVisiteCarteActive === "1") {
+        return;
+    }
+
+    element.dataset.creationVisiteCarteActive = "1";
+
+    element.addEventListener(
+        "contextmenu",
+        function(event) {
+            traiterInteractionSecondaireCarte(event, lieuId);
+        }
+    );
+
+    let timer = null;
+    let pointDepart = null;
+
+    element.addEventListener(
+        "touchstart",
+        function(event) {
+
+            if (!event.touches?.length) {
+                return;
+            }
+
+            const touch = event.touches[0];
+
+            pointDepart = {
+                x: touch.clientX,
+                y: touch.clientY
+            };
+
+            clearTimeout(timer);
+
+            timer = setTimeout(
+                function() {
+                    timer = null;
+                    appuiLongCarteDeclenche = true;
+                    traiterInteractionSecondaireCarte(
+                        touch,
+                        lieuId
+                    );
+                },
+                700
+            );
+        },
+        { passive: true }
+    );
+
+    element.addEventListener(
+        "touchmove",
+        function(event) {
+
+            if (!timer || !pointDepart || !event.touches?.length) {
+                return;
+            }
+
+            const touch = event.touches[0];
+            const dx = touch.clientX - pointDepart.x;
+            const dy = touch.clientY - pointDepart.y;
+
+            if (Math.sqrt(dx * dx + dy * dy) > 12) {
+                clearTimeout(timer);
+                timer = null;
+                pointDepart = null;
+            }
+        },
+        { passive: true }
+    );
+
+    element.addEventListener(
+        "touchend",
+        function() {
+            clearTimeout(timer);
+            timer = null;
+            pointDepart = null;
+        },
+        { passive: true }
+    );
+
+    element.addEventListener(
+        "touchcancel",
+        function() {
+            clearTimeout(timer);
+            timer = null;
+            pointDepart = null;
+        },
+        { passive: true }
+    );
+}
+
+
+function initialiserInteractionsCreationVisiteCarte() {
+
+    if (!map) {
+        return;
+    }
+
+    const canvas = map.getCanvas();
+
+    if (!canvas || canvas.dataset.creationVisiteCarteActive === "1") {
+        return;
+    }
+
+    canvas.dataset.creationVisiteCarteActive = "1";
+
+    canvas.addEventListener(
+        "contextmenu",
+        function(event) {
+            traiterInteractionSecondaireCarte(event);
+        }
+    );
+
+    let timer = null;
+    let pointDepart = null;
+    let longPressDeclenche = false;
+
+    canvas.addEventListener(
+        "touchstart",
+        function(event) {
+
+            if (!event.touches?.length) {
+                return;
+            }
+
+            const touch = event.touches[0];
+
+            pointDepart = {
+                x: touch.clientX,
+                y: touch.clientY
+            };
+
+            longPressDeclenche = false;
+
+            clearTimeout(timer);
+
+            timer = setTimeout(
+                function() {
+                    timer = null;
+                    longPressDeclenche = true;
+                    appuiLongCarteDeclenche = true;
+
+                    traiterInteractionSecondaireCarte(touch);
+                },
+                700
+            );
+        },
+        { passive: true }
+    );
+
+    canvas.addEventListener(
+        "touchmove",
+        function(event) {
+
+            if (!timer || !pointDepart || !event.touches?.length) {
+                return;
+            }
+
+            const touch = event.touches[0];
+            const dx = touch.clientX - pointDepart.x;
+            const dy = touch.clientY - pointDepart.y;
+
+            if (Math.sqrt(dx * dx + dy * dy) > 12) {
+                clearTimeout(timer);
+                timer = null;
+                pointDepart = null;
+            }
+        },
+        { passive: true }
+    );
+
+    canvas.addEventListener(
+        "touchend",
+        function() {
+            clearTimeout(timer);
+            timer = null;
+            pointDepart = null;
+
+            if (longPressDeclenche) {
+                longPressDeclenche = false;
+            }
+        },
+        { passive: true }
+    );
+
+    canvas.addEventListener(
+        "touchcancel",
+        function() {
+            clearTimeout(timer);
+            timer = null;
+            pointDepart = null;
+            longPressDeclenche = false;
+        },
+        { passive: true }
+    );
+}
+
+
 function afficherLieuxFiltres(force = false) {
 
     if (
@@ -4335,6 +4817,11 @@ function afficherLieuxFiltres(force = false) {
                     true
                 );
             }
+        );
+
+        attacherGestesCreationVisiteCarte(
+            marqueur.getElement(),
+            lieu.lieu_id
         );
 
         marqueurs.push(marqueur);
