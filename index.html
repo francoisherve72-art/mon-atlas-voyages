@@ -1418,6 +1418,10 @@ main {
 
         <select id="modeCarte" class="filtre">
 
+            <option value="points-discrets">
+                • Points discrets
+            </option>
+
             <option value="clusters">
                 🗺️ Lieux regroupés
             </option>
@@ -2526,7 +2530,7 @@ let texteRechercheParLieu = {};
 
 let marqueurs = [];
 
-let modeAffichage = "clusters";
+let modeAffichage = "points-discrets";
 
 let utilisateurConnecte = null;
 
@@ -2713,6 +2717,9 @@ try {
     map.on(
         "load",
         function() {
+            // Le mode « points discrets » est le mode d'affichage par défaut.
+            modeCarte.value = "points-discrets";
+            modeAffichage = "points-discrets";
             initialiserInteractionsClustering();
             initialiserInteractionsCreationVisiteCarte();
             afficherLieuxFiltres(true);
@@ -3658,6 +3665,30 @@ function supprimerMarqueurs() {
 }
 
 
+function supprimerPointsDiscrets() {
+
+    if (!map || !map.isStyleLoaded()) {
+        return;
+    }
+
+    const couches = [
+        "lieux-discrets-point"
+    ];
+
+    couches.forEach(
+        couche => {
+            if (map.getLayer(couche)) {
+                map.removeLayer(couche);
+            }
+        }
+    );
+
+    if (map.getSource("lieux-discrets")) {
+        map.removeSource("lieux-discrets");
+    }
+}
+
+
 function supprimerHeatmap() {
 
     if (!map || !map.isStyleLoaded()) {
@@ -3721,6 +3752,61 @@ function initialiserInteractionsClustering() {
     if (!map) {
         return;
     }
+
+    // Les points discrets restent interactifs comme les autres modes.
+    // Un clic ouvre la fiche du lieu. Le clic droit et l'appui long sont
+    // pris en charge par le gestionnaire global de la carte, qui détecte
+    // également un point discret sous le doigt ou le pointeur.
+    map.on(
+        "click",
+        "lieux-discrets-point",
+        function(event) {
+
+            const feature =
+                event.features &&
+                event.features[0];
+
+            if (!feature) {
+                return;
+            }
+
+            const lieuId =
+                feature.properties &&
+                feature.properties.lieu_id;
+
+            if (!lieuId) {
+                return;
+            }
+
+            const lieu =
+                lieuxParId[String(lieuId)];
+
+            if (!lieu) {
+                return;
+            }
+
+            ouvrirFicheFixe(
+                lieu.lieu_id,
+                true
+            );
+        }
+    );
+
+    map.on(
+        "mouseenter",
+        "lieux-discrets-point",
+        function() {
+            map.getCanvas().style.cursor = "pointer";
+        }
+    );
+
+    map.on(
+        "mouseleave",
+        "lieux-discrets-point",
+        function() {
+            map.getCanvas().style.cursor = "";
+        }
+    );
 
     // Un clic sur un cluster zoome jusqu'à son éclatement.
     map.on(
@@ -3863,6 +3949,108 @@ function initialiserInteractionsClustering() {
         function() {
             map.getCanvas().style.cursor =
                 "";
+        }
+    );
+}
+
+
+function afficherLieuxPointsDiscrets(
+    lieuxFiltres,
+    bounds
+) {
+
+    if (
+        !map ||
+        !map.isStyleLoaded()
+    ) {
+        return;
+    }
+
+    const geojson = {
+        type: "FeatureCollection",
+        features:
+            lieuxFiltres.map(
+                lieu => ({
+                    type: "Feature",
+                    geometry: {
+                        type: "Point",
+                        coordinates: [
+                            Number(lieu.longitude),
+                            Number(lieu.latitude)
+                        ]
+                    },
+                    properties: {
+                        lieu_id:
+                            String(lieu.lieu_id || "")
+                    }
+                })
+            )
+    };
+
+    map.addSource(
+        "lieux-discrets",
+        {
+            type: "geojson",
+            data: geojson
+        }
+    );
+
+    /*
+     * Mode destiné à donner une vue d'ensemble de l'atlas :
+     * les lieux sont matérialisés par de très petits points,
+     * nettement moins envahissants que les marqueurs classiques.
+     * Leur taille augmente légèrement lorsque l'on zoome, tout en
+     * restant volontairement discrète.
+     */
+    map.addLayer({
+        id: "lieux-discrets-point",
+        type: "circle",
+        source: "lieux-discrets",
+        paint: {
+            "circle-radius": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                1, 1.8,
+                3, 2.1,
+                5, 2.5,
+                7, 3.0,
+                9, 3.5,
+                12, 4.2,
+                16, 5.0,
+                20, 5.5
+            ],
+            "circle-color": "#245b8f",
+            "circle-opacity": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                1, 0.55,
+                5, 0.62,
+                9, 0.72,
+                14, 0.82,
+                20, 0.88
+            ],
+            "circle-stroke-width": [
+                "interpolate",
+                ["linear"],
+                ["zoom"],
+                1, 0,
+                7, 0.5,
+                12, 1,
+                20, 1
+            ],
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-opacity": 0.55
+        }
+    });
+
+    map.fitBounds(
+        bounds,
+        {
+            padding: 70,
+            maxZoom: 6,
+            duration: 450
         }
     );
 }
@@ -4275,6 +4463,47 @@ function traiterInteractionSecondaireCarte(event, lieuId = null) {
 
     let point = obtenirPointCarteDepuisEvenement(event);
 
+    /*
+     * Si l'interaction secondaire a lieu directement sur un point discret,
+     * on récupère le lieu concerné au lieu de traiter le geste comme un
+     * nouvel emplacement vide. Cela permet notamment le clic droit sur PC
+     * et l'appui long sur tablette/téléphone.
+     */
+    if (!lieuId && map && event) {
+        try {
+            const canvas = map.getCanvas();
+            const rect = canvas.getBoundingClientRect();
+            const x = Number(event.clientX) - rect.left;
+            const y = Number(event.clientY) - rect.top;
+
+            if (Number.isFinite(x) && Number.isFinite(y)) {
+                const couches = [
+                    "lieux-discrets-point",
+                    "clusters-lieux-point"
+                ].filter(couche => map.getLayer(couche));
+
+                if (couches.length) {
+                    const features =
+                        map.queryRenderedFeatures(
+                            [x, y],
+                            { layers: couches }
+                        );
+
+                    if (features.length) {
+                        lieuId =
+                            features[0].properties?.lieu_id ||
+                            null;
+                    }
+                }
+            }
+        } catch (erreur) {
+            console.warn(
+                "Impossible d'identifier le lieu sous le geste :",
+                erreur
+            );
+        }
+    }
+
     if (!point && event?.touches?.length) {
         const touch = event.touches[0];
         point = obtenirPointCarteDepuisEvenement(touch);
@@ -4524,6 +4753,7 @@ function afficherLieuxFiltres(force = false) {
     dernierEtatAffichageCarte = etat;
 
     supprimerMarqueurs();
+    supprimerPointsDiscrets();
     supprimerHeatmap();
     supprimerClustering();
 
@@ -4689,6 +4919,17 @@ function afficherLieuxFiltres(force = false) {
             Number(lieu.latitude)
         ]);
     });
+
+    if (modeAffichage === "points-discrets") {
+
+        afficherLieuxPointsDiscrets(
+            lieuxFiltres,
+            bounds
+        );
+
+        return;
+    }
+
 
     if (modeAffichage === "clusters") {
 
